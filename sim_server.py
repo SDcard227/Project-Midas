@@ -22,7 +22,11 @@ BASE = os.path.dirname(os.path.abspath(__file__))
 
 @app.route("/")
 def index():
-    return send_from_directory(BASE, "sim.html")
+    return send_from_directory(BASE, "index.html")
+
+@app.route("/<path:filename>")
+def static_files(filename):
+    return send_from_directory(BASE, filename)
 
 
 @app.route("/api/simulate")

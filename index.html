@@ -1473,8 +1473,7 @@
       let mi=0;const mt=setInterval(()=>{if(mi<msgs.length){me.textContent=msgs[mi];fe.style.width=((mi+1)/(msgs.length+1)*100)+'%';mi++;}},700);
       try{
         const p=new URLSearchParams({mode:simCfg.mode,freq:simCfg.freq,year:simCfg.year,balance:simCfg.balance,floor_pct:simCfg.floorPct,floor_mode:simCfg.floorMode,trail_pct:simCfg.trailPct,deploy:simCfg.deploy,reinvest:simCfg.reinvest,watcher:simCfg.watcher,max_trades:simCfg.maxTrades,conf_min:simCfg.cmin,conf_max:simCfg.cmax,tax:simCfg.tax});
-        const apiHost=location.hostname==='localhost'?'localhost':'100.100.207.78';
-        const res=await fetch(`http://${apiHost}:5050/api/simulate?`+p);
+        const res=await fetch(`/api/simulate?`+p);
         const data=await res.json();
         clearInterval(mt);fe.style.width='100%';me.textContent='Ready.';
         setTimeout(()=>simStart(data),350);
