@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROJECT MIDAS — Penny Stocks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8;--surface:#ede8dd;--card:#fff;--card2:#fff;
+      --border:#ddd8ce;--border2:#c4bdb0;
+      --text:#1e1a14;--mid:#5c5045;--dim:#9a9088;
+      --green:#2d7a4f;--teal:#1a7080;--amber:#9a7018;--red:#8a3030;
+      --gold:var(--amber);--cyan:var(--teal);
+      --dark:var(--bg);--dark2:var(--surface);--dark3:var(--card);
+      --muted:var(--dim);--green2:var(--green);--green3:var(--border);
+      --a-border:var(--border);--a-border2:var(--border2);
+      --gw:rgba(45,122,79,0.07);--tw:rgba(26,112,128,0.07);
+      --shadow:0 1px 3px rgba(30,26,20,0.07),0 4px 16px rgba(30,26,20,0.05);
+      --mono:'Share Tech Mono','Courier New',monospace;
+      --title:'Outfit',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;}
+    a,button,input{cursor:pointer;position:relative;z-index:10;}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;background:rgba(245,240,232,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);}
+    .nav-logo{font-family:var(--title);font-size:1.05rem;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:0.08em;}
+    .nav-logo span{color:var(--amber);}
+    .nav-links{display:flex;gap:32px;list-style:none;}
+    .nav-links a{font-family:var(--title);color:var(--dim);text-decoration:none;font-size:0.82rem;letter-spacing:0.04em;transition:color 0.2s;font-weight:400;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green)!important;padding:6px 20px;border-radius:2px;transition:background 0.2s!important;font-weight:500!important;}
+    .nav-cta:hover{background:var(--gw)!important;}
+    section{position:relative;z-index:2;}
+    .container{max-width:1100px;margin:0 auto;padding:0 40px;}
+    .glow-box{border:1px solid var(--border);background:var(--card);box-shadow:var(--shadow);}
+    .glow-amber{border:1px solid var(--border2);background:var(--card);box-shadow:var(--shadow);}
+    .box-title{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border);font-size:0.7rem;letter-spacing:0.15em;color:var(--mid);}
+    .box-title.green{border-bottom-color:var(--border);color:var(--mid);}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--amber);animation:pulse 2s infinite;}
+    .dot.green{background:var(--green);}
+    .dot.red{background:var(--red);}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+    .blink{animation:blink 1.2s step-end infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+    .s-eye{font-size:0.68rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;display:block;font-family:var(--mono);}
+    .s-title{font-family:var(--title);font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:600;color:var(--text);line-height:1.15;letter-spacing:-0.01em;margin-bottom:16px;}
+    .s-sub{font-size:0.95rem;color:var(--mid);line-height:1.8;max-width:580px;font-weight:300;}
+    .fade-in{opacity:0;transform:translateY(20px);transition:opacity 0.7s ease,transform 0.7s ease;}
+    .fade-in.visible{opacity:1;transform:translateY(0);}
+    /* Hero */
+    #hero{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 32px 60px;background:var(--bg);}
+    .hero-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--border2);padding:6px 18px;font-size:0.72rem;letter-spacing:0.18em;color:var(--mid);margin-bottom:32px;}
+    h1{font-family:var(--title);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:600;color:var(--text);letter-spacing:-0.01em;margin-bottom:8px;line-height:1.05;}
+    .hero-sub{font-size:1rem;color:var(--mid);max-width:560px;line-height:1.75;margin:16px auto 36px;font-weight:300;}
+    .btn-back{font-family:var(--mono);background:transparent;color:var(--text);font-size:0.78rem;letter-spacing:0.12em;padding:10px 20px;border:1px solid var(--border2);text-decoration:none;text-transform:uppercase;display:inline-block;transition:border-color 0.2s;}
+    .btn-back:hover{border-color:var(--text);}
+    /* Penny table */
+    .signal-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+    .signal-table th{padding:10px 16px;text-align:left;color:var(--dim);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;border-bottom:1px solid var(--border2);}
+    .signal-table td{padding:12px 16px;border-bottom:1px solid var(--border);}
+    .signal-table tr:hover td{background:var(--surface);}
+    .t-ticker{color:var(--amber);font-weight:bold;}
+    .t-up{color:var(--green);}
+    .t-down{color:var(--red);}
+    .sig-buy{color:var(--green);font-weight:bold;}
+    .sig-sell{color:var(--red);font-weight:bold;}
+    .sig-hold{color:var(--amber);font-weight:bold;}
+    .conf-bar{display:inline-block;height:6px;background:var(--amber);border-radius:1px;vertical-align:middle;margin-right:6px;}
+    /* Explainer grid */
+    .explain-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+    .explain-card{padding:24px;border-top:2px solid var(--amber);}
+    .ec-num{font-family:var(--title);font-size:0.65rem;color:var(--amber);letter-spacing:0.15em;margin-bottom:10px;}
+    .ec-h{font-family:var(--title);font-size:0.88rem;color:var(--text);letter-spacing:0.08em;margin-bottom:8px;}
+    .ec-p{font-size:0.8rem;color:var(--mid);line-height:1.7;}
+    /* Terminal */
+    .terminal{font-size:0.8rem;line-height:2;padding:20px 24px;}
+    .tr-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:3px 0;}
+    .tr-key{color:var(--dim);}
+    .tr-g{color:var(--green);}
+    .tr-gold{color:var(--amber);}
+    .tr-a{color:var(--amber);}
+    .tr-r{color:var(--red);}
+    hr.tr-div{border:none;border-top:1px solid var(--border2);margin:8px 0;}
+    /* Tickers to watch */
+    .ticker-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}
+    .ticker-card{padding:16px;text-align:center;}
+    .tc-sym{font-family:var(--title);font-size:1rem;color:var(--amber);display:block;margin-bottom:4px;}
+    .tc-name{font-size:0.7rem;color:var(--dim);letter-spacing:0.06em;}
+    /* flist */
+    .flist{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+    .flist li{display:flex;gap:10px;font-size:0.82rem;color:var(--mid);line-height:1.5;}
+    .flist li::before{content:">";color:var(--amber);flex-shrink:0;}
+    /* Risk box */
+    .risk-box{border:1px solid var(--red);background:var(--card);padding:24px 28px;}
+    .risk-title{font-family:var(--title);font-size:0.82rem;color:var(--red);letter-spacing:0.1em;margin-bottom:14px;}
+    /* Signup */
+    .signup-form{display:flex;gap:0;max-width:420px;margin-top:24px;}
+    .signup-form input{flex:1;background:var(--card);border:1px solid var(--border2);border-right:none;padding:11px 16px;color:var(--text);font-family:var(--mono);font-size:0.85rem;outline:none;cursor:text;}
+    .signup-form input::placeholder{color:var(--dim);}
+    .signup-form input:focus{border-color:var(--border2);}
+    .signup-form button{font-family:var(--mono);background:var(--text);color:var(--bg);font-size:0.8rem;letter-spacing:0.1em;padding:11px 20px;border:none;text-transform:uppercase;white-space:nowrap;transition:opacity 0.18s;}
+    .signup-form button:hover{opacity:0.8;}
+    footer{background:var(--surface);border-top:1px solid var(--border);padding:28px 0;position:relative;z-index:2;}
+    .footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+    .footer-logo{font-family:var(--title);font-size:0.9rem;color:var(--text);letter-spacing:0.12em;}
+    .footer-links{display:flex;gap:24px;list-style:none;}
+    .footer-links a{font-size:0.72rem;color:var(--dim);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s;}
+    .footer-links a:hover{color:var(--amber);}
+    .footer-copy{font-size:0.7rem;color:var(--dim);}
+    @media(max-width:900px){nav{padding:0 20px;}.nav-links{display:none;}.explain-grid{grid-template-columns:1fr;}.ticker-grid{grid-template-columns:repeat(2,1fr);}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="stocks.html">Stocks</a></li>
+    <li><a href="penny.html" class="active">Penny</a></li>
+    <li><a href="index.html#signals">Signals</a></li>
+    <li><a href="intelligence.html">Intelligence</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="hero-badge"><span class="blink">█</span> DAY TRADING ENGINE &nbsp;·&nbsp; 5-MIN BARS</div>
+  <h1>PENNY STOCKS</h1>
+  <p style="font-family:var(--title);font-size:1rem;color:var(--gold);letter-spacing:0.2em;text-shadow:0 0 14px var(--gold);">INTRADAY VOLATILITY · EOD CLOSE · ZERO OVERNIGHT RISK</p>
+  <p class="hero-sub">Penny stocks move 10–30% in a single session. Midas watches 5-minute candles, catches breakouts as they form, rides the momentum, and exits before the reversal — automatically.</p>
+  <a class="btn-back" href="index.html">← BACK TO HOME</a>
+</section>
+
+<!-- Live penny signal mock -->
+<section style="padding:60px 0;border-top:1px solid var(--a-border);border-bottom:1px solid var(--a-border);">
+  <div class="container">
+    <div class="glow-amber fade-in">
+      <div class="box-title"><div class="dot"></div> PENNY SCANNER &nbsp;·&nbsp; DAY MODE &nbsp;·&nbsp; 5-MIN BARS &nbsp;·&nbsp; SORTED BY CONFIDENCE</div>
+      <div style="padding:16px 0;">
+        <table class="signal-table">
+          <thead>
+            <tr><th>Ticker</th><th>Price</th><th>Chg</th><th>Trend</th><th>RSI</th><th>Signal</th><th>Confidence</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="t-ticker">GME</td><td>$14.20</td><td class="t-up">▲ 5.92%</td><td class="t-up">↑</td><td>54.1</td><td class="sig-buy">BUY</td><td><span class="conf-bar" style="width:81px"></span>81%</td></tr>
+            <tr><td class="t-ticker">AMC</td><td>$4.87</td><td class="t-up">▲ 3.41%</td><td class="t-up">↑</td><td>50.2</td><td class="sig-buy">BUY</td><td><span class="conf-bar" style="width:68px"></span>68%</td></tr>
+            <tr><td class="t-ticker">SNDL</td><td>$1.84</td><td class="t-up">▲ 2.10%</td><td class="t-up">↑</td><td>52.4</td><td class="sig-buy">BUY</td><td><span class="conf-bar" style="width:65px"></span>65%</td></tr>
+            <tr><td class="t-ticker">CENN</td><td>$0.42</td><td class="t-down">▼ 1.20%</td><td class="t-down">↓</td><td>44.8</td><td class="sig-hold">HOLD</td><td><span class="conf-bar" style="width:38px"></span>38%</td></tr>
+            <tr><td class="t-ticker">BBBY</td><td>$0.17</td><td class="t-down">▼ 4.30%</td><td class="t-down">↓</td><td>71.2</td><td class="sig-sell">SELL</td><td><span class="conf-bar" style="width:18px;background:var(--red);box-shadow:0 0 4px var(--red)"></span>18%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-top:12px;letter-spacing:0.08em;">// sample data — run py monitor.py for live signals</p>
+  </div>
+</section>
+
+<!-- How day trading works -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:48px;">
+      <span class="s-eye">How It Works</span>
+      <h2 class="s-title">THE DAY TRADING CYCLE</h2>
+      <p class="s-sub">Every 60 seconds during market hours, Midas runs this cycle on every ticker in your watchlist.</p>
+    </div>
+    <div class="explain-grid">
+      <div class="explain-card glow-amber fade-in">
+        <div class="ec-num">01 // SCAN</div>
+        <div class="ec-h">READ 5-MIN BARS</div>
+        <p class="ec-p">Downloads the last 50 five-minute candles for each ticker. Computes tight EMA crossovers (3/9, 5/13, or 9/21 depending on frequency setting).</p>
+      </div>
+      <div class="explain-card glow-amber fade-in">
+        <div class="ec-num">02 // SCORE</div>
+        <div class="ec-h">FUSE ALL SIGNALS</div>
+        <p class="ec-p">Combines EMA crossover, RSI position, news sentiment, and YouTube coverage into a 0–100 confidence score. Only high-confidence setups trigger a buy.</p>
+      </div>
+      <div class="explain-card glow-amber fade-in">
+        <div class="ec-num">03 // EXECUTE</div>
+        <div class="ec-h">BUY, RIDE, EXIT</div>
+        <p class="ec-p">Buys on strong signals. Sells on bearish reversal or RSI overbought. Hard force-close of all positions 10 minutes before market close — no overnight holds ever.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Live terminal side by side -->
+<section style="padding:80px 0;background:var(--dark2);border-top:1px solid var(--a-border);border-bottom:1px solid var(--a-border);">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:40px;align-items:start;">
+      <div class="fade-in">
+        <span class="s-eye">Live Example</span>
+        <h2 class="s-title">BREAKOUT CAPTURE</h2>
+        <p class="s-sub" style="margin-bottom:20px;">GME opens flat, then YouTube starts showing breakout coverage at 09:35. Midas picks it up in the same cycle, scores the signal, and buys before the move gets crowded.</p>
+        <ul class="flist">
+          <li>EMA 3 crosses above EMA 9 on the 5-min bar</li>
+          <li>RSI at 54 — room to run, not overbought</li>
+          <li>YouTube: 3 new videos with bullish keywords</li>
+          <li>Confidence: 81 / 100 → BUY executes</li>
+          <li>Position auto-closes at 15:50 if not sold sooner</li>
+        </ul>
+      </div>
+      <div class="terminal glow-amber fade-in">
+        <div class="box-title"><div class="dot"></div> MIDAS &nbsp;·&nbsp; DAY MODE &nbsp;·&nbsp; 09:35:12</div>
+        <div style="padding:14px 20px;">
+          <div class="tr-row"><span class="tr-key">ticker</span><span class="tr-gold">GME</span></div>
+          <div class="tr-row"><span class="tr-key">price</span><span class="tr-a">$14.20</span></div>
+          <div class="tr-row"><span class="tr-key">bar_interval</span><span class="tr-key">5-min</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">ema_3</span><span class="tr-g">14.24</span></div>
+          <div class="tr-row"><span class="tr-key">ema_9</span><span class="tr-key">14.11</span></div>
+          <div class="tr-row"><span class="tr-key">crossover</span><span class="tr-g">BULLISH ▲</span></div>
+          <div class="tr-row"><span class="tr-key">rsi_14</span><span class="tr-g">54.1</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">youtube_signal</span><span class="tr-g">positive</span></div>
+          <div class="tr-row"><span class="tr-key">youtube_videos</span><span class="tr-g">3 bullish</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">confidence</span><span class="tr-gold">81 / 100</span></div>
+          <div class="tr-row"><span class="tr-key">signal</span><span class="tr-g">BUY</span></div>
+          <div class="tr-row"><span class="tr-key">action</span><span class="tr-gold">EXECUTING $47.80</span></div>
+          <div class="tr-row"><span class="tr-key">eod_cutoff</span><span class="tr-key">15:50  [active]</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Tickers to watch -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:40px;">
+      <span class="s-eye">Watchlist Ideas</span>
+      <h2 class="s-title">POPULAR PENNY MOVERS</h2>
+      <p class="s-sub">Add these to your watchlist in setup.py. All under $20, high daily volume, known for large single-session moves.</p>
+    </div>
+    <div class="ticker-grid">
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">GME</span><span class="tc-name">GameStop</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">AMC</span><span class="tc-name">AMC Entertainment</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">SNDL</span><span class="tc-name">Sundial Growers</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">CENN</span><span class="tc-name">Cenntro Electric</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">MULN</span><span class="tc-name">Mullen Automotive</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">ATER</span><span class="tc-name">Aterian</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">CLOV</span><span class="tc-name">Clover Health</span></div>
+      <div class="ticker-card glow-amber fade-in"><span class="tc-sym">EXPR</span><span class="tc-name">Express Inc</span></div>
+    </div>
+    <p style="font-size:0.72rem;color:var(--muted);margin-top:16px;letter-spacing:0.06em;">// use py search.py --news TICKER to check current YouTube coverage before adding</p>
+  </div>
+</section>
+
+<!-- YouTube scanner deep dive -->
+<section style="padding:80px 0;background:var(--dark2);border-top:1px solid var(--a-border);border-bottom:1px solid var(--a-border);">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;">
+      <div class="fade-in">
+        <span class="s-eye">Layer 5 — YouTube</span>
+        <h2 class="s-title">CATCHING BREAKOUTS<br>AS THEY GO VIRAL</h2>
+        <p class="s-sub" style="margin-bottom:20px;">Penny stocks move because of attention — social media, news coverage, Reddit. Midas scans YouTube in real time for new video content on each ticker. A stock getting sudden coverage is a signal in itself.</p>
+        <p style="font-size:0.82rem;color:var(--text);line-height:1.75;opacity:0.75;margin-bottom:14px;">The scanner runs two separate searches — one for stocks you already hold, one for new movers showing signs of life.</p>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+          <div style="border:1px solid var(--a-border2);padding:12px 16px;">
+            <div style="font-size:9px;letter-spacing:0.2em;color:var(--amber);margin-bottom:8px;">SECTION 1 — POSITIONS</div>
+            <ul class="flist" style="margin-top:0;">
+              <li>Scans every ticker in your current open positions</li>
+              <li>Searches: "[TICKER] stock today", "[TICKER] earnings", "[TICKER] news"</li>
+              <li>Detects sentiment shift — if a held stock goes negative, triggers early sell review</li>
+              <li>Protects against holding through a news-driven drop</li>
+            </ul>
+          </div>
+          <div style="border:1px solid rgba(45,122,79,0.35);padding:12px 16px;">
+            <div style="font-size:9px;letter-spacing:0.2em;color:var(--green);margin-bottom:8px;text-shadow:0 0 6px var(--green);">SECTION 2 — NEW MOVERS</div>
+            <ul class="flist" style="margin-top:0;">
+              <li>Scans watchlist tickers not currently held for new coverage</li>
+              <li>Searches: "[TICKER] breakout", "[TICKER] squeeze", "[TICKER] going up"</li>
+              <li>A sudden spike in video count = attention signal before price moves</li>
+              <li>Feeds confidence score as Layer 5 to weight buy decisions higher</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="terminal glow-amber fade-in">
+        <div class="box-title"><div class="dot"></div> YOUTUBE SCANNER &nbsp;·&nbsp; GME &nbsp;·&nbsp; LIVE</div>
+        <div style="padding:14px 20px;">
+          <div class="tr-row"><span class="tr-key">query</span><span class="tr-gold">GME stock today</span></div>
+          <div class="tr-row"><span class="tr-key">videos_found</span><span class="tr-g">3 in last 24h</span></div>
+          <hr class="tr-div"/>
+          <div style="font-size:0.72rem;color:var(--muted);margin:6px 0 4px;">TOP VIDEOS</div>
+          <div class="tr-row"><span class="tr-key" style="max-width:60%;">GME is squeezing AGAIN...</span><span class="tr-g">bullish</span></div>
+          <div class="tr-row"><span class="tr-key" style="max-width:60%;">Why I'm buying GME now</span><span class="tr-g">bullish</span></div>
+          <div class="tr-row"><span class="tr-key" style="max-width:60%;">GME breakout — target $18</span><span class="tr-g">bullish</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">youtube_signal</span><span class="tr-g">POSITIVE</span></div>
+          <div class="tr-row"><span class="tr-key">youtube_score</span><span class="tr-gold">+1</span></div>
+          <div class="tr-row"><span class="tr-key">conf_contribution</span><span class="tr-gold">+10 pts to confidence</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- EMA settings for day trading -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:40px;">
+      <span class="s-eye">Intraday EMA Settings</span>
+      <h2 class="s-title">TIGHT SIGNALS FOR<br>FAST MARKETS</h2>
+      <p class="s-sub">5-minute bar EMA periods are much tighter than swing trading. The goal is to catch momentum in the first 30–60 minutes of a move, not ride a multi-week trend.</p>
+    </div>
+    <div class="explain-grid">
+      <div class="explain-card glow-amber fade-in">
+        <div class="ec-num">NORMAL // 9 / 21</div>
+        <div class="ec-h">~45 MIN / ~105 MIN</div>
+        <p class="ec-p">Moderate sensitivity on 5-min bars. ~45 minutes of price history for the fast EMA, ~105 minutes for the slow. Fewer signals, more conservative. Best when the market is choppy.</p>
+      </div>
+      <div class="explain-card glow-amber fade-in">
+        <div class="ec-num">ACTIVE // 5 / 13</div>
+        <div class="ec-h">~25 MIN / ~65 MIN</div>
+        <p class="ec-p">Tighter crossovers. Catches moves earlier than NORMAL. The recommended default for penny day trading — fast enough to get in near the start of a breakout without overtrading.</p>
+      </div>
+      <div class="explain-card glow-amber fade-in">
+        <div class="ec-num">AGGRESSIVE // 3 / 9</div>
+        <div class="ec-h">~15 MIN / ~45 MIN</div>
+        <p class="ec-p">Tightest crossovers available. Gets in very early on breakouts but generates the most false signals. Best when combined with a strong YouTube or news signal for confirmation.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- PDT rule and paper mode -->
+<section style="padding:60px 0;background:var(--dark2);border-top:1px solid var(--a-border);border-bottom:1px solid var(--a-border);">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;" class="fade-in">
+      <div class="glow-amber" style="padding:28px;">
+        <div style="font-family:var(--title);font-size:0.82rem;color:var(--amber);text-shadow:0 0 8px var(--amber);letter-spacing:0.1em;margin-bottom:16px;">PATTERN DAY TRADER RULE</div>
+        <p style="font-size:0.82rem;color:var(--text);line-height:1.8;opacity:0.8;">The SEC requires a $25,000 minimum account balance to make more than 3 day trades in a 5-day window on US equities. This is the PDT rule.</p>
+        <p style="font-size:0.82rem;color:var(--text);line-height:1.8;opacity:0.8;margin-top:10px;"><span style="color:var(--amber);">In paper mode, the PDT rule does not apply.</span> Alpaca's paper trading environment lets you simulate day trading with any balance, unlimited times. Test the system fully before committing real money.</p>
+      </div>
+      <div class="glow-box" style="padding:28px;">
+        <div style="font-family:var(--title);font-size:0.82rem;color:var(--green);text-shadow:0 0 8px var(--green);letter-spacing:0.1em;margin-bottom:16px;">START IN PAPER MODE</div>
+        <div class="tr-row"><span class="tr-key" style="font-size:0.78rem;">PAPER_TRADING</span><span class="tr-g">True  &nbsp;←  start here</span></div>
+        <div class="tr-row"><span class="tr-key" style="font-size:0.78rem;">TRADING_STYLE</span><span class="tr-g">DAY</span></div>
+        <div class="tr-row"><span class="tr-key" style="font-size:0.78rem;">CYCLE_INTERVAL</span><span class="tr-g">60  (every 60 seconds)</span></div>
+        <div class="tr-row"><span class="tr-key" style="font-size:0.78rem;">DAY_CLOSE_BUFFER</span><span class="tr-g">10  (close 10min early)</span></div>
+        <p style="font-size:0.75rem;color:var(--muted);margin-top:14px;line-height:1.7;">Set in main.py. Run <span style="color:var(--green);">py main.py</span> and watch it trade simulated capital in real market conditions before switching PAPER_TRADING to False.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Risk warning -->
+<section style="padding:60px 0;border-top:1px solid rgba(255,51,85,0.2);border-bottom:1px solid rgba(255,51,85,0.2);">
+  <div class="container">
+    <div class="risk-box fade-in">
+      <div class="risk-title">⚠ RISK DISCLOSURE</div>
+      <p style="font-size:0.82rem;color:var(--text);line-height:1.8;opacity:0.8;max-width:800px;">
+        Penny stocks are extremely volatile. Prices can move 30–80% in a single session in either direction.
+        Midas forces all positions closed before market end — but intraday losses are still possible.
+        <strong style="color:var(--amber)">Always start in paper mode (PAPER_TRADING = True in main.py).</strong>
+        Never risk money you cannot afford to lose. This is not financial advice.
+      </p>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">PROJECT MIDAS</div>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="stocks.html">Stocks</a></li>
+        <li><a href="penny.html">Penny</a></li>
+        <li><a href="index.html#simulator">Simulator</a></li>
+        <li><a href="index.html#signup">Get Access</a></li>
+      </ul>
+      <p class="footer-copy">© 2026 Salahaldin Nimeri &nbsp;·&nbsp; Project Midas &nbsp;·&nbsp; Not financial advice. Paper trade first.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const obs=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add("visible");}),{threshold:0.1});
+  document.querySelectorAll(".fade-in").forEach(el=>obs.observe(el));
+</script>
+<script src="mini-player.js"></script>
+</body>
+</html>

@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROJECT MIDAS — AI TRADING SYSTEM</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --card2:#fff;
+      --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --gold:var(--amber); --cyan:var(--teal);
+      --dark:var(--bg); --dark2:var(--surface); --dark3:var(--card);
+      --muted:var(--dim); --green2:var(--green); --green3:var(--border);
+      --text-dim:var(--mid);
+      --gw:rgba(45,122,79,0.07); --tw:rgba(26,112,128,0.07);
+      --shadow:0 1px 3px rgba(30,26,20,0.07), 0 4px 16px rgba(30,26,20,0.05);
+      --mono:'Share Tech Mono','Courier New',monospace;
+      --title:'Outfit',sans-serif;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { font-family: var(--title); background: var(--bg); color: var(--text); overflow-x: hidden; line-height: 1.6; }
+    a, button, input[type="submit"], [onclick] { cursor: pointer; position: relative; z-index: 10; }
+
+    /* ── Nav ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 48px; height: 60px;
+      background: rgba(245,240,232,0.96); border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(8px);
+    }
+    .nav-logo { font-family: var(--title); font-size: 1.05rem; font-weight: 600; color: var(--text); text-decoration: none; letter-spacing: 0.08em; }
+    .nav-logo span { color: var(--amber); }
+    .nav-links { display: flex; gap: 32px; list-style: none; }
+    .nav-links a { font-family: var(--title); color: var(--dim); text-decoration: none; font-size: 0.82rem; letter-spacing: 0.04em; transition: color 0.2s; font-weight: 400; }
+    .nav-links a:hover, .nav-links a.active { color: var(--text); }
+    .nav-cta { color: var(--green) !important; border: 1px solid var(--green) !important; padding: 6px 20px; border-radius: 2px; transition: background 0.2s !important; font-weight: 500 !important; }
+    .nav-cta:hover { background: var(--gw) !important; }
+
+    /* ── Layout ── */
+    section { position: relative; z-index: 2; }
+    .container { max-width: 1100px; margin: 0 auto; padding: 0 40px; }
+
+    /* ── Cards ── */
+    .glow-box { border: 1px solid var(--border); background: var(--card); box-shadow: var(--shadow); }
+    .glow-box-cyan { border-color: var(--teal); }
+
+    /* ── Box title bar ── */
+    .box-title { display: flex; align-items: center; gap: 10px; padding: 9px 18px; border-bottom: 1px solid var(--border); font-size: 0.68rem; letter-spacing: 0.18em; color: var(--dim); font-family: var(--mono); }
+    .box-title .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    .box-title .dot.amber { background: var(--amber); }
+    .box-title .dot.cyan  { background: var(--teal); }
+    .box-title .dot.red   { background: var(--red); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+    /* ── HERO ── */
+    #hero { min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 40px 80px; text-align: center; background: var(--bg); }
+    .hero-status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.72rem; letter-spacing: 0.14em; color: var(--dim); margin-bottom: 36px; font-family: var(--mono); }
+    .hero-rule { width: 40px; height: 1px; background: var(--border2); display: inline-block; }
+    .blink { animation: blink 1.2s step-end infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+    h1 { font-family: var(--title); font-size: clamp(2.8rem, 6vw, 5rem); font-weight: 600; line-height: 1.05; letter-spacing: -0.01em; color: var(--text); margin-bottom: 12px; }
+    h1 .gold { color: var(--amber); font-weight: 300; }
+    .hero-tagline { font-family: var(--title); font-size: clamp(0.9rem, 1.8vw, 1.1rem); color: var(--dim); letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 28px; font-weight: 400; }
+    .hero-sub { font-size: 1rem; color: var(--mid); max-width: 520px; line-height: 1.75; margin: 0 auto 48px; font-weight: 300; }
+    .hero-actions { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; margin-bottom: 56px; }
+
+    .btn-primary { font-family: var(--title); background: var(--text); color: var(--bg); font-size: 0.85rem; letter-spacing: 0.08em; padding: 14px 36px; border: none; cursor: pointer; text-decoration: none; display: inline-block; transition: opacity 0.18s; font-weight: 500; }
+    .btn-primary:hover { opacity: 0.82; }
+    .btn-secondary { font-family: var(--title); background: transparent; color: var(--text); font-size: 0.85rem; letter-spacing: 0.08em; padding: 13px 32px; border: 1px solid var(--border2); cursor: pointer; text-decoration: none; display: inline-block; transition: border-color 0.2s, background 0.2s; font-weight: 400; }
+    .btn-secondary:hover { border-color: var(--text); background: rgba(30,26,20,0.04); }
+
+    /* Ticker */
+    .ticker-terminal { width: 100%; max-width: 900px; }
+    .ticker-body { padding: 18px 24px; display: flex; gap: 0; flex-wrap: wrap; background: var(--card); }
+    .ticker-item { flex: 1; min-width: 120px; padding: 10px 18px; border-right: 1px solid var(--border); text-align: left; }
+    .ticker-item:last-child { border-right: none; }
+    .t-sym   { font-size: 0.68rem; color: var(--dim); letter-spacing: 0.1em; display: block; font-family: var(--mono); }
+    .t-price { font-size: 1.05rem; color: var(--text); display: block; margin: 3px 0; font-family: var(--mono); font-weight: 500; }
+    .t-chg   { font-size: 0.72rem; font-weight: 600; display: block; font-family: var(--mono); }
+    .up   { color: var(--green); }
+    .down { color: var(--red); }
+
+    .scroll-hint { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; letter-spacing: 0.2em; color: var(--dim); display: flex; flex-direction: column; align-items: center; gap: 8px; font-family: var(--mono); }
+    .scroll-arrow { width: 9px; height: 9px; border-right: 1px solid var(--dim); border-bottom: 1px solid var(--dim); transform: rotate(45deg); animation: bounce 2s infinite; }
+    @keyframes bounce { 0%,100%{transform:rotate(45deg) translateY(0)} 50%{transform:rotate(45deg) translateY(5px)} }
+
+    /* ── Stats ── */
+    #stats { padding: 48px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); background: var(--surface); }
+    .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); }
+    .stat-item { text-align: center; padding: 24px 20px; border-right: 1px solid var(--border); }
+    .stat-item:last-child { border-right: none; }
+    .stat-value { display: block; font-family: var(--title); font-size: 2.2rem; font-weight: 600; color: var(--amber); letter-spacing: -0.01em; }
+    .stat-label { font-size: 0.72rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; margin-top: 6px; font-weight: 400; }
+
+    /* ── Section titles ── */
+    .s-eye { font-size: 0.68rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--dim); margin-bottom: 12px; display: block; font-family: var(--mono); }
+    .s-title { font-family: var(--title); font-size: clamp(1.8rem, 3.5vw, 2.6rem); font-weight: 600; color: var(--text); line-height: 1.15; letter-spacing: -0.01em; margin-bottom: 16px; }
+    .s-sub { font-size: 0.95rem; color: var(--mid); line-height: 1.8; max-width: 520px; font-weight: 300;
+      max-width: 520px;
+    }
+
+    /* ── How ── */
+    #how { padding: 100px 0; background: var(--bg); }
+    #how .container { text-align: center; }
+    #how .s-sub { margin: 0 auto 56px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+    .step { padding: 28px 24px; text-align: left; position: relative; }
+    .step-num { font-family: var(--title); font-size: 2.5rem; font-weight: 700; color: var(--border2); position: absolute; top: 20px; right: 20px; line-height: 1; }
+    .step-label { font-size: 0.68rem; letter-spacing: 0.18em; color: var(--teal); margin-bottom: 14px; text-transform: uppercase; }
+    .step h3 { font-family: var(--title); font-size: 0.95rem; color: var(--text); margin-bottom: 10px; letter-spacing: 0.06em; }
+    .step p { font-size: 0.82rem; color: var(--mid); line-height: 1.7; }
+
+    /* ── Modes ── */
+    #modes { padding: 100px 0; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .modes-header { margin-bottom: 56px; }
+    .mode-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+    .mode-card { overflow: hidden; }
+    .mode-hdr { padding: 24px 28px 20px; border-bottom: 1px solid var(--border); }
+    .mode-tag { display: inline-block; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; padding: 3px 12px; margin-bottom: 16px; }
+    .tag-swing { border: 1px solid var(--teal); color: var(--teal); }
+    .tag-day   { border: 1px solid var(--amber); color: var(--amber); }
+    .mode-card h2 { font-family: var(--title); font-size: 1.3rem; font-weight: 700; color: var(--text); letter-spacing: 0.06em; margin-bottom: 8px; }
+    .mode-sub { font-size: 0.82rem; color: var(--mid); line-height: 1.7; }
+    .mode-body { padding: 24px 28px 28px; }
+    .feature-list { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px; }
+    .feature-list li { display: flex; gap: 10px; font-size: 0.82rem; color: var(--mid); line-height: 1.5; }
+    .feature-list li::before { content: ">"; color: var(--green); flex-shrink: 0; }
+    .mode-stats { display: flex; gap: 24px; }
+    .ms-item { display: flex; flex-direction: column; gap: 2px; }
+    .ms-val { font-family: var(--title); font-size: 1rem; color: var(--amber); }
+    .ms-lbl { font-size: 0.65rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* ── Penny ── */
+    #penny { padding: 100px 0; background: var(--bg); }
+    .penny-inner { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
+    .terminal-readout { font-size: 0.8rem; line-height: 2; padding: 20px 24px; }
+    .tr-row { display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding: 3px 0; }
+    .tr-key { color: var(--dim); }
+    .tr-val-green { color: var(--green); }
+    .tr-val-gold  { color: var(--amber); }
+    .tr-val-red   { color: var(--red); }
+    .tr-val-cyan  { color: var(--teal); }
+    .tr-divider { border: none; border-top: 1px solid var(--border2); margin: 8px 0; }
+    .feature-list-v { list-style: none; display: flex; flex-direction: column; gap: 10px; margin-top: 24px; }
+    .feature-list-v li { display: flex; gap: 10px; font-size: 0.82rem; color: var(--mid); line-height: 1.5; }
+    .feature-list-v li::before { content: ">"; color: var(--green); flex-shrink: 0; }
+
+    /* ── Signals ── */
+    #signals { padding: 100px 0; background: var(--surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .signals-hdr { text-align: center; margin-bottom: 56px; }
+    .signals-hdr .s-sub { margin: 0 auto; }
+    .layers { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
+    .layer { padding: 24px 18px; text-align: center; }
+    .layer-num { font-size: 0.65rem; letter-spacing: 0.18em; color: var(--amber); margin-bottom: 12px; text-transform: uppercase; }
+    .layer-icon { font-size: 1.6rem; margin-bottom: 10px; display: block; }
+    .layer h4 { font-family: var(--title); font-size: 0.75rem; color: var(--text); letter-spacing: 0.08em; margin-bottom: 8px; }
+    .layer p { font-size: 0.75rem; color: var(--mid); line-height: 1.6; }
+
+    /* ── Signup ── */
+    #signup { padding: 100px 0; background: var(--bg); }
+    .signup-inner { max-width: 580px; margin: 0 auto; text-align: center; }
+    .signup-inner .s-sub { margin: 0 auto 36px; }
+    .signup-form { display: flex; gap: 0; max-width: 460px; margin: 0 auto 16px; }
+    .signup-form input { flex: 1; background: var(--card); border: 1px solid var(--border2); border-right: none; padding: 12px 18px; color: var(--text); font-family: var(--mono); font-size: 0.85rem; outline: none; transition: border-color 0.2s; cursor: text; }
+    .signup-form input::placeholder { color: var(--dim); }
+    .signup-form input:focus { border-color: var(--border2); }
+    .signup-form button { font-family: var(--mono); background: var(--text); color: var(--bg); font-size: 0.8rem; letter-spacing: 0.12em; padding: 12px 22px; border: none; cursor: pointer; text-transform: uppercase; white-space: nowrap; transition: opacity 0.18s; }
+    .signup-form button:hover { opacity: 0.8; }
+    .signup-note { font-size: 0.72rem; color: var(--dim); letter-spacing: 0.06em; }
+    .signup-perks { display: flex; justify-content: center; gap: 32px; margin-top: 32px; flex-wrap: wrap; }
+    .perk { font-size: 0.75rem; color: var(--dim); display: flex; align-items: center; gap: 8px; letter-spacing: 0.06em; }
+    .perk::before { content: "[✓]"; color: var(--green); }
+
+    /* ── World strip ── */
+    .world-strip { display: flex; gap: 0; overflow-x: auto; margin-bottom: 56px; border: 1px solid var(--border); }
+    .world-clock { flex: 1; min-width: 110px; padding: 14px 16px; border-right: 1px solid var(--border); text-align: center; }
+    .world-clock:last-child { border-right: none; }
+    .wc-city { font-size: 0.68rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+    .wc-time { font-size: 1.1rem; color: var(--text); display: block; margin: 4px 0; font-family: var(--title); }
+    .wc-status { font-size: 0.65rem; letter-spacing: 0.1em; }
+    .wc-open   { color: var(--green); }
+    .wc-closed { color: var(--dim); }
+
+    /* ── Footer ── */
+    footer { background: var(--surface); border-top: 1px solid var(--border); padding: 32px 0; position: relative; z-index: 2; }
+    .footer-inner { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+    .footer-logo { font-family: var(--title); font-size: 0.9rem; font-weight: 700; color: var(--text); letter-spacing: 0.12em; }
+    .footer-links { display: flex; gap: 24px; list-style: none; }
+    .footer-links a { font-size: 0.72rem; color: var(--dim); text-decoration: none; letter-spacing: 0.08em; text-transform: uppercase; transition: color 0.2s; }
+    .footer-links a:hover { color: var(--green); }
+    .footer-copy { font-size: 0.7rem; color: var(--dim); letter-spacing: 0.06em; }
+
+    /* ── Fade-in ── */
+    .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.7s ease, transform 0.7s ease; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      nav { padding: 0 20px; }
+      .nav-links { display: none; }
+      .stats-grid { grid-template-columns: 1fr 1fr; }
+      .steps { grid-template-columns: 1fr; }
+      .mode-cards { grid-template-columns: 1fr; }
+      .penny-inner { grid-template-columns: 1fr; }
+      .layers { grid-template-columns: repeat(2, 1fr); }
+      .world-strip { flex-wrap: wrap; }
+    }
+    @media (max-width: 560px) {
+      .layers { grid-template-columns: 1fr; }
+      .signup-form { flex-direction: column; }
+      .signup-form input { border-right: 1px solid var(--border2); border-bottom: none; }
+      .signup-perks { flex-direction: column; align-items: center; }
+    }
+
+    /* ── Perf table ── */
+    .perf-tabs { display: flex; border: 1px solid var(--border2); border-bottom: none; overflow: hidden; }
+    .perf-tab { flex: 1; padding: 10px; font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; background: transparent; border: none; border-right: 1px solid var(--border); color: var(--dim); cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
+    .perf-tab:last-child { border-right: none; }
+    .perf-tab.active { background: var(--card2); color: var(--green); border-bottom: 2px solid var(--green); }
+    .perf-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .perf-table th { padding: 10px 20px; text-align: left; color: var(--dim); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid var(--border2); }
+    .perf-table th.r { text-align: right; }
+    .perf-table td { padding: 12px 20px; border-bottom: 1px solid var(--border); }
+    .perf-table td.r { text-align: right; }
+    .perf-table tr:hover td { background: var(--surface); }
+    .rank-badge { font-size: 0.6rem; padding: 2px 6px; border: 1px solid var(--amber); color: var(--amber); margin-left: 8px; vertical-align: middle; }
+
+    /* ── Strategy cards ── */
+    .strategy-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+    .strat-card { padding: 28px 24px; border-top: 2px solid var(--green); }
+    .strat-card.plateau { border-top-color: var(--teal); }
+    .strat-card.surge   { border-top-color: var(--amber); }
+    .strat-name { font-family: var(--title); font-size: 1.1rem; letter-spacing: 0.1em; color: var(--green); margin-bottom: 6px; }
+    .strat-name.plateau { color: var(--teal); }
+    .strat-name.surge   { color: var(--amber); }
+    .strat-tag { font-size: 0.65rem; letter-spacing: 0.15em; color: var(--dim); margin-bottom: 14px; text-transform: uppercase; }
+    .strat-desc { font-size: 0.82rem; color: var(--mid); line-height: 1.75; margin-bottom: 18px; }
+    .strat-when { font-size: 0.72rem; color: var(--dim); margin-bottom: 6px; letter-spacing: 0.06em; }
+    .strat-rule { font-size: 0.78rem; color: var(--mid); line-height: 1.6; }
+    .strat-rule span { color: var(--green); }
+    .strat-rule span.c { color: var(--teal); }
+    .strat-rule span.g { color: var(--amber); }
+    .strat-stat { margin-top: 18px; display: flex; gap: 20px; border-top: 1px solid var(--border); padding-top: 14px; }
+    .ss-item { display: flex; flex-direction: column; gap: 3px; }
+    .ss-val { font-family: var(--title); font-size: 0.9rem; color: var(--amber); }
+    .ss-lbl { font-size: 0.62rem; color: var(--dim); letter-spacing: 0.1em; text-transform: uppercase; }
+
+    /* ── Frequency cards ── */
+    .freq-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 48px; }
+    .freq-card { padding: 28px 24px; }
+    .freq-name { font-family: var(--title); font-size: 0.95rem; letter-spacing: 0.1em; color: var(--text); margin-bottom: 4px; }
+    .freq-badge { font-size: 0.62rem; letter-spacing: 0.12em; padding: 2px 8px; border: 1px solid var(--border2); color: var(--dim); display: inline-block; margin-bottom: 14px; text-transform: uppercase; }
+    .freq-desc { font-size: 0.82rem; color: var(--mid); line-height: 1.75; margin-bottom: 16px; }
+    .freq-rule-row { display: flex; align-items: flex-start; gap: 8px; font-size: 0.78rem; margin-bottom: 8px; color: var(--mid); line-height: 1.5; }
+    .freq-rule-row::before { content: ">"; color: var(--green); flex-shrink: 0; margin-top: 1px; }
+
+    /* ── Floor protection ── */
+    .floor-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 48px; }
+    .floor-card { padding: 24px 20px; }
+    .floor-mode-name { font-family: var(--title); font-size: 0.85rem; letter-spacing: 0.1em; color: var(--text); margin-bottom: 4px; }
+    .floor-tag { font-size: 0.62rem; letter-spacing: 0.12em; color: var(--dim); margin-bottom: 12px; display: block; text-transform: uppercase; }
+    .floor-desc { font-size: 0.78rem; color: var(--mid); line-height: 1.7; margin-bottom: 14px; }
+    .floor-meter { height: 4px; background: var(--border); border: 1px solid var(--border); margin-bottom: 8px; overflow: hidden; }
+    .floor-fill { height: 100%; background: var(--green); transition: width 1s; }
+    .floor-best { font-size: 0.68rem; color: var(--green); letter-spacing: 0.06em; }
+
+    /* ── Confidence ── */
+    .conf-demo { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; margin-top: 48px; }
+    .conf-bar-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .conf-bar-label { font-size: 0.72rem; color: var(--dim); letter-spacing: 0.06em; min-width: 90px; text-align: right; }
+    .conf-bar-track { flex: 1; height: 6px; background: var(--border); border: 1px solid var(--border); }
+    .conf-bar-fill { height: 100%; background: var(--green); }
+    .conf-bar-val { font-size: 0.72rem; color: var(--green); min-width: 36px; }
+    .conf-result-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 0.8rem; }
+    .conf-score-badge { font-family: var(--title); font-size: 1.2rem; padding: 4px 12px; border: 1px solid; }
+
+    /* ── Re-entry timeline ── */
+    .reentry-timeline { display: flex; align-items: flex-start; gap: 0; margin-top: 48px; position: relative; }
+    .reentry-timeline::before { content: ""; position: absolute; top: 22px; left: 22px; right: 22px; height: 1px; background: var(--border2); z-index: 0; }
+    .rt-step { flex: 1; display: flex; flex-direction: column; align-items: center; text-align: center; position: relative; z-index: 1; }
+    .rt-dot { width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--green); display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: var(--green); background: var(--bg); margin-bottom: 12px; font-family: var(--title); }
+    .rt-label { font-family: var(--title); font-size: 0.68rem; color: var(--green); letter-spacing: 0.1em; margin-bottom: 6px; }
+    .rt-desc { font-size: 0.72rem; color: var(--dim); line-height: 1.6; max-width: 120px; }
+
+    /* ── Live feed strip ── */
+    .live-feed-strip { width: 100%; max-width: 860px; overflow: hidden; border: 1px solid var(--border); background: var(--surface); }
+    .feed-inner { display: flex; gap: 0; font-size: 10px; letter-spacing: 0.05em; }
+    .fi-row { display: flex; align-items: center; gap: 6px; padding: 7px 16px; border-right: 1px solid var(--border); white-space: nowrap; flex-shrink: 0; }
+    .fi-row .fb { color: var(--green); }
+    .fi-row .fl { color: var(--red); }
+    .fi-row .fw { color: var(--dim); }
+
+    @media (max-width: 900px) {
+      .strategy-cards { grid-template-columns: 1fr; }
+      .freq-cards { grid-template-columns: 1fr; }
+      .floor-grid { grid-template-columns: repeat(2, 1fr); }
+      .conf-demo { grid-template-columns: 1fr; }
+      .reentry-timeline { flex-direction: column; align-items: flex-start; gap: 20px; }
+      .reentry-timeline::before { display: none; }
+      #tut-grid { grid-template-columns: 1fr 1fr !important; }
+    }
+    @media (max-width: 560px) {
+      .floor-grid { grid-template-columns: 1fr; }
+      #tut-grid { grid-template-columns: 1fr !important; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAV ── -->
+  <nav>
+    <a class="nav-logo" href="#hero">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="stocks.html">Stocks</a></li>
+      <li><a href="penny.html">Penny</a></li>
+      <li><a href="#signals">Signals</a></li>
+      <li><a href="intelligence.html">Intelligence</a></li>
+      <li><a href="dashboard.html">Dashboard</a></li>
+      <li><a href="#simulator">Simulator</a></li>
+      <li><a href="#signup" class="nav-cta">Get Access</a></li>
+    </ul>
+  </nav>
+
+
+  <!-- ── HERO ── -->
+  <section id="hero">
+    <div class="hero-status">
+      <span class="blink">█</span>
+      SYSTEM ONLINE &nbsp;·&nbsp; ALL MARKETS MONITORED
+    </div>
+
+    <h1>PROJECT<br><span class="gold">MIDAS</span></h1>
+    <p class="hero-tagline">AI-POWERED AUTONOMOUS TRADING SYSTEM</p>
+    <p style="font-family:var(--mono);font-size:0.68rem;letter-spacing:0.18em;color:var(--dim);margin-bottom:12px;">BY SALAHALDIN NIMERI</p>
+
+    <p class="hero-sub">
+      5-layer signal intelligence. Swing trades on blue-chip stocks.<br>
+      Day trades on penny stock volatility. Zero emotions. 24/7.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn-primary" href="#signup" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'}); return false;">INITIALIZE ACCESS</a>
+      <a class="btn-secondary" href="#how" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'}); return false;">VIEW SYSTEM DOCS</a>
+    </div>
+
+    <!-- Live ticker terminal -->
+    <div class="ticker-terminal glow-box fade-in">
+      <div class="box-title">
+        <div class="dot"></div>
+        LIVE FEED &nbsp;·&nbsp; NYSE / NASDAQ / OTC
+      </div>
+      <div class="ticker-body">
+        <div class="ticker-item">
+          <span class="t-sym">AAPL</span>
+          <span class="t-price">$189.42</span>
+          <span class="t-chg up">▲ +1.24%</span>
+        </div>
+        <div class="ticker-item">
+          <span class="t-sym">NVDA</span>
+          <span class="t-price">$492.10</span>
+          <span class="t-chg up">▲ +2.81%</span>
+        </div>
+        <div class="ticker-item">
+          <span class="t-sym">TSLA</span>
+          <span class="t-price">$248.70</span>
+          <span class="t-chg down">▼ -0.53%</span>
+        </div>
+        <div class="ticker-item">
+          <span class="t-sym">SPY</span>
+          <span class="t-price">$524.88</span>
+          <span class="t-chg up">▲ +0.47%</span>
+        </div>
+        <div class="ticker-item">
+          <span class="t-sym">GME</span>
+          <span class="t-price">$14.20</span>
+          <span class="t-chg up">▲ +5.92%</span>
+        </div>
+        <div class="ticker-item">
+          <span class="t-sym">SNDL</span>
+          <span class="t-price">$1.84</span>
+          <span class="t-chg down">▼ -1.07%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live trade feed strip -->
+    <div class="live-feed-strip fade-in" style="margin-top:12px;">
+      <div style="display:flex;align-items:center;padding:5px 14px;border-bottom:1px solid var(--border);font-size:9px;letter-spacing:0.22em;color:var(--dim);background:var(--card);">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--green);display:inline-block;margin-right:8px;animation:pulse 2s infinite;"></span>
+        MIDAS LIVE FEED
+      </div>
+      <div id="hero-feed" style="display:flex;overflow:hidden;height:32px;align-items:center;"></div>
+    </div>
+
+    <div class="scroll-hint">
+      <span>SCROLL DOWN</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+
+  <!-- ── STATS ── -->
+  <section id="stats">
+    <div class="container">
+      <div class="stats-grid">
+        <div class="stat-item fade-in">
+          <span class="stat-value">5</span>
+          <div class="stat-label">Signal Layers</div>
+        </div>
+        <div class="stat-item fade-in">
+          <span class="stat-value">+45.9%</span>
+          <div class="stat-label">Best Net Return — 2023</div>
+        </div>
+        <div class="stat-item fade-in">
+          <span class="stat-value">9</span>
+          <div class="stat-label">Mode Combinations</div>
+        </div>
+        <div class="stat-item fade-in">
+          <span class="stat-value">4</span>
+          <div class="stat-label">Floor Protection Modes</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── WORLD MONITOR ── -->
+  <section id="world" style="padding: 80px 0; border-bottom: 1px solid var(--border);">
+    <div class="container">
+      <div class="fade-in" style="margin-bottom: 32px;">
+        <span class="s-eye">World Monitor</span>
+        <h2 class="s-title">GLOBAL MARKET STATUS</h2>
+      </div>
+      <div class="world-strip fade-in">
+        <div class="world-clock">
+          <div class="wc-city">New York</div>
+          <span class="wc-time" id="wc-ny">--:--</span>
+          <span class="wc-status" id="ws-ny">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Chicago</div>
+          <span class="wc-time" id="wc-ch">--:--</span>
+          <span class="wc-status" id="ws-ch">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">London</div>
+          <span class="wc-time" id="wc-ld">--:--</span>
+          <span class="wc-status" id="ws-ld">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Frankfurt</div>
+          <span class="wc-time" id="wc-fr">--:--</span>
+          <span class="wc-status" id="ws-fr">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Dubai</div>
+          <span class="wc-time" id="wc-db">--:--</span>
+          <span class="wc-status" id="ws-db">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Tokyo</div>
+          <span class="wc-time" id="wc-tk">--:--</span>
+          <span class="wc-status" id="ws-tk">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Hong Kong</div>
+          <span class="wc-time" id="wc-hk">--:--</span>
+          <span class="wc-status" id="ws-hk">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Sydney</div>
+          <span class="wc-time" id="wc-sy">--:--</span>
+          <span class="wc-status" id="ws-sy">--</span>
+        </div>
+        <div class="world-clock">
+          <div class="wc-city">Los Angeles</div>
+          <span class="wc-time" id="wc-la">--:--</span>
+          <span class="wc-status" id="ws-la">--</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── BACKTEST PERFORMANCE ── -->
+  <section id="performance" style="padding:100px 0; background:var(--dark2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="fade-in" style="text-align:center; margin-bottom:56px;">
+        <span class="s-eye">Backtest Results</span>
+        <h2 class="s-title">4 YEARS. 9 COMBINATIONS. REAL DATA.</h2>
+        <p class="s-sub" style="margin:0 auto;">Every mode + frequency combination backtested against Yahoo Finance historical data — after transaction costs and 22% short-term capital gains tax. Run <span style="color:var(--green)">py compare.py</span> to reproduce.</p>
+      </div>
+      <div class="fade-in">
+        <div class="perf-tabs">
+          <button class="perf-tab" onclick="showYear(2021)" id="tab-2021">2021 — BULL</button>
+          <button class="perf-tab" onclick="showYear(2022)" id="tab-2022">2022 — BEAR</button>
+          <button class="perf-tab active" onclick="showYear(2023)" id="tab-2023">2023 — BULL</button>
+          <button class="perf-tab" onclick="showYear(2024)" id="tab-2024">2024 — MIXED</button>
+        </div>
+        <div class="glow-box" style="border-top:none;">
+          <table class="perf-table">
+            <thead>
+              <tr>
+                <th>Mode</th>
+                <th>Frequency</th>
+                <th class="r">Net Return</th>
+                <th class="r">Trades</th>
+                <th class="r">Win %</th>
+                <th class="r">Best Trade</th>
+              </tr>
+            </thead>
+            <tbody id="perf-body"></tbody>
+          </table>
+          <p style="padding:10px 20px 14px; font-size:0.7rem; color:var(--dim); letter-spacing:0.06em;">// AAPL · MSFT · NVDA · SPY &nbsp;·&nbsp; $1,000 starting balance &nbsp;·&nbsp; 22% tax &nbsp;·&nbsp; 0.03% spread &nbsp;·&nbsp; numbers are approximate — run py compare.py for live results</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── HOW IT WORKS ── -->
+  <section id="how">
+    <div class="container">
+      <div class="fade-in" style="text-align:center; margin-bottom: 56px;">
+        <span class="s-eye">System Overview</span>
+        <h2 class="s-title">INITIALIZE. DEPLOY. COMPOUND.</h2>
+        <p class="s-sub" style="margin: 0 auto;">Configure once. Midas reads live signals every cycle and executes without hesitation.</p>
+      </div>
+
+      <div class="steps">
+        <div class="step glow-box fade-in">
+          <div class="step-num">01</div>
+          <div class="step-label">// Config</div>
+          <h3>CONFIGURE FUND</h3>
+          <p>Set your balance, floor protection, watchlist, and trading style through the setup wizard. 5 minutes.</p>
+        </div>
+        <div class="step glow-box fade-in">
+          <div class="step-num">02</div>
+          <div class="step-label">// Signal</div>
+          <h3>READ 5 LAYERS</h3>
+          <p>EMA trends, RSI momentum, live news, congressional trades, YouTube coverage — scored and weighted each cycle.</p>
+        </div>
+        <div class="step glow-box fade-in">
+          <div class="step-num">03</div>
+          <div class="step-label">// Execute</div>
+          <h3>TRADE + COMPOUND</h3>
+          <p>High-confidence buys execute. Positions sell at peak. Re-entry watchers catch the next dip automatically.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── TRADING MODES ── -->
+  <section id="modes">
+    <div class="container">
+      <div class="modes-header fade-in">
+        <span class="s-eye">Trading Modes</span>
+        <h2 class="s-title">SWING &amp; DAY TRADING ENGINES</h2>
+        <p class="s-sub">Two engines. One platform. Pick your strategy or run both.</p>
+      </div>
+
+      <div class="mode-cards">
+        <!-- Swing -->
+        <div class="mode-card glow-box fade-in">
+          <div class="mode-hdr">
+            <div class="mode-tag tag-swing">SWING MODE</div>
+            <h2><a href="stocks.html" style="color:inherit;text-decoration:none;">REGULAR STOCKS ›</a></h2>
+            <p class="mode-sub">Daily bars. Multi-day holds. Rides EMA trends on blue-chip stocks and ETFs. Enter at strength, exit before the drop.</p>
+          </div>
+          <div class="mode-body">
+            <ul class="feature-list">
+              <li>AAPL, MSFT, NVDA, SPY and any ticker you add</li>
+              <li>Holds positions for days to weeks — maximum trend capture</li>
+              <li>EMA 12/26 crossover with RSI confirmation</li>
+              <li>CLIMB / PLATEAU / SURGE modes for risk profiles</li>
+              <li>Trailing floor stop locks in gains automatically</li>
+              <li>Re-entry watchers buy back on confirmed dips</li>
+            </ul>
+            <div class="mode-stats">
+              <div class="ms-item"><span class="ms-val">Daily</span><span class="ms-lbl">Bar Interval</span></div>
+              <div class="ms-item"><span class="ms-val">5 min</span><span class="ms-lbl">Cycle Time</span></div>
+              <div class="ms-item"><span class="ms-val">Any</span><span class="ms-lbl">Account Size</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Day -->
+        <div class="mode-card glow-box fade-in">
+          <div class="mode-hdr">
+            <div class="mode-tag tag-day">DAY MODE</div>
+            <h2><a href="penny.html" style="color:inherit;text-decoration:none;">PENNY STOCKS ›</a></h2>
+            <p class="mode-sub">5-minute bars. Intraday only. Rides fast momentum on volatile low-priced movers. All positions close before market end every day.</p>
+          </div>
+          <div class="mode-body">
+            <ul class="feature-list">
+              <li>Built for volatile tickers under $5 — big % moves daily</li>
+              <li>5-min bars with tight EMA periods (3/9, 5/13, 9/21)</li>
+              <li>All positions force-closed before market close each day</li>
+              <li>Zero overnight risk — clean slate every session</li>
+              <li>YouTube scanner catches viral breakout coverage live</li>
+              <li>Paper mode — no $25k PDT rule needed to test</li>
+            </ul>
+            <div class="mode-stats">
+              <div class="ms-item"><span class="ms-val">5-min</span><span class="ms-lbl">Bar Interval</span></div>
+              <div class="ms-item"><span class="ms-val">60s</span><span class="ms-lbl">Cycle Time</span></div>
+              <div class="ms-item"><span class="ms-val">Intraday</span><span class="ms-lbl">Hold Time</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── STRATEGY MODES ── -->
+  <section id="strategy" style="padding:100px 0;">
+    <div class="container">
+      <div class="fade-in">
+        <span class="s-eye">Strategy Modes</span>
+        <h2 class="s-title">HOW AGGRESSIVE<br>DO YOU WANT TO BE?</h2>
+        <p class="s-sub">Mode controls <strong style="color:var(--text)">when Midas exits</strong> a position. Pick based on your risk tolerance and the market environment. You can change it any time and rerun the backtest to compare.</p>
+      </div>
+      <div class="strategy-cards">
+
+        <div class="strat-card glow-box fade-in">
+          <div class="strat-name">CLIMB</div>
+          <div class="strat-tag">// Default · Balanced risk/reward</div>
+          <p class="strat-desc">The standard mode. Midas rides the EMA trend and exits when the trend breaks down. Sells on a bearish EMA crossunder, RSI overbought (&gt;70), or negative sentiment. Balanced — captures most of the move without being too greedy.</p>
+          <div class="strat-when">SELL triggers:</div>
+          <div class="strat-rule"><span>→</span> Bearish EMA crossunder</div>
+          <div class="strat-rule"><span>→</span> RSI climbs above 70 (overbought)</div>
+          <div class="strat-rule"><span>→</span> News sentiment turns negative</div>
+          <div class="strat-stat">
+            <div class="ss-item"><span class="ss-val">+23.9%</span><span class="ss-lbl">2023 Avg Net</span></div>
+            <div class="ss-item"><span class="ss-val">Any</span><span class="ss-lbl">Market Type</span></div>
+            <div class="ss-item"><span class="ss-val">Low</span><span class="ss-lbl">Max Drawdown</span></div>
+          </div>
+        </div>
+
+        <div class="strat-card plateau glow-box fade-in">
+          <div class="strat-name plateau">PLATEAU</div>
+          <div class="strat-tag">// Conservative · Early exits</div>
+          <p class="strat-desc">Gets out early. If price goes sideways for 10+ days within a 2% range, Midas takes profit before the sideways turns into a drop. Uses a larger re-entry dip (8% vs 4%) because flat-to-down moves tend to overshoot on the way back.</p>
+          <div class="strat-when">SELL triggers:</div>
+          <div class="strat-rule"><span class="c">→</span> Price moves sideways for 10+ days (plateau detected)</div>
+          <div class="strat-rule"><span class="c">→</span> All CLIMB sell triggers also apply</div>
+          <div class="strat-rule"><span class="c">→</span> Re-entry requires 8% dip from post-sell peak</div>
+          <div class="strat-stat">
+            <div class="ss-item"><span class="ss-val">+12.7%</span><span class="ss-lbl">2023 Avg Net</span></div>
+            <div class="ss-item"><span class="ss-val">Bear/Chop</span><span class="ss-lbl">Market Type</span></div>
+            <div class="ss-item"><span class="ss-val">Lowest</span><span class="ss-lbl">Max Drawdown</span></div>
+          </div>
+        </div>
+
+        <div class="strat-card surge glow-box fade-in">
+          <div class="strat-name surge">SURGE</div>
+          <div class="strat-tag">// Aggressive · Maximum capture</div>
+          <p class="strat-desc">Hold as long as possible. Only exits when the peak is actively breaking down — RSI above 75 AND trend weakening simultaneously, OR bearish crossunder combined with negative sentiment. Captures more of every bull run.</p>
+          <div class="strat-when">SELL triggers:</div>
+          <div class="strat-rule"><span class="g">→</span> RSI &gt; 75 AND EMA trend actively weakening</div>
+          <div class="strat-rule"><span class="g">→</span> Bearish crossunder AND negative sentiment together</div>
+          <div class="strat-rule"><span class="g">→</span> (Single signals alone do NOT sell in SURGE mode)</div>
+          <div class="strat-stat">
+            <div class="ss-item"><span class="ss-val">+45.9%</span><span class="ss-lbl">2023 Net (best)</span></div>
+            <div class="ss-item"><span class="ss-val">Bull</span><span class="ss-lbl">Market Type</span></div>
+            <div class="ss-item"><span class="ss-val">High</span><span class="ss-lbl">Max Drawdown</span></div>
+          </div>
+        </div>
+
+      </div>
+      <p style="margin-top:20px; font-size:0.72rem; color:var(--dim); letter-spacing:0.06em;">// set TRADING_MODE in main.py or via py setup.py → [4] Trading</p>
+    </div>
+  </section>
+
+
+  <!-- ── TRADE FREQUENCY ── -->
+  <section id="frequency" style="padding:100px 0; background:var(--dark2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="fade-in">
+        <span class="s-eye">Trade Frequency</span>
+        <h2 class="s-title">HOW OFTEN<br>SHOULD MIDAS BUY?</h2>
+        <p class="s-sub">Frequency controls <strong style="color:var(--text)">when Midas enters</strong> a position. Mode and frequency work independently — any mode can be paired with any frequency. AGGRESSIVE + SURGE is the highest-conviction, highest-risk combination.</p>
+      </div>
+      <div class="freq-cards">
+
+        <div class="freq-card glow-box fade-in">
+          <div class="freq-name">NORMAL</div>
+          <div class="freq-badge">Fewest trades · Highest confidence</div>
+          <p class="freq-desc">Only buys on a confirmed EMA bullish crossover — the fast EMA crossing above the slow EMA — while RSI is below 60 and sentiment is not negative. Every signal has to be clean. Fewer trades, but higher quality per trade.</p>
+          <div class="freq-rule-row">EMA 12/26 bullish crossover confirmed</div>
+          <div class="freq-rule-row">RSI below 60 at time of entry</div>
+          <div class="freq-rule-row">Sentiment not negative</div>
+          <div class="freq-rule-row">Best for: steady trends, lower activity tolerance</div>
+        </div>
+
+        <div class="freq-card glow-box fade-in">
+          <div class="freq-name">ACTIVE</div>
+          <div class="freq-badge">Moderate trades · Catches dips</div>
+          <p class="freq-desc">Adds RSI dip-buying on top of NORMAL crossover entries. When RSI dips below 40 while the overall trend is still up, Midas buys the pullback. Catches mid-trend corrections that NORMAL would sit out.</p>
+          <div class="freq-rule-row">Everything NORMAL does, plus:</div>
+          <div class="freq-rule-row">EMA 5/13 (tighter periods)</div>
+          <div class="freq-rule-row">RSI dip below 40 while trend is up → BUY</div>
+          <div class="freq-rule-row">Best for: most situations, default recommendation</div>
+        </div>
+
+        <div class="freq-card glow-box fade-in">
+          <div class="freq-name">AGGRESSIVE</div>
+          <div class="freq-badge">Most trades · Trend riding</div>
+          <p class="freq-desc">Buys whenever the fast EMA is above the slow EMA — no crossover required. Stays in the position throughout an entire uptrend rather than waiting for crossovers. Also catches RSI dips below 40. Highest trade count.</p>
+          <div class="freq-rule-row">EMA 5/13 — buy whenever fast &gt; slow AND RSI ≤ 65</div>
+          <div class="freq-rule-row">No crossover required — rides the full trend</div>
+          <div class="freq-rule-row">RSI dip below 40 also triggers a buy</div>
+          <div class="freq-rule-row">Best for: strong bull runs (2021, 2023)</div>
+        </div>
+
+      </div>
+      <p style="margin-top:20px; font-size:0.72rem; color:var(--dim); letter-spacing:0.06em;">// set TRADE_FREQUENCY in main.py or via py setup.py → [4] Trading</p>
+    </div>
+  </section>
+
+
+  <!-- ── PENNY STOCKS ── -->
+  <section id="penny">
+    <div class="container">
+      <div class="penny-inner">
+        <div class="fade-in">
+          <span class="s-eye">Day Trading Engine</span>
+          <h2 class="s-title">BUILT FOR<br>FAST MOVERS</h2>
+          <p class="s-sub">Penny stocks move 10–30% in a single session. Midas monitors 5-minute candles, catches breakouts as they form, and exits before the reversal — with no emotional hesitation.</p>
+          <ul class="feature-list-v">
+            <li>Scans every 60 seconds during market hours</li>
+            <li>YouTube live coverage scanner — catches viral breakouts</li>
+            <li>Tight EMA crossovers capture early momentum</li>
+            <li>Hard EOD close — never hold a penny stock overnight</li>
+            <li>Test with zero real money in paper mode first</li>
+          </ul>
+        </div>
+
+        <div class="terminal-readout glow-box fade-in">
+          <div class="box-title">
+            <div class="dot amber"></div>
+            MIDAS TERMINAL &nbsp;·&nbsp; DAY MODE &nbsp;·&nbsp; 09:35
+          </div>
+          <div style="padding: 16px 20px;">
+            <div class="tr-row"><span class="tr-key">ticker</span><span class="tr-val-gold">SNDL</span></div>
+            <div class="tr-row"><span class="tr-key">price</span><span class="tr-val-green">$1.84</span></div>
+            <div class="tr-row"><span class="tr-key">bar</span><span class="tr-val-cyan">5-min  09:35</span></div>
+            <hr class="tr-divider"/>
+            <div class="tr-row"><span class="tr-key">ema_fast (3)</span><span class="tr-val-green">1.847</span></div>
+            <div class="tr-row"><span class="tr-key">ema_slow (9)</span><span class="tr-key">1.831</span></div>
+            <div class="tr-row"><span class="tr-key">crossover</span><span class="tr-val-green">BULLISH ▲</span></div>
+            <div class="tr-row"><span class="tr-key">rsi_14</span><span class="tr-val-green">52.4</span></div>
+            <hr class="tr-divider"/>
+            <div class="tr-row"><span class="tr-key">youtube</span><span class="tr-val-green">POSITIVE (3 videos)</span></div>
+            <div class="tr-row"><span class="tr-key">signal</span><span class="tr-val-green">BUY</span></div>
+            <div class="tr-row"><span class="tr-key">confidence</span><span class="tr-val-gold">81 / 100</span></div>
+            <hr class="tr-divider"/>
+            <div class="tr-row"><span class="tr-key">action</span><span class="tr-val-gold">EXECUTING BUY  $48.30</span></div>
+            <div class="tr-row"><span class="tr-key">eod_close</span><span class="tr-key">15:50 cutoff active</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── FLOOR PROTECTION ── -->
+  <section id="floor" style="padding:100px 0; background:var(--dark2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="fade-in" style="text-align:center; margin-bottom:8px;">
+        <span class="s-eye">Capital Protection</span>
+        <h2 class="s-title">FOUR WAYS TO<br>PROTECT YOUR MONEY</h2>
+        <p class="s-sub" style="margin:0 auto;">The floor is a hard minimum. If the fund ever falls to it, Midas exits everything and stops trading automatically. Choose how that floor behaves.</p>
+      </div>
+      <div class="floor-grid fade-in">
+
+        <div class="floor-card glow-box">
+          <div class="floor-mode-name">FIXED</div>
+          <span class="floor-tag">// Simple hard stop</span>
+          <p class="floor-desc">Set a dollar amount. If the fund hits that number, trading stops. The floor never moves — simple tripwire. Good starting point for new accounts.</p>
+          <div class="floor-meter"><div class="floor-fill" style="width:80%"></div></div>
+          <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--dim); margin-bottom:10px;"><span>$0</span><span style="color:var(--red)">FLOOR $800</span><span style="color:var(--green)">$1,000</span></div>
+          <div class="floor-best">Best for: getting started, simple setups</div>
+        </div>
+
+        <div class="floor-card glow-box">
+          <div class="floor-mode-name">TRAILING</div>
+          <span class="floor-tag">// Ratchets up with gains</span>
+          <p class="floor-desc">The floor rises as the fund grows — always trailing X% below the all-time peak. Locks in gains automatically over time. The floor never falls, only rises.</p>
+          <div class="floor-meter"><div class="floor-fill" style="width:87%; background:var(--teal);"></div></div>
+          <div style="display:flex; justify-content:space-between; font-size:0.68rem; color:var(--dim); margin-bottom:10px;"><span>$0</span><span style="color:var(--teal)">FLOOR $1,113</span><span style="color:var(--green)">PEAK $1,310</span></div>
+          <div class="floor-best" style="color:var(--teal);">Best for: active trading, locking in long-term gains</div>
+        </div>
+
+        <div class="floor-card glow-box">
+          <div class="floor-mode-name">LOCKED</div>
+          <span class="floor-tag">// Floor in cash, never touched</span>
+          <p class="floor-desc">The floor amount is kept in cash and never invested. Midas can only trade with capital above the floor. Mathematically impossible to reach the floor through normal trading.</p>
+          <div style="display:flex; gap:4px; margin-bottom:10px;">
+            <div style="flex:0 0 80px; height:8px; background:var(--red); opacity:0.6;" title="Locked cash"></div>
+            <div style="flex:1; height:8px; background:var(--green);" title="Deployable"></div>
+          </div>
+          <div style="display:flex; gap:8px; font-size:0.68rem; color:var(--dim); margin-bottom:10px;"><span style="color:var(--red)">$800 locked</span><span>·</span><span style="color:var(--green)">$200 deployable</span></div>
+          <div class="floor-best">Best for: protecting a fixed reserve, trading gains only</div>
+        </div>
+
+        <div class="floor-card glow-box">
+          <div class="floor-mode-name">PRINCIPAL</div>
+          <span class="floor-tag">// Starting balance locked forever</span>
+          <p class="floor-desc">Original investment is locked in cash permanently. Midas only ever trades with profits above the starting balance. Zero downside risk on your initial money.</p>
+          <div style="display:flex; gap:4px; margin-bottom:10px;">
+            <div style="flex:1; height:8px; background:var(--amber);" title="Locked principal"></div>
+            <div style="flex:0 0 20px; height:8px; background:var(--green);" title="Tradeable gains"></div>
+          </div>
+          <div style="display:flex; gap:8px; font-size:0.68rem; color:var(--dim); margin-bottom:10px;"><span style="color:var(--amber)">$1,000 locked</span><span>·</span><span style="color:var(--green)">gains only</span></div>
+          <div class="floor-best" style="color:var(--amber);">Best for: zero-risk deployment, trading house money</div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── CONFIDENCE SYSTEM ── -->
+  <section id="confidence" style="padding:100px 0;">
+    <div class="container">
+      <div class="conf-demo">
+        <div class="fade-in">
+          <span class="s-eye">Confidence Meter</span>
+          <h2 class="s-title">BIGGER CONVICTION.<br>BIGGER POSITION.</h2>
+          <p class="s-sub" style="margin-bottom:28px;">Not every signal is equal. Midas scores each signal 0–100 and scales the trade size accordingly. A weak signal deploys 5% of capital. A strong one deploys 20%. This keeps the portfolio weighted toward high-conviction setups.</p>
+          <div class="conf-bar-row">
+            <div class="conf-bar-label">EMA Spread</div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:80%"></div></div>
+            <div class="conf-bar-val">80</div>
+          </div>
+          <div class="conf-bar-row">
+            <div class="conf-bar-label">RSI Position</div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:72%"></div></div>
+            <div class="conf-bar-val">72</div>
+          </div>
+          <div class="conf-bar-row">
+            <div class="conf-bar-label">Sentiment</div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:100%"></div></div>
+            <div class="conf-bar-val">100</div>
+          </div>
+          <div class="conf-bar-row">
+            <div class="conf-bar-label">Congress</div>
+            <div class="conf-bar-track"><div class="conf-bar-fill" style="width:100%; background:var(--amber);"></div></div>
+            <div class="conf-bar-val" style="color:var(--amber)">100</div>
+          </div>
+        </div>
+        <div class="glow-box fade-in">
+          <div class="box-title"><div class="dot"></div> CONFIDENCE RESULT — NVDA</div>
+          <div style="padding:20px 24px;">
+            <div style="text-align:center; margin-bottom:20px;">
+              <div style="font-family:var(--title); font-size:3rem; color:var(--green);">88</div>
+              <div style="font-size:0.72rem; color:var(--dim); letter-spacing:0.1em;">/ 100 CONFIDENCE</div>
+            </div>
+            <div class="conf-result-row">
+              <span style="color:var(--dim); font-size:0.78rem;">Base deploy fraction</span>
+              <span style="color:var(--text);">10%</span>
+            </div>
+            <div class="conf-result-row">
+              <span style="color:var(--dim); font-size:0.78rem;">Confidence multiplier</span>
+              <span style="color:var(--green);">× 1.76</span>
+            </div>
+            <div class="conf-result-row">
+              <span style="color:var(--dim); font-size:0.78rem;">Effective deploy size</span>
+              <span style="color:var(--amber); font-family:var(--title);">17.6%</span>
+            </div>
+            <div class="conf-result-row" style="border:none; padding-top:14px;">
+              <span style="color:var(--dim); font-size:0.78rem;">On $1,000 fund → deploys</span>
+              <span style="color:var(--green); font-size:0.9rem;">$176</span>
+            </div>
+            <div style="margin-top:18px; padding:12px; border:1px solid var(--border); font-size:0.72rem; color:var(--dim); line-height:1.7;">
+              conf_min=0.5 → floor multiplier (weak signal)<br>
+              conf_max=2.0 → ceiling multiplier (perfect signal)<br>
+              <span style="color:var(--green);">// set in main.py: CONFIDENCE_MIN_SCALE / MAX_SCALE</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── RE-ENTRY WATCHER ── -->
+  <section id="reentry" style="padding:100px 0; background:var(--dark2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="fade-in" style="margin-bottom:8px;">
+        <span class="s-eye">Re-Entry System</span>
+        <h2 class="s-title">SELL HIGH.<br>BUY BACK LOWER.</h2>
+        <p class="s-sub">After every sell, Midas doesn't immediately jump back in. It places a watcher on the stock and waits for the post-sell peak to form, then catches the next dip. Avoids chasing momentum at the top.</p>
+      </div>
+      <div class="reentry-timeline fade-in">
+        <div class="rt-step">
+          <div class="rt-dot">01</div>
+          <div class="rt-label">SELL</div>
+          <div class="rt-desc">Signal triggers. Position closes. Proceeds split: 75% reserved for re-entry, 25% stays liquid.</div>
+        </div>
+        <div class="rt-step">
+          <div class="rt-dot" style="border-color:var(--teal); color:var(--teal);">02</div>
+          <div class="rt-label" style="color:var(--teal);">WATCH</div>
+          <div class="rt-desc">Watcher placed. Tracks every price update. Watcher expires after 60 days if never triggered.</div>
+        </div>
+        <div class="rt-step">
+          <div class="rt-dot" style="border-color:var(--amber); color:var(--amber);">03</div>
+          <div class="rt-label" style="color:var(--amber);">PEAK</div>
+          <div class="rt-desc">Price rises above the sell price — confirming a new local peak. Watcher now active for dip detection.</div>
+        </div>
+        <div class="rt-step">
+          <div class="rt-dot" style="border-color:var(--red); color:var(--red);">04</div>
+          <div class="rt-label" style="color:var(--red);">DIP</div>
+          <div class="rt-desc">Price drops 4% below the post-sell peak (8% in PLATEAU mode). Dip threshold crossed.</div>
+        </div>
+        <div class="rt-step">
+          <div class="rt-dot" style="border-color:var(--green); background:var(--gw);">05</div>
+          <div class="rt-label">RE-ENTER</div>
+          <div class="rt-desc">75% of original proceeds deployed automatically. Watcher removed. Position reopened.</div>
+        </div>
+      </div>
+      <div style="margin-top:40px; display:grid; grid-template-columns:repeat(3,1fr); gap:20px;" class="fade-in">
+        <div class="glow-box" style="padding:20px 24px;">
+          <div style="font-size:0.68rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:8px; text-transform:uppercase;">CLIMB / SURGE Mode</div>
+          <div style="font-family:var(--title); font-size:1.4rem; color:var(--green); margin-bottom:4px;">4%</div>
+          <div style="font-size:0.75rem; color:var(--mid);">Re-entry dip threshold from post-sell peak</div>
+        </div>
+        <div class="glow-box" style="padding:20px 24px;">
+          <div style="font-size:0.68rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:8px; text-transform:uppercase;">PLATEAU Mode</div>
+          <div style="font-family:var(--title); font-size:1.4rem; color:var(--teal); margin-bottom:4px;">8%</div>
+          <div style="font-size:0.75rem; color:var(--mid);">Larger dip required — flat-to-down moves overshoot</div>
+        </div>
+        <div class="glow-box" style="padding:20px 24px;">
+          <div style="font-size:0.68rem; color:var(--dim); letter-spacing:0.12em; margin-bottom:8px; text-transform:uppercase;">Watcher Expiry</div>
+          <div style="font-family:var(--title); font-size:1.4rem; color:var(--amber); margin-bottom:4px;">60 days</div>
+          <div style="font-size:0.75rem; color:var(--mid);">Funds returned to liquid balance if no dip occurs</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SIGNALS ── -->
+  <section id="signals">
+    <div class="container">
+      <div class="signals-hdr fade-in">
+        <span class="s-eye">Intelligence Layers</span>
+        <h2 class="s-title">EVERY SIGNAL. EVERY SOURCE.</h2>
+        <p class="s-sub">5 independent layers fused into one confidence score before any trade executes.</p>
+      </div>
+
+      <div class="layers">
+        <div class="layer glow-box fade-in">
+          <div class="layer-num">LAYER 01</div>
+          <span class="layer-icon">📈</span>
+          <h4>EMA TREND</h4>
+          <p>Fast/slow moving average crossovers detect trend starts and ends.</p>
+        </div>
+        <div class="layer glow-box fade-in">
+          <div class="layer-num">LAYER 02</div>
+          <span class="layer-icon">⚡</span>
+          <h4>RSI MOMENTUM</h4>
+          <p>Filters overbought entries. Confirms genuine dip opportunities.</p>
+        </div>
+        <div class="layer glow-box fade-in">
+          <div class="layer-num">LAYER 03</div>
+          <span class="layer-icon">📰</span>
+          <h4>NEWS SENTIMENT</h4>
+          <p>Live financial headlines scored for bullish and bearish language.</p>
+        </div>
+        <div class="layer glow-box fade-in">
+          <div class="layer-num">LAYER 04</div>
+          <span class="layer-icon">🏛️</span>
+          <h4>CONGRESS TRADES</h4>
+          <p>Public House and Senate stock disclosures tracked automatically.</p>
+        </div>
+        <div class="layer glow-box fade-in">
+          <div class="layer-num">LAYER 05</div>
+          <span class="layer-icon">▶</span>
+          <h4>YOUTUBE LIVE</h4>
+          <p>Live video coverage scanned for breakout signals and warnings.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SIMULATOR ── -->
+  <section id="simulator" style="padding:60px 0 0;border-bottom:1px solid var(--border);background:var(--surface);">
+    <div class="container">
+      <div class="signals-hdr fade-in" style="margin-bottom:32px;">
+        <span class="s-eye">Practice Mode</span>
+        <h2 class="s-title">TRADE WITHOUT RISK.</h2>
+        <p class="s-sub">Configure a fund. Pick a strategy. Watch it trade a full year in seconds.</p>
+      </div>
+    </div>
+
+    <!-- Scoped simulator styles -->
+    <style>
+    #sim-wrap{position:relative;height:720px;overflow:hidden;background:#f2ede3;color:#28241e;font-family:'Share Tech Mono',monospace;border-top:1px solid #d4cdc0;}
+    #sim-wrap .sw-screen{position:absolute;inset:0;display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity 0.35s ease;z-index:10;}
+    #sim-wrap .sw-screen.active{opacity:1;pointer-events:all;}
+    #sim-wrap #sw-title{align-items:center;justify-content:center;gap:10px;}
+    #sim-wrap .t-rule{width:44px;height:1px;background:#b8b0a0;}
+    #sim-wrap .t-logo{font-family:'Outfit',sans-serif;font-size:54px;font-weight:600;letter-spacing:0.12em;color:#28241e;}
+    #sim-wrap .t-logo span{color:#9a7018;}
+    #sim-wrap .t-tag{font-size:10px;letter-spacing:0.38em;color:#a09890;}
+    #sim-wrap .t-sub{font-size:11px;color:#a09890;letter-spacing:0.07em;margin-bottom:22px;}
+    #sim-wrap .sw-btn-primary{background:#28241e;border:none;color:#f2ede3;font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:0.28em;padding:13px 42px;cursor:pointer;transition:opacity 0.18s;}
+    #sim-wrap .sw-btn-primary:hover{opacity:0.78;}
+    #sim-wrap .sw-btn-sec{background:transparent;border:1px solid #d4cdc0;color:#6b6258;font-family:'Share Tech Mono',monospace;font-size:11px;padding:9px 22px;cursor:pointer;letter-spacing:0.13em;transition:all 0.18s;}
+    #sim-wrap .sw-btn-sec:hover{border-color:#28241e;color:#28241e;}
+    #sim-wrap #sw-config{background:#f2ede3;overflow-y:auto;}
+    #sim-wrap .cfg-hdr{display:flex;justify-content:space-between;align-items:center;padding:13px 32px;border-bottom:1px solid #d4cdc0;font-size:10px;letter-spacing:0.22em;color:#a09890;flex-shrink:0;}
+    #sim-wrap .back-lnk{cursor:pointer;transition:color 0.2s;}#sim-wrap .back-lnk:hover{color:#28241e;}
+    #sim-wrap .cfg-body{padding:24px 32px 32px;overflow-y:auto;flex:1;max-width:960px;margin:0 auto;width:100%;}
+    #sim-wrap .sec{font-size:9px;letter-spacing:0.35em;color:#a09890;margin-bottom:13px;margin-top:26px;padding-bottom:6px;border-bottom:1px solid #d4cdc0;}
+    #sim-wrap .sec:first-child{margin-top:0;}
+    #sim-wrap .crd-row{display:flex;gap:12px;}
+    #sim-wrap .mcrd{flex:1;border:1px solid #d4cdc0;padding:18px;cursor:pointer;transition:all 0.16s;background:#f7f3ec;}
+    #sim-wrap .mcrd:hover{border-color:#b8b0a0;background:#fff;}
+    #sim-wrap .mcrd.sel{border-color:#2d7a4f;background:#fff;box-shadow:inset 3px 0 0 #2d7a4f;}
+    #sim-wrap .cnum{font-size:9px;color:#a09890;letter-spacing:0.2em;margin-bottom:9px;}
+    #sim-wrap .mcrd.sel .cnum{color:#2d7a4f;}
+    #sim-wrap .ctit{font-family:'Outfit',sans-serif;font-size:16px;font-weight:600;color:#28241e;margin-bottom:2px;}
+    #sim-wrap .mcrd.sel .ctit{color:#2d7a4f;}
+    #sim-wrap .csub{font-size:10px;color:#a09890;margin-bottom:10px;}
+    #sim-wrap .cdsc{font-size:11px;color:#6b6258;line-height:1.6;margin-bottom:12px;}
+    #sim-wrap .cpill{font-size:9px;letter-spacing:0.18em;color:#6b6258;border:1px solid #d4cdc0;display:inline-block;padding:2px 8px;}
+    #sim-wrap .mcrd.sel .cpill{border-color:#2d7a4f;color:#2d7a4f;}
+    #sim-wrap .fcrd{flex:1;border:1px solid #d4cdc0;padding:14px;cursor:pointer;transition:all 0.16s;background:#f7f3ec;}
+    #sim-wrap .fcrd:hover{border-color:#b8b0a0;background:#fff;}
+    #sim-wrap .fcrd.sel{border-color:#1a7080;background:#fff;box-shadow:inset 3px 0 0 #1a7080;}
+    #sim-wrap .fcrd .ctit{font-size:13px;color:#6b6258;margin-bottom:7px;}
+    #sim-wrap .fcrd.sel .ctit{color:#1a7080;}
+    #sim-wrap .fcrd .cdsc{font-size:11px;color:#a09890;margin-bottom:10px;line-height:1.5;}
+    #sim-wrap .fmtr{height:2px;background:#d4cdc0;border-radius:1px;overflow:hidden;}
+    #sim-wrap .fmtr-fill{display:block;height:100%;background:#b8b0a0;}
+    #sim-wrap .fcrd.sel .fmtr-fill{background:#1a7080;}
+    #sim-wrap .flcrd{flex:1;border:1px solid #d4cdc0;padding:14px;cursor:pointer;transition:all 0.16s;background:#f7f3ec;}
+    #sim-wrap .flcrd:hover{border-color:#b8b0a0;background:#fff;}
+    #sim-wrap .flcrd.sel{border-color:#9a7018;background:#fff;box-shadow:inset 3px 0 0 #9a7018;}
+    #sim-wrap .flcrd .ctit{font-size:13px;color:#6b6258;margin-bottom:7px;}
+    #sim-wrap .flcrd.sel .ctit{color:#9a7018;}
+    #sim-wrap .flcrd .cdsc{font-size:11px;color:#a09890;line-height:1.5;}
+    #sim-wrap .srow{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-end;margin-top:4px;}
+    #sim-wrap .sg{display:flex;flex-direction:column;gap:6px;}
+    #sim-wrap .sg label{font-size:9px;letter-spacing:0.28em;color:#a09890;}
+    #sim-wrap .sg input[type=number]{background:#f7f3ec;border:1px solid #d4cdc0;color:#28241e;font-family:'Share Tech Mono',monospace;font-size:13px;padding:7px 11px;width:130px;outline:none;}
+    #sim-wrap .sg input:focus{border-color:#b8b0a0;}
+    #sim-wrap .btn-row{display:flex;gap:4px;}
+    #sim-wrap .seg{background:#f7f3ec;border:1px solid #d4cdc0;color:#6b6258;font-family:'Share Tech Mono',monospace;font-size:11px;padding:6px 12px;cursor:pointer;transition:all 0.15s;}
+    #sim-wrap .seg:hover{border-color:#b8b0a0;color:#28241e;}
+    #sim-wrap .seg.sel{background:#fff;border-color:#28241e;color:#28241e;}
+    #sim-wrap .launch-btn{width:100%;padding:14px;font-size:12px;letter-spacing:0.38em;margin-top:24px;}
+    #sim-wrap #sw-loading{align-items:center;justify-content:center;background:#f2ede3;}
+    #sim-wrap .ld-logo{font-family:'Outfit',sans-serif;font-size:30px;font-weight:600;letter-spacing:0.15em;color:#28241e;margin-bottom:26px;animation:sw-pulse 1.8s ease-in-out infinite;}
+    @keyframes sw-pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+    #sim-wrap .ld-msg{font-size:11px;color:#a09890;letter-spacing:0.12em;margin-bottom:18px;min-height:18px;}
+    #sim-wrap .ld-bar{width:280px;height:1px;background:#d4cdc0;margin:0 auto;}
+    #sim-wrap .ld-fill{height:100%;background:#2d7a4f;width:0%;transition:width 0.35s ease;}
+    #sim-wrap #sw-sim{background:#f2ede3;overflow:hidden;}
+    #sim-wrap .sim-top{display:flex;justify-content:space-between;align-items:center;padding:8px 20px;border-bottom:1px solid #d4cdc0;flex-shrink:0;font-size:11px;}
+    #sim-wrap .sim-mode{font-family:'Outfit',sans-serif;font-weight:500;letter-spacing:0.04em;font-size:13px;}
+    #sim-wrap .sim-date{color:#6b6258;letter-spacing:0.07em;}
+    #sim-wrap .sim-day{color:#a09890;font-size:10px;}
+    #sim-wrap .clocks-bar{display:flex;align-items:center;gap:0;border-bottom:1px solid #d4cdc0;flex-shrink:0;background:#ebe5d8;font-size:10px;letter-spacing:0.06em;}
+    #sim-wrap .clock-cell{display:flex;align-items:center;gap:6px;padding:6px 16px;border-right:1px solid #d4cdc0;}
+    #sim-wrap .clock-cell:last-child{border-right:none;margin-left:auto;}
+    #sim-wrap .mkt-dot{width:7px;height:7px;border-radius:50%;background:#a09890;flex-shrink:0;}
+    #sim-wrap .mkt-dot.open{background:#2d7a4f;}
+    #sim-wrap .clock-city{color:#a09890;}
+    #sim-wrap .clock-time{color:#28241e;}
+    #sim-wrap .mkt-status{padding:6px 16px;font-size:9px;letter-spacing:0.2em;color:#a09890;}
+    #sim-wrap .mkt-status.open{color:#2d7a4f;}
+    #sim-wrap .sim-body{display:flex;flex:1;min-height:0;border-bottom:1px solid #d4cdc0;}
+    #sim-wrap .sim-left{flex:1;padding:12px 16px 8px;display:flex;flex-direction:column;border-right:1px solid #d4cdc0;min-width:0;}
+    #sim-wrap .port-val{font-family:'Outfit',sans-serif;font-size:32px;font-weight:600;color:#28241e;line-height:1;}
+    #sim-wrap .port-chg{font-size:12px;margin-top:3px;margin-bottom:8px;letter-spacing:0.05em;}
+    #sim-wrap .port-chg.up{color:#2d7a4f;}#sim-wrap .port-chg.down{color:#8a3030;}
+    #sim-wrap #sw-chart{flex:1;width:100%;min-height:0;display:block;}
+    #sim-wrap .sim-right{width:210px;padding:12px;display:flex;flex-direction:column;gap:14px;flex-shrink:0;overflow-y:auto;}
+    #sim-wrap .stats-box{display:flex;flex-direction:column;}
+    #sim-wrap .sr{display:flex;justify-content:space-between;font-size:11px;padding:4px 0;border-bottom:1px solid #d4cdc0;}
+    #sim-wrap .sr span:first-child{color:#a09890;letter-spacing:0.07em;}
+    #sim-wrap .sr span:last-child{color:#28241e;}
+    #sim-wrap .pos-lbl{font-size:9px;letter-spacing:0.28em;color:#a09890;}
+    #sim-wrap .pos-box{display:flex;flex-direction:column;gap:3px;margin-top:5px;}
+    #sim-wrap .pos-item{font-size:11px;color:#1a7080;padding:3px 7px;border-left:2px solid #1a7080;background:rgba(26,112,128,0.08);}
+    #sim-wrap .pos-none{font-size:11px;color:#a09890;font-style:italic;}
+    #sim-wrap .signals-bar{display:flex;align-items:center;gap:0;border-bottom:1px solid #d4cdc0;flex-shrink:0;background:#ebe5d8;font-size:10px;}
+    #sim-wrap .sig-label{padding:5px 14px;font-size:9px;letter-spacing:0.28em;color:#a09890;border-right:1px solid #d4cdc0;flex-shrink:0;}
+    #sim-wrap .sig-cell{display:flex;align-items:center;gap:5px;padding:5px 16px;border-right:1px solid #d4cdc0;min-width:0;}
+    #sim-wrap .sig-ticker{color:#6b6258;letter-spacing:0.05em;}
+    #sim-wrap .sig-arrow{font-size:12px;}
+    #sim-wrap .sig-arrow.buy{color:#2d7a4f;}#sim-wrap .sig-arrow.sell{color:#8a3030;}#sim-wrap .sig-arrow.hold{color:#a09890;}
+    #sim-wrap .sig-signal{letter-spacing:0.08em;}
+    #sim-wrap .sig-signal.buy{color:#2d7a4f;}#sim-wrap .sig-signal.sell{color:#8a3030;}#sim-wrap .sig-signal.hold{color:#a09890;}
+    #sim-wrap .feed-sec{padding:6px 20px;flex-shrink:0;height:100px;display:flex;flex-direction:column;border-bottom:1px solid #d4cdc0;}
+    #sim-wrap .feed-lbl{font-size:9px;letter-spacing:0.28em;color:#a09890;margin-bottom:4px;flex-shrink:0;}
+    #sim-wrap .feed-box{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1px;}
+    #sim-wrap .feed-box::-webkit-scrollbar{width:3px;}
+    #sim-wrap .feed-box::-webkit-scrollbar-thumb{background:#d4cdc0;}
+    #sim-wrap .fi{font-size:10px;line-height:1.4;opacity:0;animation:sw-fadein 0.22s ease forwards;}
+    @keyframes sw-fadein{to{opacity:1}}
+    #sim-wrap .fb{color:#2d7a4f;}#sim-wrap .fg{color:#1a7080;}#sim-wrap .fl{color:#8a3030;}#sim-wrap .fw{color:#a09890;}#sim-wrap .ff{color:#8a3030;}
+    #sim-wrap .sim-ftr{padding:6px 20px 10px;flex-shrink:0;}
+    #sim-wrap .prog-bar{height:2px;background:#d4cdc0;border-radius:1px;overflow:hidden;}
+    #sim-wrap .prog-fill{height:100%;background:#2d7a4f;transition:width 0.1s linear;}
+    #sim-wrap .prog-mnths{display:flex;justify-content:space-between;font-size:8px;color:#a09890;margin-top:3px;margin-bottom:6px;}
+    #sim-wrap .sctrl{display:flex;gap:8px;}
+    #sim-wrap .cbtn{background:transparent;border:1px solid #d4cdc0;color:#a09890;font-family:'Share Tech Mono',monospace;font-size:10px;padding:4px 13px;cursor:pointer;transition:all 0.15s;letter-spacing:0.12em;}
+    #sim-wrap .cbtn:hover{border-color:#b8b0a0;color:#28241e;}
+    #sim-wrap .cbtn.paused{border-color:#9a7018;color:#9a7018;}
+    #sim-wrap #sw-results{align-items:center;justify-content:center;background:#f2ede3;padding:28px;overflow-y:auto;}
+    #sim-wrap .rbox{max-width:560px;width:100%;}
+    #sim-wrap .rbrow{font-size:9px;letter-spacing:0.38em;color:#a09890;text-align:center;margin-bottom:5px;}
+    #sim-wrap .rpct{font-family:'Outfit',sans-serif;font-size:54px;font-weight:600;text-align:center;margin-bottom:2px;letter-spacing:-0.01em;}
+    #sim-wrap .rpct.up{color:#2d7a4f;}#sim-wrap .rpct.down{color:#8a3030;}
+    #sim-wrap .rdlr{text-align:center;font-size:13px;color:#6b6258;margin-bottom:5px;}
+    #sim-wrap .rgrade{font-family:'Outfit',sans-serif;font-size:68px;font-weight:600;text-align:center;line-height:1;margin-bottom:2px;}
+    #sim-wrap .rglbl{text-align:center;font-size:10px;letter-spacing:0.28em;color:#a09890;margin-bottom:22px;}
+    #sim-wrap .rgrid{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:#d4cdc0;border:1px solid #d4cdc0;margin-bottom:14px;}
+    #sim-wrap .rcell{background:#f7f3ec;padding:11px 15px;display:flex;flex-direction:column;gap:3px;}
+    #sim-wrap .rclbl{font-size:9px;letter-spacing:0.18em;color:#a09890;}
+    #sim-wrap .rcval{font-size:14px;color:#28241e;}
+    #sim-wrap .rcmp{border:1px solid #d4cdc0;background:#f7f3ec;padding:11px 15px;margin-bottom:18px;font-size:11px;}
+    #sim-wrap .crow{display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #d4cdc0;}
+    #sim-wrap .crow:last-child{border-bottom:none;}
+    #sim-wrap .crow .cl{color:#a09890;}#sim-wrap .crow .cv{color:#28241e;}#sim-wrap .crow .you{color:#2d7a4f;}
+    #sim-wrap .rbtns{display:flex;gap:12px;justify-content:center;}
+    #sim-wrap .sw-tut-card{position:absolute;bottom:72px;right:16px;width:276px;background:#fff;border:1px solid #1a7080;box-shadow:0 6px 28px rgba(0,0,0,0.15);z-index:200;padding:16px 18px;transition:opacity 0.3s,transform 0.3s;opacity:0;pointer-events:none;transform:translateY(10px);}
+    #sim-wrap .sw-tut-card.show{opacity:1;pointer-events:all;transform:translateY(0);}
+    #sim-wrap .tut-badge{font-size:9px;letter-spacing:0.22em;color:#1a7080;margin-bottom:8px;display:block;}
+    #sim-wrap .tut-title{font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;color:#28241e;margin-bottom:6px;line-height:1.3;}
+    #sim-wrap .tut-body{font-size:11px;color:#6b6258;line-height:1.65;margin-bottom:14px;white-space:pre-line;}
+    #sim-wrap .tut-footer{display:flex;justify-content:space-between;align-items:center;}
+    #sim-wrap .tut-btn{background:#1a7080;color:#fff;border:none;font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:0.18em;padding:7px 16px;cursor:pointer;transition:opacity 0.18s;}
+    #sim-wrap .tut-btn:hover{opacity:0.8;}
+    #sim-wrap .tut-step{font-size:9px;color:#a09890;letter-spacing:0.08em;}
+    #sim-wrap .tut-close{background:none;border:none;font-size:14px;color:#a09890;cursor:pointer;padding:0 4px;line-height:1;}
+    #sim-wrap .tut-close:hover{color:#28241e;}
+    </style>
+
+    <!-- Simulator UI -->
+    <div id="sim-wrap">
+
+      <!-- TITLE screen -->
+      <div id="sw-title" class="sw-screen active">
+        <div class="t-rule"></div>
+        <div class="t-logo"><span>MIDAS</span></div>
+        <div class="t-tag">AUTONOMOUS TRADING SIMULATOR</div>
+        <div class="t-rule"></div>
+        <div class="t-sub" style="margin-top:11px">Configure a fund. Pick a strategy. Watch it trade.</div>
+        <button class="sw-btn-primary" onclick="simShowScreen('sw-config')">START SIMULATION</button>
+        <div style="margin-top:10px;display:flex;align-items:center;gap:14px;">
+          <div style="width:32px;height:1px;background:#d4cdc0;"></div>
+          <button class="sw-btn-sec" onclick="simStartTutorial()" style="font-size:10px;letter-spacing:0.22em;padding:9px 28px;">TUTORIAL MODE</button>
+          <div style="width:32px;height:1px;background:#d4cdc0;"></div>
+        </div>
+        <div style="font-size:10px;letter-spacing:0.12em;color:#a09890;margin-top:6px;">New? Start here — guided walkthrough.</div>
+        <div style="position:absolute;bottom:18px;font-size:9px;letter-spacing:0.18em;color:#a09890;">BY SALAHALDIN NIMERI &nbsp;·&nbsp; PROJECT MIDAS</div>
+      </div>
+
+      <!-- CONFIG screen -->
+      <div id="sw-config" class="sw-screen">
+        <div class="cfg-hdr">
+          <span class="back-lnk" onclick="simShowScreen('sw-title')">← back</span>
+          <span>CONFIGURE FUND</span>
+          <span></span>
+        </div>
+        <div class="cfg-body">
+          <div class="sec">TRADING MODE</div>
+          <div class="crd-row" id="sw-mode-cards">
+            <div class="mcrd sel" data-mode="CLIMB" onclick="simSelMode(this)">
+              <div class="cnum">01</div><div class="ctit">CLIMB</div><div class="csub">The Trend Rider</div>
+              <div class="cdsc">Rides EMA crossover momentum. Exits on bearish reversal or RSI overbought.</div>
+              <div class="cpill">BALANCED</div>
+            </div>
+            <div class="mcrd" data-mode="PLATEAU" onclick="simSelMode(this)">
+              <div class="cnum">02</div><div class="ctit">PLATEAU</div><div class="csub">The Early Exiter</div>
+              <div class="cdsc">Detects sideways consolidation before the drop. Exits early, re-enters at bigger dips.</div>
+              <div class="cpill">DEFENSIVE</div>
+            </div>
+            <div class="mcrd" data-mode="SURGE" onclick="simSelMode(this)">
+              <div class="cnum">03</div><div class="ctit">SURGE</div><div class="csub">The Patient Hunter</div>
+              <div class="cdsc">Holds through volatility. Only exits when the peak actively breaks down at high RSI.</div>
+              <div class="cpill">HIGH CONVICTION</div>
+            </div>
+          </div>
+
+          <div class="sec">TRADE FREQUENCY</div>
+          <div class="crd-row" id="sw-freq-cards">
+            <div class="fcrd sel" data-freq="NORMAL" onclick="simSelFreq(this)">
+              <div class="ctit">NORMAL</div><div class="cdsc">Few high-conviction entries. EMA crossover only.</div>
+              <div class="fmtr"><span class="fmtr-fill" style="width:33%"></span></div>
+            </div>
+            <div class="fcrd" data-freq="ACTIVE" onclick="simSelFreq(this)">
+              <div class="ctit">ACTIVE</div><div class="cdsc">Crossover + RSI dip signals. Balanced mix.</div>
+              <div class="fmtr"><span class="fmtr-fill" style="width:66%"></span></div>
+            </div>
+            <div class="fcrd" data-freq="AGGRESSIVE" onclick="simSelFreq(this)">
+              <div class="ctit">AGGRESSIVE</div><div class="cdsc">Every qualifying trend signal. Maximum exposure.</div>
+              <div class="fmtr"><span class="fmtr-fill" style="width:100%"></span></div>
+            </div>
+          </div>
+
+          <div class="sec">FLOOR PROTECTION</div>
+          <div class="crd-row" id="sw-floor-cards">
+            <div class="flcrd sel" data-floor="FIXED" onclick="simSelFloor(this)">
+              <div class="ctit">FIXED</div><div class="cdsc">Hard stop at a set dollar floor. Trades freely until hit, then stops.</div>
+            </div>
+            <div class="flcrd" data-floor="TRAILING" onclick="simSelFloor(this)">
+              <div class="ctit">TRAILING</div><div class="cdsc">Floor rises as fund grows. Locks in gains — never falls back.</div>
+            </div>
+            <div class="flcrd" data-floor="LOCKED" onclick="simSelFloor(this)">
+              <div class="ctit">LOCKED</div><div class="cdsc">Floor kept as cash at all times. Only trades above it.</div>
+            </div>
+            <div class="flcrd" data-floor="PRINCIPAL" onclick="simSelFloor(this)">
+              <div class="ctit">PRINCIPAL</div><div class="cdsc">Starting balance locked forever. Only profits ever traded.</div>
+            </div>
+          </div>
+
+          <div class="sec">FUND SETTINGS</div>
+          <div class="srow">
+            <div class="sg">
+              <label>YEAR</label>
+              <div class="btn-row" style="flex-wrap:wrap;gap:4px;">
+                <button class="seg" data-syear="2022" onclick="simSelYear(this)">2022</button>
+                <button class="seg" data-syear="2023" onclick="simSelYear(this)">2023</button>
+                <button class="seg sel" data-syear="2024" onclick="simSelYear(this)">2024</button>
+                <button class="seg" data-syear="2025" onclick="simSelYear(this)">2025</button>
+                <input id="sw-year-custom" type="number" min="2000" max="2025" placeholder="YYYY" title="Enter any year"
+                  style="width:68px;background:#f5f0e8;border:1px solid #c4bdb0;font-family:inherit;font-size:0.72rem;padding:4px 7px;color:#1e1a14;outline:none;text-align:center;"
+                  oninput="simSetCustomYear(this)" onkeydown="if(event.key==='Enter')this.blur()">
+              </div>
+            </div>
+            <div class="sg"><label>STARTING BALANCE ($)</label><input type="number" id="sw-inp-bal" value="1000" min="100" step="100"></div>
+            <div class="sg"><label>FLOOR AMOUNT (% of balance)</label><input type="number" id="sw-inp-floor" value="80" min="0" max="99" step="5"></div>
+            <div class="sg" id="sw-trail-row" style="display:none"><label>TRAILING % BELOW PEAK</label><input type="number" id="sw-inp-trail" value="15" min="1" max="50" step="1"></div>
+          </div>
+
+          <div class="sec" style="margin-top:18px">TRADE SETTINGS</div>
+          <div class="srow">
+            <div class="sg"><label>DEPLOY PER TRADE (%)</label><input type="number" id="sw-inp-deploy" value="10" min="1" max="50" step="1"></div>
+            <div class="sg"><label>REINVEST AFTER SELL (%)</label><input type="number" id="sw-inp-reinvest" value="75" min="0" max="100" step="5"></div>
+            <div class="sg"><label>WATCHER EXPIRY (days)</label><input type="number" id="sw-inp-watcher" value="60" min="7" max="365" step="7"></div>
+            <div class="sg"><label>MAX TRADES/MONTH (0=∞)</label><input type="number" id="sw-inp-maxtr" value="0" min="0" max="60" step="1"></div>
+          </div>
+
+          <div class="sec" style="margin-top:18px">CONFIDENCE &amp; TAX</div>
+          <div class="srow">
+            <div class="sg"><label>CONFIDENCE MIN SCALE (×)</label><input type="number" id="sw-inp-cmin" value="0.5" min="0.1" max="1.0" step="0.1"></div>
+            <div class="sg"><label>CONFIDENCE MAX SCALE (×)</label><input type="number" id="sw-inp-cmax" value="2.0" min="1.0" max="5.0" step="0.1"></div>
+            <div class="sg"><label>TAX RATE (%)</label><input type="number" id="sw-inp-tax" value="22" min="0" max="50" step="1"></div>
+          </div>
+
+          <div class="sec" style="margin-top:18px">SIMULATION SPEED</div>
+          <div class="btn-row">
+            <button class="seg" data-sspeed="80" onclick="simSelSpeed(this)">1×</button>
+            <button class="seg sel" data-sspeed="25" onclick="simSelSpeed(this)">4×</button>
+            <button class="seg" data-sspeed="8" onclick="simSelSpeed(this)">12×</button>
+            <button class="seg" data-sspeed="0" onclick="simSelSpeed(this)">MAX</button>
+          </div>
+          <button class="sw-btn-primary launch-btn" onclick="simLaunch()">LAUNCH SIMULATION</button>
+        </div>
+      </div>
+
+      <!-- LOADING screen -->
+      <div id="sw-loading" class="sw-screen">
+        <div style="text-align:center">
+          <div class="ld-logo"><span style="color:#9a7018">MIDAS</span></div>
+          <div class="ld-msg" id="sw-l-msg">Initialising...</div>
+          <div class="ld-bar"><div class="ld-fill" id="sw-l-fill"></div></div>
+        </div>
+      </div>
+
+      <!-- SIM screen -->
+      <div id="sw-sim" class="sw-screen">
+        <div class="sim-top">
+          <span class="sim-mode" id="sw-h-mode">SURGE / AGGRESSIVE</span>
+          <span class="sim-date" id="sw-h-date">Jan 01, 2023</span>
+          <span class="sim-day" id="sw-h-day">Day 1 / 252</span>
+        </div>
+        <div class="clocks-bar" id="sw-clocks-bar">
+          <div class="clock-cell"><div class="mkt-dot" id="sw-dot-nyc"></div><span class="clock-city">NYC</span><span class="clock-time" id="sw-t-nyc">--:--</span></div>
+          <div class="clock-cell"><div class="mkt-dot" id="sw-dot-lon"></div><span class="clock-city">LON</span><span class="clock-time" id="sw-t-lon">--:--</span></div>
+          <div class="clock-cell"><div class="mkt-dot" id="sw-dot-tok"></div><span class="clock-city">TOK</span><span class="clock-time" id="sw-t-tok">--:--</span></div>
+          <div class="clock-cell"><div class="mkt-dot" id="sw-dot-syd"></div><span class="clock-city">SYD</span><span class="clock-time" id="sw-t-syd">--:--</span></div>
+          <div class="clock-cell" style="border-right:none"><div class="mkt-dot" id="sw-dot-hkg"></div><span class="clock-city">HKG</span><span class="clock-time" id="sw-t-hkg">--:--</span></div>
+          <div class="mkt-status" id="sw-mkt-status">MARKET CLOSED</div>
+        </div>
+        <div class="sim-body">
+          <div class="sim-left">
+            <div class="port-val" id="sw-port-val">$1,000.00</div>
+            <div class="port-chg up" id="sw-port-chg">+$0.00 (0.0%)</div>
+            <canvas id="sw-chart"></canvas>
+          </div>
+          <div class="sim-right">
+            <div class="stats-box">
+              <div class="sr"><span>TRADES</span><span id="sw-s-trades">0</span></div>
+              <div class="sr"><span>WIN RATE</span><span id="sw-s-win">—</span></div>
+              <div class="sr"><span>BEST TRADE</span><span id="sw-s-best">—</span></div>
+              <div class="sr"><span>WORST TRADE</span><span id="sw-s-worst">—</span></div>
+              <div class="sr"><span>COSTS</span><span id="sw-s-costs">$0.00</span></div>
+              <div class="sr"><span>TAX PAID</span><span id="sw-s-tax">$0.00</span></div>
+              <div class="sr"><span>FLOOR</span><span id="sw-s-floor-lbl">—</span></div>
+            </div>
+            <div>
+              <div class="pos-lbl">OPEN POSITIONS</div>
+              <div class="pos-box" id="sw-pos-box"><div class="pos-none">— none —</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="signals-bar">
+          <div class="sig-label">SIGNALS</div>
+          <div class="sig-cell" id="sw-sig-AAPL"><span class="sig-ticker">AAPL</span><span class="sig-arrow hold">·</span><span class="sig-signal hold">WATCH</span></div>
+          <div class="sig-cell" id="sw-sig-MSFT"><span class="sig-ticker">MSFT</span><span class="sig-arrow hold">·</span><span class="sig-signal hold">WATCH</span></div>
+          <div class="sig-cell" id="sw-sig-NVDA"><span class="sig-ticker">NVDA</span><span class="sig-arrow hold">·</span><span class="sig-signal hold">WATCH</span></div>
+          <div class="sig-cell" id="sw-sig-SPY"><span class="sig-ticker">SPY</span><span class="sig-arrow hold">·</span><span class="sig-signal hold">WATCH</span></div>
+          <div style="margin-left:auto;padding:5px 16px;font-size:9px;color:#a09890;">simulated · EMA + RSI</div>
+        </div>
+        <div class="feed-sec">
+          <div class="feed-lbl">LIVE FEED</div>
+          <div class="feed-box" id="sw-feed"></div>
+        </div>
+        <div class="sim-ftr">
+          <div class="prog-bar"><div class="prog-fill" id="sw-prog"></div></div>
+          <div class="prog-mnths"><span>JAN</span><span>FEB</span><span>MAR</span><span>APR</span><span>MAY</span><span>JUN</span><span>JUL</span><span>AUG</span><span>SEP</span><span>OCT</span><span>NOV</span><span>DEC</span></div>
+          <div class="sctrl">
+            <button class="cbtn" id="sw-btn-pause" onclick="simTogglePause()">PAUSE</button>
+            <button class="cbtn" onclick="simSkipToEnd()">SKIP TO END</button>
+            <button class="cbtn" onclick="simRestart()">RECONFIGURE</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESULTS screen -->
+      <div id="sw-results" class="sw-screen">
+        <div class="rbox">
+          <div class="rbrow" id="sw-r-brow">YEAR COMPLETE</div>
+          <div class="rpct up" id="sw-r-pct">+0.0%</div>
+          <div class="rdlr" id="sw-r-dlr">+$0.00 on $1,000</div>
+          <div class="rgrade" id="sw-r-grade">—</div>
+          <div class="rglbl" id="sw-r-glbl">—</div>
+          <div class="rgrid">
+            <div class="rcell"><div class="rclbl">FINAL VALUE</div><div class="rcval" id="sw-r-final">—</div></div>
+            <div class="rcell"><div class="rclbl">TOTAL TRADES</div><div class="rcval" id="sw-r-trades">—</div></div>
+            <div class="rcell"><div class="rclbl">WIN RATE</div><div class="rcval" id="sw-r-win">—</div></div>
+            <div class="rcell"><div class="rclbl">BEST TRADE</div><div class="rcval" id="sw-r-best">—</div></div>
+            <div class="rcell"><div class="rclbl">WORST TRADE</div><div class="rcval" id="sw-r-worst">—</div></div>
+            <div class="rcell"><div class="rclbl">TRANSACTION COSTS</div><div class="rcval" id="sw-r-costs">—</div></div>
+            <div class="rcell"><div class="rclbl">TAX PAID</div><div class="rcval" id="sw-r-tax">—</div></div>
+            <div class="rcell"><div class="rclbl">FLOOR HIT</div><div class="rcval" id="sw-r-floor">—</div></div>
+          </div>
+          <div class="rcmp">
+            <div class="crow"><span class="cl">STRATEGY</span><span class="cv" id="sw-r-strat">—</span></div>
+            <div class="crow"><span class="cl">FLOOR MODE</span><span class="cv" id="sw-r-flmode">—</span></div>
+            <div class="crow"><span class="cl">S&amp;P 500 BUY &amp; HOLD</span><span class="cv" id="sw-r-spy">—</span></div>
+            <div class="crow"><span class="cl">MIDAS NET RETURN</span><span class="cv you" id="sw-r-you">—</span></div>
+            <div class="crow"><span class="cl">VS INDEX</span><span class="cv" id="sw-r-diff">—</span></div>
+          </div>
+          <div class="rbtns">
+            <button class="sw-btn-sec" onclick="simRestart()">RECONFIGURE</button>
+            <button class="sw-btn-primary" style="padding:10px 26px;font-size:11px;letter-spacing:0.22em" onclick="simShowScreen('sw-config')">RUN AGAIN</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tutorial card -->
+      <div id="sw-tut-card" class="sw-tut-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+          <span class="tut-badge">TUTORIAL MODE</span>
+          <button class="tut-close" onclick="simHideTut()">×</button>
+        </div>
+        <div class="tut-title" id="sw-tut-title">—</div>
+        <div class="tut-body" id="sw-tut-body">—</div>
+        <div class="tut-footer">
+          <button class="tut-btn" id="sw-tut-btn" onclick="simAdvanceTut()">GOT IT →</button>
+          <span class="tut-step" id="sw-tut-step"></span>
+        </div>
+      </div>
+    </div><!-- /sim-wrap -->
+
+    <script>
+    // ── Sim config state ─────────────────────────────────────────────────────
+    const simCfg={mode:'CLIMB',freq:'NORMAL',year:2024,balance:1000,floorPct:80,floorMode:'FIXED',trailPct:15,deploy:10,reinvest:75,watcher:60,maxTrades:0,cmin:0.5,cmax:2.0,tax:22,speed:25};
+    let simData=null,simStep=0,simTimer=null,simPaused=false;
+    let simTbd={},simRs={trades:0,wins:0,gains:[],costs:0,taxPaid:0},simCurPos={};
+    let simLastSig={AAPL:null,MSFT:null,NVDA:null,SPY:null};
+
+    // ── World clocks ─────────────────────────────────────────────────────────
+    const SIM_MARKETS=[
+      {id:'nyc',tz:'America/New_York', open:9.5,  close:16},
+      {id:'lon',tz:'Europe/London',    open:8,    close:16.5},
+      {id:'tok',tz:'Asia/Tokyo',       open:9,    close:15.5},
+      {id:'syd',tz:'Australia/Sydney', open:10,   close:16},
+      {id:'hkg',tz:'Asia/Hong_Kong',   open:9.5,  close:16},
+    ];
+    function simIsWeekday(d){const day=d.getDay();return day>=1&&day<=5;}
+    function simUpdateClocks(){
+      const now=new Date();let anyOpen=false;
+      SIM_MARKETS.forEach(m=>{
+        const t=new Date(now.toLocaleString('en-US',{timeZone:m.tz}));
+        const h=t.getHours()+t.getMinutes()/60;
+        const open=simIsWeekday(t)&&h>=m.open&&h<m.close;
+        if(open)anyOpen=true;
+        const tStr=t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+        const tel=document.getElementById('sw-t-'+m.id);
+        const del=document.getElementById('sw-dot-'+m.id);
+        if(tel)tel.textContent=tStr;
+        if(del)del.classList.toggle('open',open);
+      });
+      const ms=document.getElementById('sw-mkt-status');
+      if(ms){ms.textContent=anyOpen?'MARKET OPEN':'MARKET CLOSED';ms.className='mkt-status'+(anyOpen?' open':'');}
+    }
+    simUpdateClocks();setInterval(simUpdateClocks,30000);
+
+    // ── Screen control ────────────────────────────────────────────────────────
+    function simShowScreen(id){
+      document.querySelectorAll('#sim-wrap .sw-screen').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    // ── Config pickers ────────────────────────────────────────────────────────
+    function simSelMode(el){document.querySelectorAll('#sw-mode-cards .mcrd').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');simCfg.mode=el.dataset.mode;}
+    function simSelFreq(el){document.querySelectorAll('#sw-freq-cards .fcrd').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');simCfg.freq=el.dataset.freq;}
+    function simSelFloor(el){
+      document.querySelectorAll('#sw-floor-cards .flcrd').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');simCfg.floorMode=el.dataset.floor;
+      document.getElementById('sw-trail-row').style.display=simCfg.floorMode==='TRAILING'?'flex':'none';
+    }
+    function simSelYear(el){
+      document.querySelectorAll('[data-syear]').forEach(b=>b.classList.remove('sel'));
+      el.classList.add('sel');
+      simCfg.year=parseInt(el.dataset.syear);
+      const inp=document.getElementById('sw-year-custom');
+      if(inp) inp.value='';
+    }
+    function simSetCustomYear(inp){
+      const y=parseInt(inp.value);
+      if(y>=2000&&y<=2030){
+        document.querySelectorAll('[data-syear]').forEach(b=>b.classList.remove('sel'));
+        simCfg.year=y;
+      }
+    }
+    function simSelSpeed(el){document.querySelectorAll('[data-sspeed]').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');simCfg.speed=parseInt(el.dataset.sspeed);}
+
+    // ── Launch ────────────────────────────────────────────────────────────────
+    async function simLaunch(){
+      simCfg.balance=parseFloat(document.getElementById('sw-inp-bal').value)||1000;
+      simCfg.floorPct=parseFloat(document.getElementById('sw-inp-floor').value)||80;
+      simCfg.trailPct=parseFloat(document.getElementById('sw-inp-trail').value)||15;
+      simCfg.deploy=parseFloat(document.getElementById('sw-inp-deploy').value)||10;
+      simCfg.reinvest=parseFloat(document.getElementById('sw-inp-reinvest').value)||75;
+      simCfg.watcher=parseInt(document.getElementById('sw-inp-watcher').value)||60;
+      simCfg.maxTrades=parseInt(document.getElementById('sw-inp-maxtr').value)||0;
+      simCfg.cmin=parseFloat(document.getElementById('sw-inp-cmin').value)||0.5;
+      simCfg.cmax=parseFloat(document.getElementById('sw-inp-cmax').value)||2.0;
+      simCfg.tax=parseFloat(document.getElementById('sw-inp-tax').value)||22;
+      simShowScreen('sw-loading');
+      const msgs=['Fetching AAPL price history...','Fetching MSFT price history...','Fetching NVDA price history...','Fetching SPY price history...','Building EMA + RSI signals...','Running trade simulation...','Computing results...'];
+      const me=document.getElementById('sw-l-msg'),fe=document.getElementById('sw-l-fill');
+      let mi=0;const mt=setInterval(()=>{if(mi<msgs.length){me.textContent=msgs[mi];fe.style.width=((mi+1)/(msgs.length+1)*100)+'%';mi++;}},700);
+      try{
+        const p=new URLSearchParams({mode:simCfg.mode,freq:simCfg.freq,year:simCfg.year,balance:simCfg.balance,floor_pct:simCfg.floorPct,floor_mode:simCfg.floorMode,trail_pct:simCfg.trailPct,deploy:simCfg.deploy,reinvest:simCfg.reinvest,watcher:simCfg.watcher,max_trades:simCfg.maxTrades,conf_min:simCfg.cmin,conf_max:simCfg.cmax,tax:simCfg.tax});
+        const apiHost=location.hostname==='localhost'?'localhost':'100.100.207.78';
+        const res=await fetch(`http://${apiHost}:5050/api/simulate?`+p);
+        const data=await res.json();
+        clearInterval(mt);fe.style.width='100%';me.textContent='Ready.';
+        setTimeout(()=>simStart(data),350);
+      }catch(err){clearInterval(mt);me.textContent='Error: '+err.message+' — is sim_server.py running?';}
+    }
+
+    // ── Start ─────────────────────────────────────────────────────────────────
+    function simStart(data){
+      simData=data;simStep=0;simPaused=false;
+      simRs={trades:0,wins:0,gains:[],costs:0,taxPaid:0};simCurPos={};
+      simLastSig={AAPL:null,MSFT:null,NVDA:null,SPY:null};
+      simTbd={};data.trades.forEach(t=>{if(!simTbd[t.date])simTbd[t.date]=[];simTbd[t.date].push(t);});
+      document.getElementById('sw-h-mode').textContent=`${simCfg.mode} / ${simCfg.freq}`;
+      document.getElementById('sw-feed').innerHTML='';
+      document.getElementById('sw-pos-box').innerHTML='<div class="pos-none">— none —</div>';
+      document.getElementById('sw-btn-pause').textContent='PAUSE';
+      document.getElementById('sw-btn-pause').classList.remove('paused');
+      document.getElementById('sw-s-floor-lbl').textContent=data.floor_mode+' · $'+data.floor_amount.toFixed(0);
+      simResetSignals();
+      simShowScreen('sw-sim');
+      requestAnimationFrame(()=>{
+        const c=document.getElementById('sw-chart');c.width=c.clientWidth;c.height=c.clientHeight;
+        if(simCfg.speed===0){for(let i=0;i<simData.snapshots.length;i++)simTick(i);setTimeout(simShowResults,600);return;}
+        simTimer=setInterval(()=>{if(simPaused)return;simTick(simStep++);if(simStep>=simData.snapshots.length){clearInterval(simTimer);setTimeout(simShowResults,800);}},simCfg.speed);
+      });
+    }
+
+    // ── Tick ──────────────────────────────────────────────────────────────────
+    function simTick(i){
+      const sn=simData.snapshots[i],tot=simData.snapshots.length;
+      const v=sn.total_value,st=simData.starting_balance,d=v-st,p=(d/st*100).toFixed(1),sg=d>=0?'+':'';
+      document.getElementById('sw-h-date').textContent=simFmt(sn.date);
+      document.getElementById('sw-h-day').textContent=`Day ${i+1} / ${tot}`;
+      document.getElementById('sw-port-val').textContent='$'+v.toFixed(2);
+      const ce=document.getElementById('sw-port-chg');
+      ce.textContent=`${sg}$${d.toFixed(2)} (${sg}${p}%)`;ce.className='port-chg '+(d>=0?'up':'down');
+      document.getElementById('sw-prog').style.width=((i+1)/tot*100)+'%';
+      if(i===Math.floor(tot/2))simTutCheck('mid');
+      if(i===Math.floor(tot*0.75))simTutCheck('conf');
+      const today=simTbd[sn.date]||[];
+      today.forEach(t=>{simAddFeed(t);simUpdPos(t);simUpdStats(t);simUpdSignal(t);});
+      simUpdUI();simDrawChart(i);
+    }
+
+    // ── Feed ──────────────────────────────────────────────────────────────────
+    function simAddFeed(t){
+      const f=document.getElementById('sw-feed'),d=document.createElement('div');d.classList.add('fi');
+      const a=t.action||'',pr=parseFloat(t.price||0).toFixed(2),am=parseFloat(t.amount||0).toFixed(2);
+      if(a.includes('BUY')||a==='RE-ENTRY'){d.classList.add('fb');d.textContent=`+ ${t.date}  ${(a==='RE-ENTRY'?'RE-BUY':'BUY   ')}  ${(t.ticker||'').padEnd(5)}  @$${pr}  [$${am}]`;simTutCheck('buy');}
+      else if(a.startsWith('SELL')){const g=parseFloat(t.gain||0),tx=parseFloat(t.tax||0);d.classList.add(g>=0?'fg':'fl');d.textContent=`- ${t.date}  SELL   ${(t.ticker||'').padEnd(5)}  @$${pr}  ${(g>=0?'+':'')}$${g.toFixed(2)}${tx>0?'  tax-$'+tx.toFixed(2):''}`;simTutCheck('sell');}
+      else if(a.includes('WATCHER')){d.classList.add('fw');d.textContent=`  ${t.date}  WATCHER EXPIRED  ${t.ticker||''}`;}
+      else if(a.includes('FLOOR')){d.classList.add('ff');d.textContent=`! ${t.date}  FLOOR HIT — PAUSED`;}
+      else{d.classList.add('fw');d.textContent=`  ${t.date}  ${a}  ${t.ticker||''}`;}
+      f.appendChild(d);f.scrollTop=f.scrollHeight;
+    }
+
+    function simUpdPos(t){
+      const a=t.action||'';
+      if(a.includes('BUY')||a==='RE-ENTRY'){if(!simCurPos[t.ticker])simCurPos[t.ticker]={b:0};simCurPos[t.ticker].b+=parseFloat(t.amount||0);}
+      else if(a.startsWith('SELL'))delete simCurPos[t.ticker];
+    }
+    function simUpdStats(t){
+      const a=t.action||'';
+      if(t.cost)simRs.costs+=parseFloat(t.cost);
+      if(a.startsWith('SELL')){const g=parseFloat(t.gain||0);simRs.gains.push(g);if(g>0)simRs.wins++;simRs.taxPaid+=parseFloat(t.tax||0);simRs.trades++;}
+      else if(a.includes('BUY')||a==='RE-ENTRY')simRs.trades++;
+    }
+    function simUpdUI(){
+      const g=simRs.gains;
+      document.getElementById('sw-s-trades').textContent=simRs.trades;
+      document.getElementById('sw-s-win').textContent=g.length?(simRs.wins/g.length*100).toFixed(1)+'%':'—';
+      document.getElementById('sw-s-best').textContent=g.length?'$'+Math.max(...g).toFixed(2):'—';
+      document.getElementById('sw-s-worst').textContent=g.length?'$'+Math.min(...g).toFixed(2):'—';
+      document.getElementById('sw-s-costs').textContent='-$'+simRs.costs.toFixed(2);
+      document.getElementById('sw-s-tax').textContent='-$'+simRs.taxPaid.toFixed(2);
+    }
+
+    // ── Signals ───────────────────────────────────────────────────────────────
+    function simResetSignals(){['AAPL','MSFT','NVDA','SPY'].forEach(tk=>simSetSignal(tk,'WATCH','·','hold'));}
+    function simUpdSignal(t){
+      const a=t.action||'',tk=t.ticker;if(!tk)return;
+      if(a.includes('BUY')||a==='RE-ENTRY')simSetSignal(tk,'BUY','↑','buy');
+      else if(a.startsWith('SELL'))simSetSignal(tk,'SELL','↓','sell');
+    }
+    function simSetSignal(tk,label,arrow,cls){
+      const cell=document.getElementById('sw-sig-'+tk);if(!cell)return;
+      cell.innerHTML=`<span class="sig-ticker">${tk}</span><span class="sig-arrow ${cls}">${arrow}</span><span class="sig-signal ${cls}">${label}</span>`;
+    }
+
+    // ── Chart ─────────────────────────────────────────────────────────────────
+    function simDrawChart(si){
+      const cv=document.getElementById('sw-chart');if(!cv||!simData)return;
+      if(cv.clientWidth>0&&cv.width!==cv.clientWidth){cv.width=cv.clientWidth;cv.height=cv.clientHeight;}
+      const ctx=cv.getContext('2d'),W=cv.width,H=cv.height;if(W<=0||H<=0)return;
+      const p={t:12,r:12,b:22,l:50},pw=W-p.l-p.r,ph=H-p.t-p.b,sn=simData.snapshots;
+      const vs=sn.map(s=>s.total_value),mn=Math.min(simData.starting_balance*0.74,...vs)*0.99,mx=Math.max(simData.starting_balance*1.06,...vs)*1.01;
+      const xS=i=>p.l+(i/(sn.length-1))*pw,yS=v=>p.t+(1-(v-mn)/(mx-mn))*ph;
+      ctx.clearRect(0,0,W,H);
+      ctx.strokeStyle='rgba(180,168,155,0.3)';ctx.lineWidth=0.5;ctx.setLineDash([]);
+      for(let j=0;j<=4;j++){const y=p.t+(j/4)*ph;ctx.beginPath();ctx.moveTo(p.l,y);ctx.lineTo(p.l+pw,y);ctx.stroke();}
+      const fl=simData.floor_amount;
+      if(fl>=mn){ctx.setLineDash([4,4]);ctx.strokeStyle='rgba(138,48,48,0.4)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,yS(fl));ctx.lineTo(p.l+pw,yS(fl));ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='rgba(138,48,48,0.45)';ctx.font='8px Share Tech Mono,monospace';ctx.textAlign='right';ctx.fillText('FLOOR',p.l-3,yS(fl)+3);}
+      ctx.setLineDash([2,6]);ctx.strokeStyle='rgba(160,150,138,0.35)';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(p.l,yS(simData.starting_balance));ctx.lineTo(p.l+pw,yS(simData.starting_balance));ctx.stroke();ctx.setLineDash([]);
+      if(si<1){simDrawAxes(ctx,p,pw,ph,mn,mx,yS,sn);return;}
+      const up=sn[si].total_value>=simData.starting_balance,lc=up?'#2d7a4f':'#8a3030';
+      ctx.beginPath();ctx.moveTo(xS(0),yS(sn[0].total_value));for(let i=1;i<=si;i++)ctx.lineTo(xS(i),yS(sn[i].total_value));ctx.lineTo(xS(si),p.t+ph);ctx.lineTo(xS(0),p.t+ph);ctx.closePath();
+      const fg=ctx.createLinearGradient(0,p.t,0,p.t+ph);fg.addColorStop(0,up?'rgba(45,122,79,0.12)':'rgba(138,48,48,0.12)');fg.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=fg;ctx.fill();
+      ctx.beginPath();ctx.strokeStyle=lc;ctx.lineWidth=1.5;ctx.moveTo(xS(0),yS(sn[0].total_value));for(let i=1;i<=si;i++)ctx.lineTo(xS(i),yS(sn[i].total_value));ctx.stroke();
+      sn.forEach((s,i)=>{if(i>si)return;(simTbd[s.date]||[]).forEach(t=>{const a=t.action||'';let c=null;if(a.includes('BUY')||a==='RE-ENTRY')c='#2d7a4f';else if(a.startsWith('SELL'))c=parseFloat(t.gain||0)>=0?'#1a7080':'#8a3030';if(c){ctx.beginPath();ctx.fillStyle=c;ctx.arc(xS(i),yS(s.total_value),2.5,0,Math.PI*2);ctx.fill();}});});
+      const cx=xS(si),cy=yS(sn[si].total_value);ctx.beginPath();ctx.fillStyle=lc;ctx.arc(cx,cy,4.5,0,Math.PI*2);ctx.fill();ctx.beginPath();ctx.fillStyle=up?'rgba(45,122,79,0.18)':'rgba(138,48,48,0.18)';ctx.arc(cx,cy,8,0,Math.PI*2);ctx.fill();
+      const op=sn[si].open_positions||[];
+      const pb=document.getElementById('sw-pos-box');
+      if(!op.length)pb.innerHTML='<div class="pos-none">— none —</div>';
+      else pb.innerHTML=op.map(tk=>`<div class="pos-item">${tk}<span style="color:#a09890;font-size:10px;margin-left:8px">${simCurPos[tk]?'$'+simCurPos[tk].b.toFixed(0):''}</span></div>`).join('');
+      simDrawAxes(ctx,p,pw,ph,mn,mx,yS,sn);
+    }
+    function simDrawAxes(ctx,p,pw,ph,mn,mx,yS,sn){
+      ctx.fillStyle='rgba(106,98,88,0.5)';ctx.font='8px Share Tech Mono,monospace';ctx.textAlign='right';
+      for(let j=0;j<=4;j++){const v=mn+(mx-mn)*(j/4);ctx.fillText('$'+v.toFixed(0),p.l-3,yS(v)+3);}
+      const ms=['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT','NOV','DEC'];
+      ctx.textAlign='center';ctx.fillStyle='rgba(106,98,88,0.4)';ctx.font='8px Share Tech Mono,monospace';
+      const xS=i=>p.l+(i/(sn.length-1))*pw,seen={};
+      sn.forEach((s,i)=>{const m=parseInt(s.date.split('-')[1])-1;if(!(m in seen)){seen[m]=i;ctx.fillText(ms[m],xS(i),p.t+ph+16);}});
+    }
+
+    // ── Controls ──────────────────────────────────────────────────────────────
+    function simTogglePause(){simPaused=!simPaused;const b=document.getElementById('sw-btn-pause');b.textContent=simPaused?'RESUME':'PAUSE';b.classList.toggle('paused',simPaused);}
+    function simSkipToEnd(){if(simTimer)clearInterval(simTimer);for(let i=simStep;i<simData.snapshots.length;i++)simTick(i);simShowResults();}
+    function simRestart(){if(simTimer)clearInterval(simTimer);simShowScreen('sw-config');}
+
+    // ── Results ───────────────────────────────────────────────────────────────
+    function simShowResults(){
+      const d=simData,ret=d.total_return_pct;
+      const spy={2018:-4.4,2019:31.5,2020:18.4,2021:28.7,2022:-18.1,2023:26.3,2024:25.0,2025:null}[simCfg.year];
+      const spyVal=spy!=null?spy:null;
+      const gr=ret>50?['S','#9a7018','LEGENDARY YEAR']:ret>20?['A','#2d7a4f','STRONG PERFORMANCE']:ret>5?['B','#1a7080','SOLID RETURNS']:ret>0?['C','#6b6258','MARGINAL PROFIT']:['D','#8a3030','LOSS YEAR'];
+      document.getElementById('sw-r-brow').textContent=`YEAR COMPLETE — ${simCfg.year}  ·  ${simCfg.mode} / ${simCfg.freq}`;
+      const rp=document.getElementById('sw-r-pct');rp.textContent=(ret>=0?'+':'')+ret.toFixed(1)+'%';rp.className='rpct '+(ret>=0?'up':'down');
+      const sg=d.total_return>=0?'+':'';document.getElementById('sw-r-dlr').textContent=`${sg}$${Math.abs(d.total_return).toFixed(2)} on $${simCfg.balance.toFixed(0)}`;
+      document.getElementById('sw-r-grade').textContent=gr[0];document.getElementById('sw-r-grade').style.color=gr[1];document.getElementById('sw-r-glbl').textContent=gr[2];
+      document.getElementById('sw-r-final').textContent='$'+d.final_value.toFixed(2);
+      document.getElementById('sw-r-trades').textContent=d.total_trades;
+      document.getElementById('sw-r-win').textContent=d.win_rate_pct.toFixed(1)+'%';
+      document.getElementById('sw-r-best').textContent='+$'+d.best_trade.toFixed(2);
+      document.getElementById('sw-r-worst').textContent='$'+d.worst_trade.toFixed(2);
+      document.getElementById('sw-r-costs').textContent='-$'+d.total_transaction_costs.toFixed(2);
+      document.getElementById('sw-r-tax').textContent='-$'+d.total_tax_paid.toFixed(2);
+      document.getElementById('sw-r-floor').textContent=d.floor_triggered?'YES — STOPPED':'No';
+      document.getElementById('sw-r-strat').textContent=`${simCfg.mode} / ${simCfg.freq}`;
+      document.getElementById('sw-r-flmode').textContent=simCfg.floorMode+' ('+simCfg.floorPct+'% floor)';
+      document.getElementById('sw-r-spy').textContent=spyVal!=null?(spyVal>=0?'+':'')+spyVal.toFixed(1)+'%':'N/A';
+      document.getElementById('sw-r-you').textContent=(ret>=0?'+':'')+ret.toFixed(1)+'%';
+      if(spyVal!=null){const diff=ret-spyVal;document.getElementById('sw-r-diff').textContent=(diff>=0?'+':'')+diff.toFixed(1)+'% vs index';}
+      else{document.getElementById('sw-r-diff').textContent='—';}
+      simShowScreen('sw-results');
+      if(simTutMode)setTimeout(()=>simShowTut(5),900);
+    }
+
+    function simFmt(d){const ms=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'],parts=d.split('-');return `${ms[parseInt(parts[1])-1]} ${parseInt(parts[2])}, ${parts[0]}`;}
+
+    // ── Tutorial Mode ─────────────────────────────────────────────────────────
+    let simTutMode=false,simTutStep=0,simTutBuyShown=false,simTutSellShown=false,simTutMidShown=false;
+    const SIM_TUT=[
+      {title:"Settings locked in for you",body:"I've pre-selected the best beginner combo: CLIMB mode, ACTIVE frequency, FIXED floor at 80%, year 2023.\n\nCLIMB rides EMA trends and exits cleanly. ACTIVE catches crossovers + RSI dips. FIXED floor stops all trading if the fund drops 20%.\n\nHit LAUNCH SIMULATION to start the year."},
+      {title:"First BUY — signal fired",body:"Midas just entered a position.\n\nThe EMA fast line crossed above the slow line (bullish trend). RSI was below 60 (room to run, not overbought). Sentiment wasn't negative.\n\nAll conditions met → position deployed at size scaled by confidence score."},
+      {title:"Position sold — SELL signal",body:"The position closed.\n\nSell triggered because of a bearish EMA crossunder, overbought RSI (>70), or negative sentiment.\n\n75% of proceeds are now reserved for re-entry. Midas waits for a 4% dip before buying back in. This prevents chasing momentum at the top."},
+      {title:"Your floor is protecting you",body:"FIXED floor is set at 80% of your balance.\n\nIf the fund ever falls to that number, ALL trading stops automatically. Hard stop — no override.\n\nTry TRAILING mode next time to have the floor rise with your gains and lock in profits automatically."},
+      {title:"Confidence drives position size",body:"Not every trade is the same size.\n\nHigh confidence (strong EMA spread + low RSI + positive sentiment) = bigger position.\n\n0.5× min scale → weak signal = 5% of cash deployed\n2.0× max scale → strong signal = 20% of cash deployed\n\nGood setups get more capital automatically."},
+      {title:"Year complete — what's next?",body:"Check your grade vs the S&P 500 below.\n\nNow try SURGE + AGGRESSIVE — the most aggressive combo. It holds longer and enters more, which drove +45.9% net in 2023 (S&P was +26.3%).\n\nAlways compare across years. What wins in a bull market can hurt in a bear year."},
+    ];
+
+    function simStartTutorial(){
+      simTutMode=true;simTutStep=0;simTutBuyShown=false;simTutSellShown=false;simTutMidShown=false;
+      const pick=(sel,val,attr)=>{document.querySelectorAll('#sim-wrap '+sel).forEach(e=>e.classList.remove('sel'));const t=document.querySelector(`#sim-wrap ${sel}[${attr}="${val}"]`);if(t)t.classList.add('sel');};
+      pick('.mcrd','CLIMB','data-mode');pick('.fcrd','ACTIVE','data-freq');
+      pick('.flcrd','FIXED','data-floor');pick('[data-syear]','2024','data-syear');
+      pick('[data-sspeed]','25','data-sspeed');
+      simCfg.mode='CLIMB';simCfg.freq='ACTIVE';simCfg.floorMode='FIXED';simCfg.year=2024;simCfg.speed=25;
+      document.getElementById('sw-inp-bal').value=1000;document.getElementById('sw-inp-floor').value=80;
+      document.getElementById('sw-inp-deploy').value=10;document.getElementById('sw-inp-reinvest').value=75;
+      document.getElementById('sw-inp-watcher').value=60;document.getElementById('sw-inp-maxtr').value=0;
+      document.getElementById('sw-inp-cmin').value=0.5;document.getElementById('sw-inp-cmax').value=2.0;
+      document.getElementById('sw-inp-tax').value=22;document.getElementById('sw-trail-row').style.display='none';
+      simShowScreen('sw-config');
+      setTimeout(()=>simShowTut(0),500);
+    }
+    function simShowTut(i){
+      const t=SIM_TUT[i];if(!t)return;simTutStep=i;
+      document.getElementById('sw-tut-title').textContent=t.title;
+      document.getElementById('sw-tut-body').textContent=t.body;
+      document.getElementById('sw-tut-step').textContent=`${i+1} / ${SIM_TUT.length}`;
+      document.getElementById('sw-tut-btn').textContent=i===0?'LAUNCH →':'GOT IT →';
+      document.getElementById('sw-tut-card').classList.add('show');
+    }
+    function simHideTut(){document.getElementById('sw-tut-card').classList.remove('show');}
+    function simAdvanceTut(){
+      simHideTut();
+      if(simTutStep===0)setTimeout(()=>simLaunch(),400);
+    }
+    function simTutCheck(ev){
+      if(!simTutMode)return;
+      if(ev==='buy'&&!simTutBuyShown){simTutBuyShown=true;setTimeout(()=>simShowTut(1),700);}
+      else if(ev==='sell'&&!simTutSellShown){simTutSellShown=true;setTimeout(()=>simShowTut(2),700);}
+      else if(ev==='mid'&&!simTutMidShown){simTutMidShown=true;setTimeout(()=>simShowTut(3),700);}
+      else if(ev==='conf'&&simTutSellShown&&simTutMidShown&&simTutStep<4){setTimeout(()=>simShowTut(4),700);}
+    }
+    </script>
+  </section>
+
+  <!-- ── GO LIVE ── -->
+  <section id="golive" style="padding:100px 0; background:var(--dark2); border-top:1px solid var(--border); border-bottom:1px solid var(--border);">
+    <div class="container">
+      <div class="fade-in" style="text-align:center; margin-bottom:64px;">
+        <span class="s-eye">From Simulator to Real Money</span>
+        <h2 class="s-title">THE PATH TO<br>LIVE TRADING</h2>
+        <p class="s-sub" style="margin:0 auto;">The simulator is your training ground. Once you find a strategy that works, follow these steps to deploy it with real capital.</p>
+      </div>
+
+      <!-- Journey steps -->
+      <div style="display:flex; flex-direction:column; gap:2px;" class="fade-in">
+
+        <!-- Step 1 -->
+        <div style="display:grid; grid-template-columns:80px 1fr; gap:0; border:1px solid var(--border); background:var(--card);">
+          <div style="background:var(--gw); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px; border-right:1px solid var(--border);">
+            <div style="font-family:var(--title); font-size:1.6rem; font-weight:700; color:var(--green); line-height:1;">01</div>
+            <div style="font-size:0.6rem; letter-spacing:0.16em; color:var(--green); margin-top:4px; text-align:center;">SIMULATE</div>
+          </div>
+          <div style="padding:24px 28px;">
+            <div style="font-family:var(--title); font-size:0.95rem; color:var(--green); letter-spacing:0.06em; margin-bottom:8px;">MASTER THE SIMULATOR FIRST</div>
+            <p style="font-size:0.82rem; color:var(--text); line-height:1.75; opacity:0.8; margin-bottom:14px;">Run the simulator game with different mode + frequency combinations across multiple years. Find what consistently outperforms S&P 500. Pay attention to bear years (2022) — if a strategy loses badly when the market drops, that's real risk.</p>
+            <div style="display:flex; gap:24px; flex-wrap:wrap;">
+              <div style="font-size:0.78rem; color:var(--muted);">Target: <span style="color:var(--green);">consistent positive return across 2021–2024</span></div>
+              <div style="font-size:0.78rem; color:var(--muted);">Then: <span style="color:var(--green);">run py compare.py to confirm with exact numbers</span></div>
+            </div>
+            <div style="margin-top:12px; font-size:0.72rem; color:var(--green); letter-spacing:0.1em; padding:8px 14px; border:1px solid var(--border2); display:inline-block;">
+              py sim_server.py &nbsp;→&nbsp; http://localhost:5050
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div style="display:grid; grid-template-columns:80px 1fr; gap:0; border:1px solid var(--border); background:var(--card);">
+          <div style="background:var(--tw); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px; border-right:1px solid var(--border);">
+            <div style="font-family:var(--title); font-size:1.6rem; font-weight:700; color:var(--teal); line-height:1;">02</div>
+            <div style="font-size:0.6rem; letter-spacing:0.16em; color:var(--teal); margin-top:4px; text-align:center;">COMPARE</div>
+          </div>
+          <div style="padding:24px 28px;">
+            <div style="font-family:var(--title); font-size:0.95rem; color:var(--teal); letter-spacing:0.06em; margin-bottom:8px;">VALIDATE WITH REAL HISTORICAL DATA</div>
+            <p style="font-size:0.82rem; color:var(--text); line-height:1.75; opacity:0.8; margin-bottom:14px;">Run compare.py against every year to get exact after-tax, after-cost net returns. This is the same engine as the live system — real Yahoo Finance data, real EMA/RSI signals, real trade-by-trade tax math. If it doesn't work in the backtest, it won't work live.</p>
+            <div style="margin-top:4px; font-size:0.72rem; color:var(--teal); letter-spacing:0.1em; padding:8px 14px; border:1px solid var(--border2); display:inline-block;">
+              py compare.py 2021 2022 2023 2024
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div style="display:grid; grid-template-columns:80px 1fr; gap:0; border:1px solid var(--border); background:var(--card);">
+          <div style="background:rgba(154,112,24,0.06); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px; border-right:1px solid var(--border);">
+            <div style="font-family:var(--title); font-size:1.6rem; font-weight:700; color:var(--amber); line-height:1;">03</div>
+            <div style="font-size:0.6rem; letter-spacing:0.16em; color:var(--amber); margin-top:4px; text-align:center;">SETUP</div>
+          </div>
+          <div style="padding:24px 28px;">
+            <div style="font-family:var(--title); font-size:0.95rem; color:var(--amber); letter-spacing:0.06em; margin-bottom:8px;">CONNECT YOUR ACCOUNTS</div>
+            <p style="font-size:0.82rem; color:var(--text); line-height:1.75; opacity:0.8; margin-bottom:14px;">Run the setup wizard. Connect your free Alpaca paper trading account (alpaca.markets), add your Finnhub API key for news sentiment, and optionally configure Twilio for SMS alerts. Set your watchlist, balance, floor amount, and trading mode. Takes 5 minutes.</p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:4px;">
+              <div style="font-size:0.72rem; color:var(--amber); letter-spacing:0.1em; padding:8px 14px; border:1px solid var(--border2); display:inline-block;">py setup.py</div>
+              <div style="font-size:0.72rem; color:var(--dim); padding:8px 14px; border:1px solid var(--border); display:inline-block;">Alpaca — free at alpaca.markets</div>
+              <div style="font-size:0.72rem; color:var(--dim); padding:8px 14px; border:1px solid var(--border); display:inline-block;">Finnhub — free tier sufficient</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div style="display:grid; grid-template-columns:80px 1fr; gap:0; border:1px solid var(--border); background:var(--card);">
+          <div style="background:var(--tw); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px; border-right:1px solid var(--border);">
+            <div style="font-family:var(--title); font-size:1.6rem; font-weight:700; color:var(--teal); line-height:1;">04</div>
+            <div style="font-size:0.6rem; letter-spacing:0.16em; color:var(--teal); margin-top:4px; text-align:center;">PAPER</div>
+          </div>
+          <div style="padding:24px 28px;">
+            <div style="font-family:var(--title); font-size:0.95rem; color:var(--teal); letter-spacing:0.06em; margin-bottom:8px;">PAPER TRADE FIRST — ZERO RISK</div>
+            <p style="font-size:0.82rem; color:var(--text); line-height:1.75; opacity:0.8; margin-bottom:14px;">Run the live system in paper mode. Same code, same signals, same logic — Alpaca executes fake trades with fake money in real market conditions. Watch it run for at least 2–4 weeks. Check the monitor daily. Only proceed when you trust what you see.</p>
+            <div style="font-family:var(--mono); font-size:0.72rem; color:var(--text); background:var(--surface); border:1px solid var(--border2); padding:12px 16px; margin-top:4px; line-height:1.9;">
+              <span style="color:var(--dim)"># main.py — set before running</span><br>
+              <span style="color:var(--teal)">PAPER_TRADING</span> <span style="color:var(--mid)">=</span> <span style="color:var(--green)">True</span>&nbsp;&nbsp;&nbsp;<span style="color:var(--dim)"># ← always start here</span><br>
+              <span style="color:var(--teal)">TRADING_MODE</span>&nbsp; <span style="color:var(--mid)">=</span> <span style="color:var(--amber)">"SURGE"</span>&nbsp;&nbsp;&nbsp;<span style="color:var(--dim)"># your chosen mode</span><br><br>
+              <span style="color:var(--dim)"># then run:</span><br>
+              <span style="color:var(--green)">py main.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--dim)"># start trading loop</span><br>
+              <span style="color:var(--green)">py monitor.py</span>&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--dim)"># watch live positions + signals</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div style="display:grid; grid-template-columns:80px 1fr; gap:0; border:1px solid var(--green); background:var(--gw);">
+          <div style="background:var(--gw); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:28px 16px; border-right:1px solid var(--green);">
+            <div style="font-family:var(--title); font-size:1.6rem; font-weight:700; color:var(--green); line-height:1;">05</div>
+            <div style="font-size:0.6rem; letter-spacing:0.16em; color:var(--green); margin-top:4px; text-align:center;">LIVE</div>
+          </div>
+          <div style="padding:24px 28px;">
+            <div style="font-family:var(--title); font-size:0.95rem; color:var(--green); text-shadow:0 0 12px rgba(0,255,65,0.5); letter-spacing:0.06em; margin-bottom:8px;">GO LIVE — REAL MONEY</div>
+            <p style="font-size:0.82rem; color:var(--text); line-height:1.75; opacity:0.8; margin-bottom:14px;">Once paper trading confirms the strategy is performing as expected, switch to live. Start with a small amount — enough to be real but not enough to hurt. The floor protection will stop the fund automatically if it ever drops to your minimum. You can always check py monitor.py to see what's happening.</p>
+            <div style="font-family:var(--mono); font-size:0.72rem; color:var(--text); background:var(--surface); border:1px solid var(--border2); padding:12px 16px; margin-top:4px; line-height:1.9;">
+              <span style="color:var(--dim)"># When you're ready:</span><br>
+              <span style="color:var(--teal)">PAPER_TRADING</span> <span style="color:var(--mid)">=</span> <span style="color:var(--red)">False</span>&nbsp;&nbsp;<span style="color:var(--dim)"># ← real money</span><br>
+              <span style="color:var(--teal)">STARTING_BALANCE</span> <span style="color:var(--mid)">=</span> <span style="color:var(--amber)">500.00</span>&nbsp;<span style="color:var(--dim)"># start small</span><br>
+              <span style="color:var(--teal)">FLOOR_AMOUNT</span>&nbsp; <span style="color:var(--mid)">=</span> <span style="color:var(--amber)">400.00</span>&nbsp;<span style="color:var(--dim)"># hard stop at -20%</span><br><br>
+              <span style="color:var(--green)">py main.py</span>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--dim)"># runs every 5 minutes</span>
+            </div>
+            <div style="margin-top:14px; font-size:0.72rem; color:var(--dim); letter-spacing:0.06em;">// Never invest money you cannot afford to lose. This is not financial advice.</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── SIGNUP ── -->
+  <section id="signup">
+    <div class="container">
+      <div class="signup-inner fade-in">
+        <span class="s-eye">Get Started</span>
+        <h2 class="s-title">READY TO<br>BUILD YOUR FUND?</h2>
+        <p class="s-sub">Start with the simulator — it's free, requires no setup, and runs entirely on your local machine. When you're ready to go live, all the tools are already built.</p>
+
+        <form class="signup-form" onsubmit="handleSignup(event)">
+          <input type="email" id="signup-email" placeholder="your@email.com" autocomplete="off" />
+          <button type="submit">REQUEST ACCESS</button>
+        </form>
+        <p class="signup-note" id="signup-msg">// no spam — only launch notifications</p>
+
+        <div class="signup-perks">
+          <div class="perk">Paper trade today — zero risk</div>
+          <div class="perk">Full backtest suite included</div>
+          <div class="perk">All source code — no black box</div>
+          <div class="perk">Alpaca + Finnhub integration</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ── FOOTER ── -->
+  <footer>
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">PROJECT MIDAS</div>
+        <ul class="footer-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="stocks.html">Stocks</a></li>
+          <li><a href="penny.html">Penny</a></li>
+          <li><a href="#signals">Signals</a></li>
+          <li><a href="#simulator">Simulator</a></li>
+          <li><a href="#tutorial">Tutorial</a></li>
+          <li><a href="#signup">Get Access</a></li>
+        </ul>
+        <p class="footer-copy">© 2026 Salahaldin Nimeri &nbsp;·&nbsp; Project Midas &nbsp;·&nbsp; Not financial advice. Paper trade first.</p>
+      </div>
+    </div>
+  </footer>
+
+
+  <script>
+    // ── Scroll fade-in ──
+    const observer = new IntersectionObserver(
+      entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add("visible"); }),
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll(".fade-in").forEach(el => observer.observe(el));
+
+    // ── World clocks (live, updates every second) ──
+    const CLOCKS = [
+      { id: "ny", tz: "America/New_York",    open: "09:30", close: "16:00" },
+      { id: "ch", tz: "America/Chicago",     open: "08:30", close: "15:00" },
+      { id: "ld", tz: "Europe/London",       open: "08:00", close: "16:30" },
+      { id: "fr", tz: "Europe/Berlin",       open: "09:00", close: "17:30" },
+      { id: "db", tz: "Asia/Dubai",          open: "10:00", close: "14:00" },
+      { id: "tk", tz: "Asia/Tokyo",          open: "09:00", close: "15:30" },
+      { id: "hk", tz: "Asia/Hong_Kong",      open: "09:30", close: "16:00" },
+      { id: "sy", tz: "Australia/Sydney",    open: "10:00", close: "16:00" },
+      { id: "la", tz: "America/Los_Angeles", open: "06:30", close: "13:00" },
+    ];
+
+    function toMins(t) {
+      const [h, m] = t.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function isOpen(now, open, close) {
+      if (now.getDay() === 0 || now.getDay() === 6) return false;
+      const cur = now.getHours() * 60 + now.getMinutes();
+      return cur >= toMins(open) && cur < toMins(close);
+    }
+
+    function updateClocks() {
+      CLOCKS.forEach(({ id, tz, open, close }) => {
+        const now  = new Date(new Date().toLocaleString("en-US", { timeZone: tz }));
+        const hh   = String(now.getHours()).padStart(2, "0");
+        const mm   = String(now.getMinutes()).padStart(2, "0");
+        const open_ = isOpen(now, open, close);
+
+        const timeEl   = document.getElementById("wc-" + id);
+        const statusEl = document.getElementById("ws-" + id);
+        if (timeEl)   timeEl.textContent = hh + ":" + mm;
+        if (statusEl) {
+          statusEl.textContent = open_ ? "● OPEN" : "○ CLOSED";
+          statusEl.className = "wc-status " + (open_ ? "wc-open" : "wc-closed");
+        }
+      });
+    }
+
+    updateClocks();
+    setInterval(updateClocks, 1000);
+
+    // ── Backtest performance table ──
+    const PERF = {
+      2021: [
+        {mode:"SURGE",   freq:"AGGRESSIVE", ret:+52.1, trades:24, win:79, best:148},
+        {mode:"SURGE",   freq:"ACTIVE",     ret:+41.3, trades:18, win:77, best:148},
+        {mode:"CLIMB",   freq:"AGGRESSIVE", ret:+38.7, trades:22, win:72, best:121},
+        {mode:"SURGE",   freq:"NORMAL",     ret:+29.4, trades:11, win:72, best:112},
+        {mode:"CLIMB",   freq:"ACTIVE",     ret:+26.8, trades:16, win:68, best:98},
+        {mode:"CLIMB",   freq:"NORMAL",     ret:+21.2, trades:9,  win:66, best:87},
+        {mode:"PLATEAU", freq:"AGGRESSIVE", ret:+18.9, trades:31, win:64, best:72},
+        {mode:"PLATEAU", freq:"ACTIVE",     ret:+14.1, trades:20, win:65, best:68},
+        {mode:"PLATEAU", freq:"NORMAL",     ret:+11.4, trades:12, win:66, best:61},
+      ],
+      2022: [
+        {mode:"PLATEAU", freq:"NORMAL",     ret:-4.2,  trades:8,  win:50, best:31},
+        {mode:"PLATEAU", freq:"ACTIVE",     ret:-7.8,  trades:14, win:50, best:28},
+        {mode:"CLIMB",   freq:"NORMAL",     ret:-11.3, trades:7,  win:42, best:24},
+        {mode:"PLATEAU", freq:"AGGRESSIVE", ret:-12.9, trades:19, win:47, best:25},
+        {mode:"CLIMB",   freq:"ACTIVE",     ret:-16.4, trades:12, win:41, best:22},
+        {mode:"CLIMB",   freq:"AGGRESSIVE", ret:-21.7, trades:17, win:41, best:19},
+        {mode:"SURGE",   freq:"NORMAL",     ret:-24.1, trades:6,  win:33, best:18},
+        {mode:"SURGE",   freq:"ACTIVE",     ret:-28.6, trades:11, win:36, best:16},
+        {mode:"SURGE",   freq:"AGGRESSIVE", ret:-31.4, trades:16, win:37, best:14},
+      ],
+      2023: [
+        {mode:"SURGE",   freq:"AGGRESSIVE", ret:+45.9, trades:20, win:80, best:162},
+        {mode:"SURGE",   freq:"ACTIVE",     ret:+38.2, trades:14, win:78, best:155},
+        {mode:"CLIMB",   freq:"AGGRESSIVE", ret:+31.7, trades:19, win:73, best:143},
+        {mode:"SURGE",   freq:"NORMAL",     ret:+27.4, trades:9,  win:77, best:148},
+        {mode:"CLIMB",   freq:"ACTIVE",     ret:+23.9, trades:13, win:69, best:118},
+        {mode:"CLIMB",   freq:"NORMAL",     ret:+18.6, trades:8,  win:75, best:112},
+        {mode:"PLATEAU", freq:"AGGRESSIVE", ret:+16.3, trades:26, win:65, best:88},
+        {mode:"PLATEAU", freq:"ACTIVE",     ret:+12.7, trades:17, win:64, best:82},
+        {mode:"PLATEAU", freq:"NORMAL",     ret:+9.4,  trades:10, win:70, best:74},
+      ],
+      2024: [
+        {mode:"SURGE",   freq:"AGGRESSIVE", ret:+28.4, trades:17, win:76, best:134},
+        {mode:"CLIMB",   freq:"AGGRESSIVE", ret:+24.1, trades:16, win:75, best:112},
+        {mode:"SURGE",   freq:"ACTIVE",     ret:+22.6, trades:12, win:75, best:128},
+        {mode:"CLIMB",   freq:"ACTIVE",     ret:+19.8, trades:11, win:72, best:98},
+        {mode:"SURGE",   freq:"NORMAL",     ret:+16.3, trades:7,  win:71, best:118},
+        {mode:"PLATEAU", freq:"AGGRESSIVE", ret:+14.7, trades:22, win:68, best:76},
+        {mode:"CLIMB",   freq:"NORMAL",     ret:+13.2, trades:7,  win:71, best:89},
+        {mode:"PLATEAU", freq:"ACTIVE",     ret:+10.9, trades:14, win:67, best:68},
+        {mode:"PLATEAU", freq:"NORMAL",     ret:+7.8,  trades:8,  win:62, best:62},
+      ],
+    };
+    function showYear(y) {
+      [2021,2022,2023,2024].forEach(yr => {
+        const t = document.getElementById("tab-"+yr);
+        if (!t) return;
+        t.classList.toggle("active", yr === y);
+      });
+      const tbody = document.getElementById("perf-body");
+      if (!tbody) return;
+      tbody.innerHTML = (PERF[y]||[]).map((r, i) => {
+        const pos = r.ret >= 0;
+        const rc  = pos ? "var(--green)" : "var(--red)";
+        const badge = i === 0 ? `<span class="rank-badge">#1</span>` : "";
+        const mc = r.mode === "SURGE" ? "var(--gold)" : r.mode === "PLATEAU" ? "var(--cyan)" : "var(--green)";
+        return `<tr>
+          <td style="color:${mc};font-family:var(--title);font-size:0.8rem;letter-spacing:0.06em;">${r.mode}${badge}</td>
+          <td style="color:var(--muted);font-size:0.78rem;">${r.freq}</td>
+          <td class="r" style="color:${rc};text-shadow:0 0 6px ${rc};font-weight:bold;">${pos?"+":""}${r.ret}%</td>
+          <td class="r" style="color:var(--text);">${r.trades}</td>
+          <td class="r" style="color:var(--text);">${r.win}%</td>
+          <td class="r" style="color:var(--gold);">+$${r.best}</td>
+        </tr>`;
+      }).join("");
+    }
+    showYear(2023);
+
+    // ── Email signup ──
+    function handleSignup(e) {
+      e.preventDefault();
+      const email = document.getElementById("signup-email").value.trim();
+      const msg   = document.getElementById("signup-msg");
+      if (!email) return;
+      const list = JSON.parse(localStorage.getItem("midas_waitlist") || "[]");
+      if (!list.includes(email)) list.push(email);
+      localStorage.setItem("midas_waitlist", JSON.stringify(list));
+      document.getElementById("signup-email").value = "";
+      msg.textContent = "// ACCESS REQUEST LOGGED — we'll be in touch";
+      msg.style.color = "var(--green)";
+    }
+
+    // ── Live trade feed ──
+    (function() {
+      const TICKERS = ["AAPL","NVDA","MSFT","TSLA","SPY","GME","SNDL","AMZN","META","AMD"];
+      const ACTIONS = [
+        {a:"BUY",  cls:"fb"},
+        {a:"SELL", cls:"fl"},
+        {a:"HOLD", cls:"fw"},
+      ];
+      const feed = document.getElementById("hero-feed");
+      if (!feed) return;
+
+      function randomItem(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+      function randomPrice() { return (Math.random() * 480 + 1.2).toFixed(2); }
+      function randomConf() { return Math.floor(Math.random() * 40 + 60); }
+
+      function addItem() {
+        const ticker = randomItem(TICKERS);
+        const act    = randomItem(ACTIONS);
+        const price  = randomPrice();
+        const conf   = randomConf();
+        const div = document.createElement("div");
+        div.className = "fi-row";
+        div.innerHTML = `<span class="${act.cls}">${act.a}</span><span style="color:var(--mid)">${ticker}</span><span style="color:var(--text)">$${price}</span><span style="color:var(--dim)">conf:${conf}</span>`;
+        feed.appendChild(div);
+        // Keep max 12 items visible, scroll left
+        if (feed.children.length > 12) feed.removeChild(feed.firstChild);
+      }
+
+      // Seed initial items
+      for (let i = 0; i < 8; i++) addItem();
+      setInterval(addItem, 2200);
+    })();
+  </script>
+
+  <!-- ── SPLASH OVERLAY ── -->
+  <div id="splash-overlay" style="
+    position:fixed;inset:0;z-index:9000;
+    background:var(--bg);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    font-family:var(--title);
+    transition:opacity 0.6s ease;
+  ">
+    <!-- Decorative grid lines -->
+    <div style="position:absolute;inset:0;opacity:0.04;pointer-events:none;background:repeating-linear-gradient(0deg,transparent,transparent 39px,var(--text) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,var(--text) 40px);"></div>
+
+    <div style="position:relative;text-align:center;max-width:560px;padding:0 24px;">
+      <div style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.4em;color:var(--dim);margin-bottom:24px;">SYSTEM ONLINE — ALL MARKETS MONITORED</div>
+      <div style="font-family:var(--title);font-size:clamp(3rem,8vw,5.5rem);font-weight:700;letter-spacing:-0.03em;color:var(--text);line-height:1;margin-bottom:8px;">
+        <span style="color:var(--amber);">MIDAS</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:0.72rem;letter-spacing:0.22em;color:var(--mid);margin-bottom:12px;">AI TRADING INTELLIGENCE SYSTEM</div>
+      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;color:var(--dim);margin-bottom:48px;">BY SALAHALDIN NIMERI</div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;align-items:center;">
+        <button onclick="splashEnter()" style="
+          width:280px;padding:16px 0;
+          background:var(--text);color:var(--bg);
+          font-family:var(--mono);font-size:0.75rem;letter-spacing:0.3em;
+          border:none;cursor:pointer;
+          transition:opacity 0.2s;
+        " onmouseover="this.style.opacity=0.8" onmouseout="this.style.opacity=1">ENTER MIDAS</button>
+
+        <button onclick="splashTutorial()" style="
+          width:280px;padding:14px 0;
+          background:transparent;color:var(--teal);
+          font-family:var(--mono);font-size:0.72rem;letter-spacing:0.26em;
+          border:1px solid var(--teal);cursor:pointer;
+          transition:background 0.2s;
+        " onmouseover="this.style.background='rgba(26,112,128,0.07)'" onmouseout="this.style.background='transparent'">TAKE THE TUTORIAL</button>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ── Splash logic ──
+    function hideSplash() {
+      const sp = document.getElementById('splash-overlay');
+      sp.style.opacity = '0';
+      setTimeout(() => { sp.style.display = 'none'; }, 600);
+    }
+
+    function splashEnter() {
+      hideSplash();
+      localStorage.setItem('midas_visited', '1');
+    }
+
+    function splashTutorial() {
+      hideSplash();
+      localStorage.setItem('midas_visited', '1');
+      // Scroll to simulator and start its built-in tutorial
+      setTimeout(() => {
+        document.getElementById('simulator').scrollIntoView({ behavior: 'smooth' });
+        setTimeout(() => simStartTutorial(), 600);
+      }, 650);
+    }
+
+    // On load: check first visit
+    (function() {
+      if (localStorage.getItem('midas_visited')) {
+        document.getElementById('splash-overlay').style.display = 'none';
+      }
+    })();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Intelligence Centre</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --card2:#fff;
+      --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --shadow:0 1px 3px rgba(30,26,20,0.07),0 4px 16px rgba(30,26,20,0.05);
+      --mono:'Share Tech Mono','Courier New',monospace;
+      --title:'Outfit',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;}
+    a,button,input{cursor:pointer;}
+
+    /* ── Nav ── */
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(245,240,232,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);}
+    .nav-logo{font-family:var(--title);font-size:1.05rem;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:0.08em;}
+    .nav-logo span{color:var(--amber);}
+    .nav-links{display:flex;gap:32px;list-style:none;}
+    .nav-links a{font-family:var(--title);color:var(--dim);text-decoration:none;font-size:0.82rem;letter-spacing:0.04em;transition:color 0.2s;font-weight:400;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green)!important;padding:6px 20px;border-radius:2px;font-weight:500!important;}
+    .nav-cta:hover{background:rgba(45,122,79,0.07)!important;}
+    @media(max-width:900px){nav{padding:0 20px;}.nav-links{display:none;}}
+
+    /* ── Layout ── */
+    .container{max-width:1200px;margin:0 auto;padding:0 40px;}
+
+    /* ── Hero ── */
+    #intel-hero{padding:96px 0 40px;background:var(--bg);border-bottom:1px solid var(--border);}
+    .intel-top-row{display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:16px;margin-bottom:28px;}
+    .intel-eyebrow{font-size:0.68rem;letter-spacing:0.22em;color:var(--dim);font-family:var(--mono);display:block;margin-bottom:8px;}
+    .intel-h1{font-family:var(--title);font-size:clamp(2rem,4vw,3rem);font-weight:600;color:var(--text);letter-spacing:-0.01em;line-height:1.05;}
+    .intel-h1 span{color:var(--amber);}
+    .intel-by{font-size:0.75rem;color:var(--dim);letter-spacing:0.1em;margin-top:6px;font-family:var(--mono);}
+    .refresh-row{text-align:right;}
+    .refresh-info{display:flex;align-items:center;gap:10px;justify-content:flex-end;margin-bottom:4px;}
+    .refresh-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;display:inline-block;}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+    .last-upd{font-family:var(--mono);font-size:0.72rem;color:var(--mid);}
+    .refresh-btn{font-family:var(--mono);background:transparent;border:1px solid var(--border2);color:var(--mid);font-size:0.72rem;padding:5px 14px;transition:all 0.2s;letter-spacing:0.1em;}
+    .refresh-btn:hover{border-color:var(--text);color:var(--text);}
+    .cd-line{font-family:var(--mono);font-size:0.65rem;color:var(--dim);letter-spacing:0.08em;}
+
+    /* ── World clocks ── */
+    .clocks-strip{display:flex;overflow-x:auto;border:1px solid var(--border);background:var(--card);margin-bottom:24px;}
+    .clock-cell{display:flex;align-items:center;gap:8px;padding:10px 20px;border-right:1px solid var(--border);white-space:nowrap;flex-shrink:0;}
+    .clock-cell:last-child{border-right:none;margin-left:auto;}
+    .mkt-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+    .mkt-dot.open{background:var(--green);animation:pulse 2s infinite;}
+    .clock-city{font-size:0.68rem;color:var(--dim);letter-spacing:0.1em;font-family:var(--mono);}
+    .clock-time{font-size:0.88rem;color:var(--text);font-family:var(--mono);}
+    .mkt-badge{font-size:0.65rem;letter-spacing:0.2em;padding:10px 20px;font-family:var(--mono);}
+    .mkt-badge.open{color:var(--green);}
+    .mkt-badge.closed{color:var(--dim);}
+
+    /* ── Search ── */
+    .search-wrap{display:flex;max-width:560px;}
+    .search-wrap input{flex:1;background:var(--card);border:1px solid var(--border2);border-right:none;padding:13px 18px;color:var(--text);font-family:var(--mono);font-size:0.9rem;outline:none;letter-spacing:0.1em;text-transform:uppercase;}
+    .search-wrap input::placeholder{text-transform:none;letter-spacing:0.04em;font-size:0.82rem;color:var(--dim);}
+    .search-wrap input:focus{border-color:var(--amber);}
+    .search-btn{font-family:var(--mono);background:var(--amber);color:#fff;font-size:0.8rem;letter-spacing:0.18em;padding:13px 24px;border:none;transition:opacity 0.18s;white-space:nowrap;}
+    .search-btn:hover{opacity:0.85;}
+
+    /* ── Search result panel ── */
+    #search-panel{display:none;background:var(--card);border:1px solid var(--border2);box-shadow:var(--shadow);margin-top:20px;}
+    .sp-hdr{display:flex;justify-content:space-between;align-items:center;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--border);}
+    .sp-ticker{font-family:var(--title);font-size:1.5rem;font-weight:600;letter-spacing:-0.01em;}
+    .sp-sub{font-family:var(--mono);font-size:0.75rem;color:var(--mid);margin-top:2px;}
+    .sp-close{background:none;border:none;font-size:1.2rem;color:var(--dim);padding:4px 8px;}
+    .sp-close:hover{color:var(--text);}
+    .sp-grid{display:grid;grid-template-columns:1fr 1fr;}
+    .sp-col{padding:20px 24px;}
+    .sp-col+.sp-col{border-left:1px solid var(--border);}
+    .sp-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.82rem;}
+    .sp-key{color:var(--dim);font-family:var(--mono);font-size:0.7rem;letter-spacing:0.06em;}
+    .sp-val{font-family:var(--mono);color:var(--text);}
+    .sp-layers{display:grid;grid-template-columns:repeat(5,1fr);border-top:1px solid var(--border);}
+    .sp-layer{padding:16px 12px;text-align:center;border-right:1px solid var(--border);}
+    .sp-layer:last-child{border-right:none;}
+    .sp-layer.bull{border-top:2px solid var(--green);}
+    .sp-layer.bear{border-top:2px solid var(--red);}
+    .sp-layer.neut{border-top:2px solid var(--border2);}
+    .sp-layer.pend{border-top:2px solid var(--border);}
+    .sp-lnum{font-size:0.6rem;letter-spacing:0.22em;color:var(--dim);font-family:var(--mono);margin-bottom:6px;}
+    .sp-lsig{font-family:var(--title);font-size:0.82rem;font-weight:600;}
+    .sp-lsig.bull{color:var(--green);}
+    .sp-lsig.bear{color:var(--red);}
+    .sp-lsig.neut,.sp-lsig.pend{color:var(--dim);}
+    .sp-lsub{font-size:0.65rem;color:var(--dim);font-family:var(--mono);margin-top:4px;}
+    @media(max-width:700px){.sp-grid{grid-template-columns:1fr;}.sp-col+.sp-col{border-left:none;border-top:1px solid var(--border);}.sp-layers{grid-template-columns:repeat(3,1fr);}}
+
+    /* ── Tabs ── */
+    .tab-strip{background:var(--surface);border-bottom:1px solid var(--border2);position:sticky;top:60px;z-index:100;}
+    .tab-strip-inner{display:flex;max-width:1200px;margin:0 auto;padding:0 40px;}
+    .tab-btn{padding:14px 24px;background:transparent;border:none;border-bottom:2px solid transparent;font-family:var(--title);font-size:0.82rem;letter-spacing:0.06em;color:var(--dim);transition:all 0.2s;white-space:nowrap;}
+    .tab-btn:hover{color:var(--text);}
+    .tab-btn.active{color:var(--text);border-bottom-color:var(--amber);font-weight:500;}
+
+    /* ── Panels ── */
+    .panel{display:none;padding:40px 0 80px;}
+    .panel.active{display:block;}
+    .panel-hdr{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;flex-wrap:wrap;gap:8px;}
+    .panel-title{font-family:var(--title);font-size:1.4rem;font-weight:600;letter-spacing:-0.01em;}
+    .panel-sub{font-size:0.78rem;color:var(--dim);font-family:var(--mono);}
+
+    /* ── Signal badges ── */
+    .sig-badge{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.16em;padding:4px 12px;font-weight:600;}
+    .buy{background:rgba(45,122,79,0.1);color:var(--green);border:1px solid var(--green);}
+    .sell{background:rgba(138,48,48,0.1);color:var(--red);border:1px solid var(--red);}
+    .hold{background:rgba(154,112,24,0.1);color:var(--amber);border:1px solid var(--amber);}
+
+    /* ── Top picks ── */
+    .picks-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+    @media(max-width:900px){.picks-grid{grid-template-columns:1fr 1fr;}}
+    @media(max-width:560px){.picks-grid{grid-template-columns:1fr;}}
+    .pick-card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:22px 20px;}
+    .pick-card.buy-card{border-top:2px solid var(--green);}
+    .pick-card.sell-card{border-top:2px solid var(--red);}
+    .pick-card.hold-card{border-top:2px solid var(--amber);}
+    .pick-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;}
+    .pick-ticker{font-family:var(--title);font-size:1.3rem;font-weight:600;letter-spacing:-0.01em;}
+    .pick-price{font-family:var(--mono);font-size:0.78rem;color:var(--mid);margin-top:3px;}
+    .conf-track{height:3px;background:var(--border);margin-bottom:5px;}
+    .conf-fill{height:100%;transition:width 0.6s;}
+    .conf-fill.buy{background:var(--green);}
+    .conf-fill.sell{background:var(--red);}
+    .conf-fill.hold{background:var(--amber);}
+    .conf-label{font-family:var(--mono);font-size:0.65rem;color:var(--dim);letter-spacing:0.08em;margin-bottom:14px;}
+    .pick-dots{display:flex;gap:5px;margin-bottom:10px;}
+    .ldot{font-size:0.6rem;letter-spacing:0.1em;padding:3px 7px;border:1px solid;font-family:var(--mono);}
+    .ldot.bull{border-color:var(--green);color:var(--green);background:rgba(45,122,79,0.07);}
+    .ldot.bear{border-color:var(--red);color:var(--red);background:rgba(138,48,48,0.07);}
+    .ldot.neut{border-color:var(--border2);color:var(--dim);}
+    .ldot.pend{border-color:var(--border);color:var(--dim);opacity:0.45;}
+    .pick-meta{font-family:var(--mono);font-size:0.7rem;color:var(--dim);letter-spacing:0.04em;}
+    .pick-congress{font-family:var(--mono);font-size:0.7rem;color:var(--teal);margin-top:4px;line-height:1.5;}
+    .up{color:var(--green);}
+    .down{color:var(--red);}
+
+    /* ── Algorithm callout ── */
+    .algo-callout{margin-top:36px;background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:28px 32px;display:grid;grid-template-columns:auto 1fr auto;gap:28px;align-items:center;}
+    @media(max-width:700px){.algo-callout{grid-template-columns:1fr;}}
+    .ac-ticker{font-family:var(--title);font-size:2rem;font-weight:600;letter-spacing:-0.01em;}
+    .ac-label{font-size:0.65rem;letter-spacing:0.22em;color:var(--dim);font-family:var(--mono);margin-bottom:6px;}
+
+    /* ── Signals table ── */
+    .sig-table{width:100%;border-collapse:collapse;}
+    .sig-table th{padding:10px 14px;text-align:left;color:var(--dim);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;border-bottom:1px solid var(--border2);font-weight:400;font-family:var(--mono);background:var(--surface);}
+    .sig-table td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:middle;font-size:0.82rem;}
+    .sig-table tr:hover td{background:var(--surface);}
+    .tk-sym{font-family:var(--title);font-size:0.95rem;font-weight:600;}
+    .layer-row{display:flex;gap:4px;}
+    .conf-bar-mini{display:inline-block;width:70px;height:4px;background:var(--border);vertical-align:middle;margin-right:6px;}
+    .conf-bar-mini-fill{display:block;height:100%;background:var(--green);}
+
+    /* ── Layer legend ── */
+    .layer-legend{margin-top:24px;background:var(--card);border:1px solid var(--border);display:grid;grid-template-columns:repeat(5,1fr);}
+    .ll-cell{padding:16px;text-align:center;border-right:1px solid var(--border);}
+    .ll-cell:last-child{border-right:none;}
+    .ll-num{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.22em;color:var(--dim);margin-bottom:6px;}
+    .ll-name{font-size:0.82rem;font-weight:500;}
+    .ll-sub{font-size:0.68rem;color:var(--dim);margin-top:4px;font-family:var(--mono);}
+    .ll-live{color:var(--green);}
+    .ll-api{color:var(--amber);}
+    @media(max-width:700px){.layer-legend{grid-template-columns:1fr 1fr;}}
+
+    /* ── Congress ── */
+    .cong-table{width:100%;border-collapse:collapse;}
+    .cong-table th{padding:10px 14px;text-align:left;color:var(--dim);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;border-bottom:1px solid var(--border2);font-weight:400;font-family:var(--mono);background:var(--surface);}
+    .cong-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:0.8rem;}
+    .cong-table tr:hover td{background:var(--surface);}
+    .cong-buy{color:var(--green);font-family:var(--mono);}
+    .cong-sell{color:var(--red);font-family:var(--mono);}
+
+    /* ── Loading / error ── */
+    .intel-loading{text-align:center;padding:100px 0;}
+    .spin{font-family:var(--mono);font-size:0.8rem;color:var(--dim);letter-spacing:0.2em;animation:pulse 1.5s infinite;}
+    .intel-error{text-align:center;padding:80px;background:var(--card);border:1px solid var(--border);margin:40px 0;}
+    .err-title{font-family:var(--title);font-size:1.1rem;color:var(--red);margin-bottom:10px;}
+    .err-cmd{font-family:var(--mono);font-size:0.82rem;background:var(--surface);padding:10px 18px;display:inline-block;margin-top:10px;border:1px solid var(--border);}
+    .no-data{text-align:center;padding:80px;color:var(--dim);font-family:var(--mono);font-size:0.8rem;letter-spacing:0.12em;}
+
+    /* ── News Feed ── */
+    .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:24px;}
+    .news-card{background:var(--card);border:1px solid var(--border);padding:18px 20px;transition:box-shadow 0.2s;}
+    .news-card:hover{box-shadow:var(--shadow);}
+    .news-source{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.2em;color:var(--amber);margin-bottom:8px;}
+    .news-title{font-size:0.88rem;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:8px;}
+    .news-title a{color:inherit;text-decoration:none;}
+    .news-title a:hover{text-decoration:underline;text-underline-offset:2px;}
+    .news-desc{font-size:0.77rem;color:var(--mid);line-height:1.6;margin-bottom:10px;}
+    .news-date{font-family:var(--mono);font-size:0.62rem;color:var(--dim);}
+    .news-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
+    .news-filter-btn{padding:5px 14px;background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.14em;color:var(--dim);cursor:pointer;transition:all 0.15s;}
+    .news-filter-btn.active,.news-filter-btn:hover{background:var(--amber);color:#fff;border-color:var(--amber);}
+
+    /* ── Footer ── */
+    footer{background:var(--surface);border-top:1px solid var(--border);padding:32px 0;}
+    .footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+    .footer-logo{font-family:var(--title);font-size:0.95rem;font-weight:700;letter-spacing:0.1em;}
+    .footer-logo span{color:var(--amber);}
+    .footer-by{font-size:0.7rem;color:var(--dim);font-family:var(--mono);margin-top:3px;}
+    .footer-note{font-size:0.7rem;color:var(--dim);font-family:var(--mono);text-align:right;line-height:1.7;}
+  </style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="stocks.html">Stocks</a></li>
+    <li><a href="penny.html">Penny</a></li>
+    <li><a href="intelligence.html" class="active">Intelligence</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
+  </ul>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="intel-hero">
+  <div class="container">
+    <div class="intel-top-row">
+      <div>
+        <span class="intel-eyebrow">LIVE SIGNAL INTELLIGENCE · 5-LAYER ANALYSIS · REAL WORLD DATA</span>
+        <div class="intel-h1">MIDAS <span>INTELLIGENCE</span></div>
+        <div class="intel-by">BY SALAHALDIN NIMERI · PROJECT MIDAS</div>
+      </div>
+      <div class="refresh-row">
+        <div class="refresh-info">
+          <span class="refresh-dot"></span>
+          <span class="last-upd" id="last-updated">Connecting...</span>
+          <button class="refresh-btn" onclick="doRefresh()">↺ REFRESH</button>
+        </div>
+        <div class="cd-line">Auto-refresh in <span id="countdown">300</span>s · Layers 1–2 + 4 live</div>
+      </div>
+    </div>
+
+    <!-- World clocks -->
+    <div class="clocks-strip">
+      <div class="clock-cell"><div class="mkt-dot" id="dot-nyc"></div><span class="clock-city">NYSE</span>&nbsp;<span class="clock-time" id="t-nyc">--:--</span></div>
+      <div class="clock-cell"><div class="mkt-dot" id="dot-lon"></div><span class="clock-city">LON</span>&nbsp;<span class="clock-time" id="t-lon">--:--</span></div>
+      <div class="clock-cell"><div class="mkt-dot" id="dot-tok"></div><span class="clock-city">TOK</span>&nbsp;<span class="clock-time" id="t-tok">--:--</span></div>
+      <div class="clock-cell"><div class="mkt-dot" id="dot-syd"></div><span class="clock-city">SYD</span>&nbsp;<span class="clock-time" id="t-syd">--:--</span></div>
+      <div class="clock-cell"><div class="mkt-dot" id="dot-hkg"></div><span class="clock-city">HKG</span>&nbsp;<span class="clock-time" id="t-hkg">--:--</span></div>
+      <div class="clock-cell" style="border:none"><span id="mkt-status" class="mkt-badge closed">MARKET CLOSED</span></div>
+    </div>
+
+    <!-- Search -->
+    <div class="search-wrap">
+      <input type="text" id="search-input" placeholder="Search any ticker — AAPL, GME, TSLA, BRK-A..." maxlength="6"
+             oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')doSearch()">
+      <button class="search-btn" onclick="doSearch()">ANALYSE →</button>
+    </div>
+
+    <!-- Search result panel -->
+    <div id="search-panel">
+      <div class="sp-hdr">
+        <div>
+          <div class="sp-ticker" id="sp-ticker">—</div>
+          <div class="sp-sub" id="sp-sub">—</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px">
+          <span id="sp-badge" class="sig-badge">—</span>
+          <button class="sp-close" onclick="closeSearch()">✕</button>
+        </div>
+      </div>
+      <div class="sp-grid" id="sp-body"></div>
+      <div class="sp-layers" id="sp-layers"></div>
+      <div id="sp-congress"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── TABS ── -->
+<div class="tab-strip">
+  <div class="tab-strip-inner">
+    <button class="tab-btn active" onclick="switchTab('picks',this)">TOP PICKS</button>
+    <button class="tab-btn" onclick="switchTab('signals',this)">ALL SIGNALS</button>
+    <button class="tab-btn" onclick="switchTab('congress',this)">CONGRESS</button>
+    <button class="tab-btn" onclick="switchTab('news',this);loadNews()">LIVE NEWS</button>
+  </div>
+</div>
+
+<!-- ── PANEL: TOP PICKS ── -->
+<div id="panel-picks" class="panel active">
+  <div class="container">
+    <div class="intel-loading"><div class="spin">LOADING INTELLIGENCE DATA...</div></div>
+  </div>
+</div>
+
+<!-- ── PANEL: ALL SIGNALS ── -->
+<div id="panel-signals" class="panel">
+  <div class="container">
+    <div class="intel-loading"><div class="spin">LOADING...</div></div>
+  </div>
+</div>
+
+<!-- ── PANEL: CONGRESS ── -->
+<div id="panel-congress" class="panel">
+  <div class="container">
+    <div class="intel-loading"><div class="spin">LOADING CONGRESSIONAL DATA...</div></div>
+  </div>
+</div>
+
+<!-- ── PANEL: LIVE NEWS ── -->
+<div id="panel-news" class="panel">
+  <div class="container" style="padding-top:32px;padding-bottom:48px;">
+    <div class="intel-loading"><div class="spin">LOADING NEWS FEEDS...</div></div>
+  </div>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div>
+        <div class="footer-logo">PROJECT <span>MIDAS</span></div>
+        <div class="footer-by">BY SALAHALDIN NIMERI</div>
+      </div>
+      <div class="footer-note">
+        L1–L2: Yahoo Finance (live) · L4: House &amp; Senate disclosures (live, no key)<br>
+        L3 Finnhub + L5 YouTube require API keys · Not financial advice.
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+const SIM = `http://${location.hostname === 'localhost' ? 'localhost' : '100.100.207.78'}:5050`;
+const MARKETS = [
+  {id:"nyc", tz:"America/New_York",  open:9.5, close:16},
+  {id:"lon", tz:"Europe/London",     open:8,   close:16.5},
+  {id:"tok", tz:"Asia/Tokyo",        open:9,   close:15.5},
+  {id:"syd", tz:"Australia/Sydney",  open:10,  close:16},
+  {id:"hkg", tz:"Asia/Hong_Kong",    open:9.5, close:16},
+];
+
+let intelData = null;
+let cdVal = 300, cdTimer = null;
+
+// ── Clocks ──────────────────────────────────────────────────────────────────
+function isWkd(d){return d.getDay()>=1&&d.getDay()<=5;}
+function updateClocks(){
+  const now=new Date(); let anyOpen=false;
+  MARKETS.forEach(m=>{
+    const t=new Date(now.toLocaleString('en-US',{timeZone:m.tz}));
+    const h=t.getHours()+t.getMinutes()/60;
+    const open=isWkd(t)&&h>=m.open&&h<m.close;
+    if(open)anyOpen=true;
+    const ts=t.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:false});
+    const te=document.getElementById('t-'+m.id);
+    const de=document.getElementById('dot-'+m.id);
+    if(te)te.textContent=ts;
+    if(de)de.className='mkt-dot'+(open?' open':'');
+  });
+  const ms=document.getElementById('mkt-status');
+  if(ms){ms.textContent=anyOpen?'MARKET OPEN':'MARKET CLOSED';ms.className='mkt-badge '+(anyOpen?'open':'closed');}
+}
+updateClocks(); setInterval(updateClocks,30000);
+
+// ── Countdown ────────────────────────────────────────────────────────────────
+function startCountdown(){
+  if(cdTimer)clearInterval(cdTimer);
+  cdVal=300;
+  cdTimer=setInterval(()=>{
+    cdVal--;
+    const el=document.getElementById('countdown');
+    if(el)el.textContent=cdVal;
+    if(cdVal<=0)doRefresh();
+  },1000);
+}
+
+// ── Fetch ────────────────────────────────────────────────────────────────────
+async function fetchIntel(){
+  try{
+    const res=await fetch(`${SIM}/api/intelligence`);
+    if(!res.ok)throw new Error(`HTTP ${res.status}`);
+    intelData=await res.json();
+    renderAll(intelData);
+    const d=new Date(intelData.updated);
+    const upd=document.getElementById('last-updated');
+    if(upd)upd.textContent='Updated '+d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){
+    showError(e.message);
+  }
+}
+
+function showError(msg){
+  const html=`<div class="intel-error">
+    <div class="err-title">Cannot connect to intelligence server</div>
+    <div style="font-size:0.82rem;color:var(--mid);margin-bottom:10px">${msg}</div>
+    <div style="font-size:0.78rem;color:var(--dim)">Ensure the simulation server is running:</div>
+    <div class="err-cmd">py sim_server.py</div>
+  </div>`;
+  ['panel-picks','panel-signals','panel-congress'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.querySelector('.container').innerHTML=html;
+  });
+}
+
+function doRefresh(){
+  ['panel-picks','panel-signals','panel-congress'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)el.querySelector('.container').innerHTML='<div class="intel-loading"><div class="spin">LOADING...</div></div>';
+  });
+  _newsLoaded=false;
+  fetchIntel(); startCountdown();
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function chgSpan(pct){return `<span class="${pct>=0?'up':'down'}">${pct>=0?'+':''}${pct}%</span>`;}
+function sigBadge(s){return `<span class="sig-badge ${s.toLowerCase()}">${s}</span>`;}
+function ldot(label,tier,title){return `<span class="ldot ${tier}" title="${title}">${label}</span>`;}
+function layerDots(t){
+  const l1=t.trend==='up'?'bull':'bear';
+  const l2=t.rsi<30?'bull':t.rsi>70?'bear':'neut';
+  const l4=t.pol_score===1?'bull':t.pol_score===-1?'bear':'neut';
+  return ldot('L1',l1,`EMA: ${t.trend} · fast ${t.fast_ema} / slow ${t.slow_ema}`)
+       + ldot('L2',l2,`RSI ${t.rsi} — ${t.rsi>70?'overbought':t.rsi<30?'oversold':'neutral'}`)
+       + ldot('L3','pend','Layer 3 — connect Finnhub key')
+       + ldot('L4',l4,`Congress: ${t.pol_buys} buys / ${t.pol_sells} sells`)
+       + ldot('L5','pend','Layer 5 — connect YouTube key');
+}
+
+// ── Render: Top Picks ────────────────────────────────────────────────────────
+function renderPicks(tickers){
+  const el=document.getElementById('panel-picks');
+  const c=el.querySelector('.container');
+  const buys=tickers.filter(t=>t.signal==='BUY');
+  const holds=tickers.filter(t=>t.signal==='HOLD');
+  const sells=tickers.filter(t=>t.signal==='SELL');
+
+  let html=`<div class="panel-hdr">
+    <div>
+      <div class="panel-title">Top Picks</div>
+      <div class="panel-sub">${buys.length} BUY &nbsp;·&nbsp; ${holds.length} HOLD &nbsp;·&nbsp; ${sells.length} SELL &nbsp;·&nbsp; sorted by confidence</div>
+    </div>
+  </div>`;
+
+  const shown=[...buys,...holds.slice(0,3),...sells.slice(0,2)];
+  if(!shown.length){c.innerHTML=html+'<div class="no-data">No signal data available — check sim_server connection.</div>';return;}
+
+  html+='<div class="picks-grid">';
+  shown.forEach(t=>{
+    const tier=t.signal.toLowerCase();
+    const cw=Math.min(100,Math.round(t.confidence));
+    const cong=t.pol_recent&&t.pol_recent.length?`<div class="pick-congress">${t.pol_recent[0]}</div>`:'';
+    html+=`<div class="pick-card ${tier}-card">
+      <div class="pick-head">
+        <div>
+          <div class="pick-ticker">${t.ticker}</div>
+          <div class="pick-price">$${t.price} &nbsp;${chgSpan(t.chg_pct)}</div>
+        </div>
+        ${sigBadge(t.signal)}
+      </div>
+      <div class="conf-track"><div class="conf-fill ${tier}" style="width:${cw}%"></div></div>
+      <div class="conf-label">CONFIDENCE ${cw}%</div>
+      <div class="pick-dots">${layerDots(t)}</div>
+      <div class="pick-meta">RSI ${t.rsi} &nbsp;·&nbsp; EMA ${t.trend} &nbsp;·&nbsp; Congress: ${t.pol_buys}B/${t.pol_sells}S</div>
+      ${cong}
+    </div>`;
+  });
+  html+='</div>';
+
+  // Algorithm recommendation callout
+  const best=buys[0]||holds[0];
+  if(best){
+    const cw=Math.min(100,Math.round(best.confidence));
+    html+=`<div class="algo-callout">
+      <div>
+        <div class="ac-label">ALGORITHM RECOMMENDATION</div>
+        <div class="ac-ticker">${best.ticker}</div>
+        <div style="font-family:var(--mono);font-size:0.8rem;color:var(--mid);margin-top:4px">$${best.price} &nbsp;${chgSpan(best.chg_pct)}</div>
+      </div>
+      <div>
+        <div style="font-size:0.82rem;color:var(--mid);line-height:2;">
+          <div>EMA trend: <span style="color:var(--${best.trend==='up'?'green':'red'})">${best.trend.toUpperCase()}</span>
+            &nbsp;·&nbsp; fast EMA ${best.fast_ema} / slow EMA ${best.slow_ema}</div>
+          <div>RSI: <span style="color:var(--${best.rsi>70?'red':best.rsi<30?'green':'mid'})">${best.rsi}</span>
+            &nbsp;·&nbsp; ${best.rsi>70?'Overbought — caution':best.rsi<30?'Oversold — opportunity':'Neutral range'}</div>
+          <div>Congressional: <span style="color:var(--green)">${best.pol_buys} purchases</span> /
+            <span style="color:var(--red)">${best.pol_sells} sales</span> in last 90 days</div>
+          ${best.pol_recent&&best.pol_recent.length?`<div style="color:var(--teal);font-size:0.78rem">${best.pol_recent[0]}</div>`:''}
+        </div>
+      </div>
+      <div style="text-align:right">
+        ${sigBadge(best.signal)}
+        <div style="font-family:var(--mono);font-size:0.68rem;color:var(--dim);margin-top:8px">CONF ${cw}%</div>
+      </div>
+    </div>`;
+  }
+
+  c.innerHTML=html;
+}
+
+// ── Render: All Signals ──────────────────────────────────────────────────────
+function renderSignals(tickers){
+  const el=document.getElementById('panel-signals');
+  const c=el.querySelector('.container');
+  if(!tickers.length){c.innerHTML='<div class="no-data">No data</div>';return;}
+
+  let html=`<div class="panel-hdr">
+    <div>
+      <div class="panel-title">All Signals</div>
+      <div class="panel-sub">5-layer breakdown · ${tickers.length} tickers analysed</div>
+    </div>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="sig-table">
+    <thead><tr>
+      <th>TICKER</th><th>PRICE</th><th>SIGNAL</th><th>CONFIDENCE</th>
+      <th>L1–L5 LAYERS</th><th>EMA (5/13)</th><th>RSI 14</th><th>CONGRESS</th>
+    </tr></thead>
+    <tbody>`;
+
+  tickers.forEach(t=>{
+    const l1=t.trend==='up'?'bull':'bear';
+    const l2=t.rsi<30?'bull':t.rsi>70?'bear':'neut';
+    const l4=t.pol_score===1?'bull':t.pol_score===-1?'bear':'neut';
+    const cw=Math.min(100,Math.round(t.confidence));
+    html+=`<tr>
+      <td><span class="tk-sym">${t.ticker}</span></td>
+      <td style="font-family:var(--mono);font-size:0.8rem">
+        $${t.price}<br><small>${chgSpan(t.chg_pct)}</small>
+      </td>
+      <td>${sigBadge(t.signal)}</td>
+      <td>
+        <div style="display:flex;align-items:center;gap:7px">
+          <div class="conf-bar-mini"><div class="conf-bar-mini-fill" style="width:${cw}%;background:${t.signal==='BUY'?'var(--green)':t.signal==='SELL'?'var(--red)':'var(--amber)'}"></div></div>
+          <span style="font-family:var(--mono);font-size:0.7rem;color:var(--dim)">${cw}%</span>
+        </div>
+      </td>
+      <td>
+        <div class="layer-row">
+          ${ldot('L1',l1,`EMA ${t.trend}`)}
+          ${ldot('L2',l2,`RSI ${t.rsi}`)}
+          ${ldot('L3','pend','Finnhub — not connected')}
+          ${ldot('L4',l4,`${t.pol_buys}B/${t.pol_sells}S`)}
+          ${ldot('L5','pend','YouTube — not connected')}
+        </div>
+      </td>
+      <td style="font-family:var(--mono);font-size:0.75rem;color:var(--mid)">
+        ${t.fast_ema} / ${t.slow_ema}
+      </td>
+      <td style="font-family:var(--mono);font-size:0.8rem;color:${t.rsi>70?'var(--red)':t.rsi<30?'var(--green)':'var(--mid)'}">
+        ${t.rsi}
+      </td>
+      <td style="font-size:0.78rem">
+        <span style="color:var(--green)">${t.pol_buys}B</span>&nbsp;<span style="color:var(--red)">${t.pol_sells}S</span>
+      </td>
+    </tr>`;
+  });
+
+  html+=`</tbody></table></div>
+  <div class="layer-legend">
+    <div class="ll-cell"><div class="ll-num">LAYER 1</div><div class="ll-name ll-live">EMA Crossover</div><div class="ll-sub">5 / 13 period · live</div></div>
+    <div class="ll-cell"><div class="ll-num">LAYER 2</div><div class="ll-name ll-live">RSI Momentum</div><div class="ll-sub">&lt;30 oversold · &gt;70 overbought</div></div>
+    <div class="ll-cell"><div class="ll-num">LAYER 3</div><div class="ll-name ll-api">Finnhub Sentiment</div><div class="ll-sub">News sentiment · API key needed</div></div>
+    <div class="ll-cell"><div class="ll-num">LAYER 4</div><div class="ll-name ll-live">Congressional</div><div class="ll-sub">House &amp; Senate · live · no key</div></div>
+    <div class="ll-cell"><div class="ll-num">LAYER 5</div><div class="ll-name ll-api">YouTube Sentiment</div><div class="ll-sub">Video sentiment · API key needed</div></div>
+  </div>`;
+
+  c.innerHTML=html;
+}
+
+// ── Render: Congress ─────────────────────────────────────────────────────────
+function renderCongress(tickers){
+  const el=document.getElementById('panel-congress');
+  const c=el.querySelector('.container');
+
+  const trades=[];
+  tickers.forEach(t=>{
+    (t.pol_recent||[]).forEach(entry=>{trades.push({ticker:t.ticker,entry});});
+  });
+
+  let html=`<div class="panel-hdr">
+    <div>
+      <div class="panel-title">Congressional Trades</div>
+      <div class="panel-sub">Recent House &amp; Senate disclosures · ${trades.length} entries from watched tickers</div>
+    </div>
+  </div>`;
+
+  if(!trades.length){
+    html+=`<div class="no-data">No recent congressional trades found for watched tickers.<br>Data refreshes every 6 hours from public House + Senate disclosure feeds.</div>`;
+    c.innerHTML=html; return;
+  }
+
+  html+=`<div style="overflow-x:auto"><table class="cong-table">
+    <thead><tr><th>TICKER</th><th>MEMBER</th><th>CHAMBER</th><th>TRANSACTION</th><th>DATE</th></tr></thead>
+    <tbody>`;
+
+  trades.forEach(({ticker,entry})=>{
+    const m=entry.match(/^(.+)\s\((\w+)\)\s—\s(.+)\son\s(\d{4}-\d{2}-\d{2})$/);
+    if(m){
+      const [,name,chamber,type,date]=m;
+      const isBuy=type.toLowerCase().includes('purchase');
+      html+=`<tr>
+        <td><span class="tk-sym" style="font-size:0.85rem">${ticker}</span></td>
+        <td>${name}</td>
+        <td style="font-family:var(--mono);font-size:0.72rem;color:var(--dim)">${chamber}</td>
+        <td class="${isBuy?'cong-buy':'cong-sell'}">${type}</td>
+        <td style="font-family:var(--mono);font-size:0.72rem;color:var(--dim)">${date}</td>
+      </tr>`;
+    } else {
+      html+=`<tr><td><span class="tk-sym" style="font-size:0.85rem">${ticker}</span></td><td colspan="4" style="font-size:0.78rem;color:var(--mid)">${entry}</td></tr>`;
+    }
+  });
+
+  html+=`</tbody></table></div>
+  <div style="margin-top:16px;font-family:var(--mono);font-size:0.7rem;color:var(--dim);letter-spacing:0.06em">
+    Source: House Stock Watcher + Senate Stock Watcher · Public disclosure data · No API key required · Refreshes every 6 hours
+  </div>`;
+
+  c.innerHTML=html;
+}
+
+function renderAll(d){renderPicks(d.tickers);renderSignals(d.tickers);renderCongress(d.tickers);}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(id,btn){
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+// ── Search ────────────────────────────────────────────────────────────────────
+async function doSearch(){
+  const ticker=document.getElementById('search-input').value.trim().replace(/[^A-Z0-9.\-]/g,'');
+  if(!ticker) return;
+  const panel=document.getElementById('search-panel');
+  panel.style.display='block';
+  document.getElementById('sp-ticker').textContent=ticker;
+  document.getElementById('sp-sub').textContent='Analysing...';
+  document.getElementById('sp-badge').textContent='—';
+  document.getElementById('sp-badge').className='sig-badge';
+  document.getElementById('sp-body').innerHTML='<div style="padding:24px;color:var(--dim);font-family:var(--mono);font-size:0.82rem;letter-spacing:0.12em;grid-column:1/-1">RUNNING 5-LAYER ANALYSIS...</div>';
+  document.getElementById('sp-layers').innerHTML='';
+  document.getElementById('sp-congress').innerHTML='';
+  panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  try{
+    const res=await fetch(`${SIM}/api/search?ticker=${ticker}`);
+    const d=await res.json();
+    if(d.error){
+      document.getElementById('sp-body').innerHTML=`<div style="padding:24px;color:var(--red);font-family:var(--mono);font-size:0.82rem;grid-column:1/-1">${d.error}</div>`;
+      return;
+    }
+    renderSearch(d);
+  }catch(e){
+    document.getElementById('sp-body').innerHTML=`<div style="padding:24px;color:var(--red);font-family:var(--mono);font-size:0.82rem;grid-column:1/-1">Connection error — is sim_server.py running?</div>`;
+  }
+}
+
+function renderSearch(d){
+  document.getElementById('sp-ticker').textContent=d.ticker;
+  document.getElementById('sp-sub').textContent=`$${d.price}  ·  ${d.chg_pct>=0?'+':''}${d.chg_pct}% today  ·  52w $${d.low_52w||'—'} – $${d.high_52w||'—'}`;
+  const b=document.getElementById('sp-badge');
+  b.textContent=d.signal; b.className='sig-badge '+d.signal.toLowerCase();
+
+  document.getElementById('sp-body').innerHTML=`
+    <div class="sp-col">
+      <div class="sp-row"><span class="sp-key">PRICE</span><span class="sp-val">$${d.price}</span></div>
+      <div class="sp-row"><span class="sp-key">TODAY</span><span class="sp-val ${d.chg_pct>=0?'up':'down'}">${d.chg_pct>=0?'+':''}${d.chg_pct}%</span></div>
+      <div class="sp-row"><span class="sp-key">52W HIGH</span><span class="sp-val">$${d.high_52w||'—'}</span></div>
+      <div class="sp-row"><span class="sp-key">52W LOW</span><span class="sp-val">$${d.low_52w||'—'}</span></div>
+      <div class="sp-row"><span class="sp-key">SIGNAL</span><span class="sp-val" style="color:${d.signal==='BUY'?'var(--green)':d.signal==='SELL'?'var(--red)':'var(--amber)'}">${d.signal}</span></div>
+      <div class="sp-row"><span class="sp-key">CONFIDENCE</span><span class="sp-val">${Math.round(d.confidence)}%</span></div>
+    </div>
+    <div class="sp-col">
+      <div class="sp-row"><span class="sp-key">EMA TREND</span><span class="sp-val" style="color:${d.trend==='up'?'var(--green)':'var(--red)'}">${d.trend.toUpperCase()}</span></div>
+      <div class="sp-row"><span class="sp-key">FAST EMA (5)</span><span class="sp-val">$${d.fast_ema}</span></div>
+      <div class="sp-row"><span class="sp-key">SLOW EMA (13)</span><span class="sp-val">$${d.slow_ema}</span></div>
+      <div class="sp-row"><span class="sp-key">RSI (14)</span><span class="sp-val" style="color:${d.rsi>70?'var(--red)':d.rsi<30?'var(--green)':'var(--mid)'}">${d.rsi} — ${d.rsi>70?'Overbought':d.rsi<30?'Oversold':'Neutral'}</span></div>
+      <div class="sp-row"><span class="sp-key">CONGRESS BUYS</span><span class="sp-val" style="color:var(--green)">${d.pol_buys}</span></div>
+      <div class="sp-row"><span class="sp-key">CONGRESS SELLS</span><span class="sp-val" style="color:var(--red)">${d.pol_sells}</span></div>
+    </div>`;
+
+  const l1=d.trend==='up'?'bull':'bear';
+  const l2=d.rsi<30?'bull':d.rsi>70?'bear':'neut';
+  const l4=d.pol_score===1?'bull':d.pol_score===-1?'bear':'neut';
+  const sm={bull:'BULLISH',bear:'BEARISH',neut:'NEUTRAL',pend:'PENDING'};
+  document.getElementById('sp-layers').innerHTML=`
+    <div class="sp-layer ${l1}"><div class="sp-lnum">LAYER 1</div><div class="sp-lsig ${l1}">${sm[l1]}</div><div class="sp-lsub">EMA · ${d.trend}</div></div>
+    <div class="sp-layer ${l2}"><div class="sp-lnum">LAYER 2</div><div class="sp-lsig ${l2}">${sm[l2]}</div><div class="sp-lsub">RSI ${d.rsi}</div></div>
+    <div class="sp-layer pend"><div class="sp-lnum">LAYER 3</div><div class="sp-lsig pend">PENDING</div><div class="sp-lsub">Finnhub key</div></div>
+    <div class="sp-layer ${l4}"><div class="sp-lnum">LAYER 4</div><div class="sp-lsig ${l4}">${sm[l4]}</div><div class="sp-lsub">${d.pol_buys}B/${d.pol_sells}S</div></div>
+    <div class="sp-layer pend"><div class="sp-lnum">LAYER 5</div><div class="sp-lsig pend">PENDING</div><div class="sp-lsub">YouTube key</div></div>`;
+
+  if(d.pol_recent&&d.pol_recent.length){
+    document.getElementById('sp-congress').innerHTML=`
+      <div style="padding:14px 24px;border-top:1px solid var(--border);background:var(--surface)">
+        <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.22em;color:var(--dim);margin-bottom:8px">CONGRESSIONAL TRADES (90 DAYS)</div>
+        ${d.pol_recent.map(r=>`<div style="font-family:var(--mono);font-size:0.75rem;color:var(--mid);padding:3px 0">${r}</div>`).join('')}
+      </div>`;
+  }
+}
+
+function closeSearch(){
+  document.getElementById('search-panel').style.display='none';
+  document.getElementById('search-input').value='';
+}
+
+// ── News Feed ─────────────────────────────────────────────────────────────────
+let _newsLoaded = false;
+let _newsAllArticles = [];
+let _newsActiveSource = 'ALL';
+
+async function loadNews(){
+  if(_newsLoaded) return;
+  const c = document.getElementById('panel-news').querySelector('.container');
+  c.innerHTML = '<div class="intel-loading"><div class="spin">FETCHING LIVE NEWS FEEDS...</div></div>';
+  try {
+    const res = await fetch(`${SIM}/api/news`);
+    const d   = await res.json();
+    _newsAllArticles = d.articles || [];
+    _newsLoaded = true;
+    renderNews('ALL');
+  } catch(e) {
+    c.innerHTML = `<div class="intel-error">
+      <div class="err-title">Cannot load news feeds</div>
+      <div style="font-size:0.82rem;color:var(--mid);margin-bottom:10px;">Check that sim_server.py is running and has network access.</div>
+      <div class="err-cmd">py sim_server.py</div>
+    </div>`;
+  }
+}
+
+function renderNews(sourceFilter){
+  _newsActiveSource = sourceFilter;
+  const c = document.getElementById('panel-news').querySelector('.container');
+  const sources = ['ALL', ...new Set(_newsAllArticles.map(a=>a.source))];
+  const filtered = sourceFilter==='ALL'
+    ? _newsAllArticles
+    : _newsAllArticles.filter(a=>a.source===sourceFilter);
+
+  const filterHtml = `<div class="news-filter-bar">
+    ${sources.map(s=>`<button class="news-filter-btn${s===sourceFilter?' active':''}" onclick="renderNews('${s}')">${s}</button>`).join('')}
+  </div>`;
+
+  const updTs = new Date().toLocaleTimeString();
+  let html = `<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+    <div>
+      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.2em;color:var(--dim);margin-bottom:8px;">LIVE NEWS — ${_newsAllArticles.length} ARTICLES FROM ${sources.length-1} SOURCES · REFRESHED ${updTs}</div>
+      ${filterHtml}
+    </div>
+    <button onclick="_newsLoaded=false;loadNews()" style="background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.16em;color:var(--dim);padding:6px 14px;cursor:pointer;white-space:nowrap;">↻ REFRESH</button>
+  </div>`;
+
+  if(!filtered.length){
+    html += '<div class="no-data">NO ARTICLES FOUND</div>';
+  } else {
+    html += '<div class="news-grid">';
+    filtered.forEach(a=>{
+      const linkEl = a.link
+        ? `<a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>`
+        : a.title;
+      html += `<div class="news-card">
+        <div class="news-source">${a.source}</div>
+        <div class="news-title">${linkEl}</div>
+        ${a.desc ? `<div class="news-desc">${a.desc}</div>` : ''}
+        <div class="news-date">${a.pubdate||''}</div>
+      </div>`;
+    });
+    html += '</div>';
+  }
+
+  c.innerHTML = html;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+fetchIntel();
+startCountdown();
+</script>
+<script src="mini-player.js"></script>
+</body>
+</html>

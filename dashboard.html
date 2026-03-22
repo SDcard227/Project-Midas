@@ -1,0 +1,950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>MIDAS — Command Centre</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <style>
+  :root{
+    --bg:#f5f0e8;--surface:#ede8dd;--card:#fff;
+    --border:#ddd8ce;--border2:#c4bdb0;
+    --text:#1e1a14;--mid:#5c5045;--dim:#9a9088;
+    --green:#2d7a4f;--teal:#1a7080;--amber:#9a7018;--red:#8a3030;
+    --mono:'Share Tech Mono','Courier New',monospace;
+    --title:'Outfit',sans-serif;
+    --shadow:0 1px 3px rgba(30,26,20,0.07),0 4px 16px rgba(30,26,20,0.05);
+  }
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{font-family:var(--title);background:var(--bg);color:var(--text);overflow-x:hidden;}
+  a{cursor:pointer;}
+
+  /* ── Nav ── */
+  nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(245,240,232,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);}
+  .nav-logo{font-family:var(--title);font-size:1.05rem;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:0.08em;}
+  .nav-logo span{color:var(--amber);}
+  .nav-links{display:flex;gap:28px;list-style:none;}
+  .nav-links a{font-family:var(--title);color:var(--dim);text-decoration:none;font-size:0.82rem;letter-spacing:0.04em;transition:color 0.2s;font-weight:400;}
+  .nav-links a:hover,.nav-links a.active{color:var(--text);}
+  .nav-cta{color:var(--green)!important;border:1px solid var(--green)!important;padding:6px 20px;border-radius:2px;font-weight:500!important;}
+
+  /* ── Page ── */
+  .page{padding-top:60px;}
+
+  /* ── Monitor header ── */
+  .mon-hdr{padding:20px 32px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+  .mon-title{font-family:var(--title);font-size:1.1rem;font-weight:600;letter-spacing:-0.01em;}
+  .mon-sub{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.16em;color:var(--dim);margin-top:2px;}
+  .mon-controls{display:flex;gap:8px;align-items:center;}
+  .ctrl-btn{padding:5px 14px;background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.14em;color:var(--dim);cursor:pointer;transition:all 0.15s;}
+  .ctrl-btn:hover,.ctrl-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+
+  /* ── 4-WAY MONITOR GRID ── */
+  .monitor-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:1px;background:var(--border);height:520px;margin:16px 32px 0;}
+  .pane{background:var(--card);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+  .pane-hdr{display:flex;justify-content:space-between;align-items:center;padding:8px 14px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0;}
+  .pane-label{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.22em;color:var(--dim);}
+  .pane-title{font-family:var(--title);font-size:0.82rem;font-weight:600;color:var(--text);}
+  .pane-badge{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.16em;padding:2px 7px;border:1px solid currentColor;}
+  .pane-badge.live{color:var(--green);border-color:var(--green);animation:badge-pulse 2s infinite;}
+  @keyframes badge-pulse{0%,100%{opacity:1}50%{opacity:0.5}}
+  .pane-body{flex:1;overflow-y:auto;overflow-x:hidden;padding:10px 14px;}
+  .pane-body::-webkit-scrollbar{width:3px;}
+  .pane-body::-webkit-scrollbar-thumb{background:var(--border2);}
+
+  /* ── Signals pane ── */
+  .sig-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:0.8rem;}
+  .sig-row:last-child{border-bottom:none;}
+  .sig-ticker-d{font-family:var(--mono);font-weight:600;font-size:0.78rem;width:52px;}
+  .sig-badge-d{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.12em;padding:2px 8px;border:1px solid currentColor;}
+  .sig-badge-d.buy{color:var(--green);border-color:var(--green);}
+  .sig-badge-d.sell{color:var(--red);border-color:var(--red);}
+  .sig-badge-d.hold{color:var(--dim);border-color:var(--border2);}
+  .sig-conf{font-family:var(--mono);font-size:0.7rem;color:var(--mid);}
+  .sig-price{font-family:var(--mono);font-size:0.72rem;color:var(--mid);}
+  .conf-bar-d{height:3px;background:var(--border);width:60px;margin-top:3px;}
+  .conf-bar-d-fill{height:100%;background:var(--green);}
+
+  /* ── News pane ── */
+  .news-item{padding:8px 0;border-bottom:1px solid var(--border);cursor:default;}
+  .news-item:last-child{border-bottom:none;}
+  .news-src{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.18em;color:var(--amber);margin-bottom:3px;}
+  .news-hl{font-size:0.8rem;font-weight:500;color:var(--text);line-height:1.35;}
+  .news-hl a{color:inherit;text-decoration:none;}
+  .news-hl a:hover{text-decoration:underline;text-underline-offset:2px;}
+  .news-dt{font-family:var(--mono);font-size:0.6rem;color:var(--dim);margin-top:3px;}
+
+  /* ── World monitor pane ── */
+  .clock-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);font-size:0.78rem;}
+  .clock-row:last-child{border-bottom:none;}
+  .clock-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);flex-shrink:0;}
+  .clock-dot.open{background:var(--green);}
+  .clock-city-d{font-family:var(--mono);font-size:0.72rem;color:var(--mid);width:90px;}
+  .clock-time-d{font-family:var(--mono);font-size:0.78rem;color:var(--text);flex:1;text-align:center;}
+  .clock-status{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;text-align:right;}
+  .clock-status.open{color:var(--green);}
+  .clock-status.closed{color:var(--dim);}
+
+  /* ── Region filter strip ── */
+  .region-strip{display:flex;gap:4px;padding:5px 10px;border-bottom:1px solid var(--border);background:var(--surface);flex-wrap:wrap;flex-shrink:0;}
+  .rgn-btn{padding:2px 9px;background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.58rem;letter-spacing:0.12em;color:var(--dim);cursor:pointer;transition:all 0.15s;white-space:nowrap;}
+  .rgn-btn:hover{border-color:var(--mid);color:var(--text);}
+  .rgn-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+
+  /* ── YouTube pane ── */
+  .yt-live-bar{display:flex;gap:8px;padding:8px 0 10px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+  .yt-live-btn{padding:5px 12px;background:transparent;border:1px solid var(--red);font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;color:var(--red);cursor:pointer;transition:all 0.15s;display:flex;align-items:center;gap:5px;}
+  .yt-live-btn:hover{background:var(--red);color:#fff;}
+  .yt-live-dot{width:6px;height:6px;border-radius:50%;background:currentColor;animation:badge-pulse 1.5s infinite;}
+  .yt-video-list{margin-top:8px;}
+  .yt-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:background 0.15s;}
+  .yt-item:hover{background:var(--surface);margin:0 -14px;padding:8px 14px;}
+  .yt-item:last-child{border-bottom:none;}
+  .yt-thumb{width:80px;height:45px;object-fit:cover;flex-shrink:0;background:var(--border);}
+  .yt-info{flex:1;min-width:0;}
+  .yt-ch{font-family:var(--mono);font-size:0.58rem;letter-spacing:0.16em;color:var(--teal);margin-bottom:3px;}
+  .yt-ttl{font-size:0.75rem;font-weight:500;color:var(--text);line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+  .yt-date{font-family:var(--mono);font-size:0.58rem;color:var(--dim);margin-top:3px;}
+
+  /* ── YouTube player overlay ── */
+  #yt-player-overlay{display:none;position:fixed;inset:0;z-index:500;background:rgba(30,26,20,0.85);align-items:center;justify-content:center;}
+  #yt-player-overlay.show{display:flex;}
+  #yt-player-box{position:relative;width:min(880px,90vw);background:#000;}
+  #yt-player-box iframe{width:100%;aspect-ratio:16/9;display:block;border:none;}
+  #yt-player-close{position:absolute;top:-36px;right:0;background:none;border:none;color:#fff;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.14em;cursor:pointer;padding:4px 8px;}
+
+  /* ── Layer tabs section ── */
+  .layer-section{margin:24px 32px 0;}
+  .layer-section-hdr{margin-bottom:0;}
+  .layer-tab-strip{display:flex;border-bottom:2px solid var(--border);gap:0;}
+  .layer-tab{padding:12px 22px;background:transparent;border:none;border-bottom:3px solid transparent;margin-bottom:-2px;font-family:var(--title);font-size:0.82rem;letter-spacing:0.04em;color:var(--dim);cursor:pointer;transition:all 0.18s;white-space:nowrap;}
+  .layer-tab:hover{color:var(--text);}
+  .layer-tab.active{color:var(--text);border-bottom-color:var(--amber);font-weight:600;}
+  .layer-tab .l-num{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.16em;display:block;color:var(--dim);margin-bottom:2px;}
+  .layer-tab.active .l-num{color:var(--amber);}
+  .layer-panel{display:none;padding:24px 0 48px;}
+  .layer-panel.active{display:block;}
+  .lp-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+  .lp-title{font-family:var(--title);font-size:1.05rem;font-weight:600;letter-spacing:-0.01em;}
+  .lp-desc{font-size:0.82rem;color:var(--mid);margin-top:4px;max-width:600px;line-height:1.6;}
+  .lp-status{font-family:var(--mono);font-size:0.65rem;letter-spacing:0.16em;padding:4px 12px;border:1px solid currentColor;}
+  .lp-status.active{color:var(--green);}
+  .lp-status.pending{color:var(--amber);}
+
+  /* Layer data tables */
+  .l-table{width:100%;border-collapse:collapse;}
+  .l-table th{padding:9px 14px;text-align:left;font-family:var(--mono);font-size:0.62rem;letter-spacing:0.14em;color:var(--dim);border-bottom:1px solid var(--border2);background:var(--surface);font-weight:400;}
+  .l-table td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:0.8rem;vertical-align:middle;}
+  .l-table tr:hover td{background:var(--surface);}
+  .up{color:var(--green);}
+  .down{color:var(--red);}
+  .neut{color:var(--dim);}
+  .rsi-bar{height:4px;background:var(--border);width:100px;position:relative;}
+  .rsi-fill{height:100%;background:var(--teal);}
+  .rsi-danger{background:var(--red);}
+  .rsi-safe{background:var(--green);}
+
+  /* Congress cards */
+  .cong-feed{display:flex;flex-direction:column;gap:8px;}
+  .cong-card{background:var(--card);border:1px solid var(--border);padding:14px 16px;}
+  .cong-name{font-weight:600;font-size:0.85rem;color:var(--text);}
+  .cong-detail{font-family:var(--mono);font-size:0.68rem;color:var(--mid);margin-top:4px;line-height:1.6;}
+  .cong-type-buy{color:var(--green);}
+  .cong-type-sell{color:var(--red);}
+
+  /* YT layer - video grid */
+  .yt-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px;}
+  .yt-card{background:var(--card);border:1px solid var(--border);cursor:pointer;transition:box-shadow 0.2s;}
+  .yt-card:hover{box-shadow:var(--shadow);}
+  .yt-card-thumb{width:100%;aspect-ratio:16/9;object-fit:cover;background:var(--border);display:block;}
+  .yt-card-body{padding:12px 14px;}
+  .yt-card-ch{font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;color:var(--teal);margin-bottom:5px;}
+  .yt-card-title{font-size:0.82rem;font-weight:500;color:var(--text);line-height:1.4;}
+  .yt-card-date{font-family:var(--mono);font-size:0.6rem;color:var(--dim);margin-top:6px;}
+
+  /* Loading/error states */
+  .dash-loading{text-align:center;padding:60px 0;font-family:var(--mono);font-size:0.75rem;color:var(--dim);letter-spacing:0.18em;}
+  @keyframes dash-pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+  .dash-loading span{animation:dash-pulse 1.5s infinite;}
+  .api-pending{background:var(--surface);border:1px solid var(--border);padding:24px;text-align:center;}
+  .api-pending-icon{font-size:2rem;margin-bottom:12px;}
+  .api-pending-title{font-family:var(--title);font-size:0.95rem;font-weight:600;color:var(--text);margin-bottom:8px;}
+  .api-pending-desc{font-size:0.82rem;color:var(--mid);line-height:1.7;}
+
+  footer{background:var(--surface);border-top:1px solid var(--border);padding:28px 32px;margin-top:48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
+  .ft-logo{font-family:var(--title);font-size:0.9rem;font-weight:700;letter-spacing:0.08em;}
+  .ft-logo span{color:var(--amber);}
+  .ft-note{font-family:var(--mono);font-size:0.62rem;color:var(--dim);}
+
+  /* ── Mobile / Responsive ── */
+  @media(max-width:768px){
+    nav{padding:0 16px;}
+    .nav-links{gap:14px;}
+    .nav-links a{font-size:0.75rem;}
+    .mon-hdr{padding:14px 16px 0;gap:8px;}
+    .monitor-grid{grid-template-columns:1fr;grid-template-rows:repeat(4,auto);height:auto;margin:12px 12px 0;gap:1px;}
+    .pane{height:280px;}
+    .mon-controls{gap:5px;}
+    .ctrl-btn{padding:4px 10px;}
+    .layer-section{margin:16px 12px 0;}
+    .layer-tab{padding:10px 14px;font-size:0.75rem;}
+    .layer-panel{padding:16px 0 32px;}
+    #mon-clocks-grid{grid-template-columns:repeat(2,1fr)!important;}
+    footer{padding:20px 16px;flex-direction:column;align-items:flex-start;}
+    .region-strip{gap:3px;padding:4px 8px;}
+    .rgn-btn{font-size:0.54rem;padding:2px 7px;}
+    .yt-grid{grid-template-columns:repeat(auto-fill,minmax(160px,1fr));}
+  }
+  @media(max-width:480px){
+    nav{padding:0 12px;height:52px;}
+    .nav-logo{font-size:0.9rem;}
+    .nav-links{gap:10px;}
+    .nav-links li:nth-child(n+4){display:none;}
+    .monitor-grid{margin:8px 8px 0;}
+    .pane{height:260px;}
+    .layer-tab-strip{overflow-x:auto;}
+    .layer-tab{padding:8px 12px;font-size:0.7rem;white-space:nowrap;}
+    #mon-clocks-grid{grid-template-columns:1fr 1fr!important;}
+    .lp-hdr{flex-direction:column;}
+    .l-table{font-size:0.7rem;}
+    .l-table th,.l-table td{padding:6px 8px;}
+  }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html"><span>MIDAS</span> COMMAND</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="stocks.html">Stocks</a></li>
+    <li><a href="penny.html">Penny</a></li>
+    <li><a href="intelligence.html">Intelligence</a></li>
+    <li><a href="dashboard.html" class="active">Dashboard</a></li>
+    <li><a href="#signup" class="nav-cta">Get Access</a></li>
+  </ul>
+</nav>
+
+<div class="page">
+
+  <!-- ── MONITOR HEADER ── -->
+  <div class="mon-hdr">
+    <div>
+      <div class="mon-title">COMMAND CENTRE</div>
+      <div class="mon-sub">4-WAY LIVE MONITOR &nbsp;·&nbsp; 5-LAYER INTELLIGENCE &nbsp;·&nbsp; WORLD MARKETS</div>
+    </div>
+    <div class="mon-controls">
+      <span id="mon-clock" style="font-family:var(--mono);font-size:0.68rem;color:var(--dim);letter-spacing:0.1em;margin-right:8px;"></span>
+      <button class="ctrl-btn" onclick="refreshAll()">↻ REFRESH ALL</button>
+      <button class="ctrl-btn" id="btn-layout" onclick="toggleLayout()">2×2 GRID</button>
+    </div>
+  </div>
+
+  <!-- ── 4-WAY MONITOR ── -->
+  <div class="monitor-grid" id="monitor-grid">
+
+    <!-- PANE 1: SIGNALS -->
+    <div class="pane" id="pane-signals">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-label">LAYER 1–2</div>
+          <div class="pane-title">LIVE SIGNALS</div>
+        </div>
+        <span class="pane-badge live">LIVE</span>
+      </div>
+      <div class="pane-body" id="pb-signals">
+        <div class="dash-loading"><span>LOADING SIGNALS...</span></div>
+      </div>
+    </div>
+
+    <!-- PANE 2: NEWS -->
+    <div class="pane" id="pane-news">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-label">LAYER 3</div>
+          <div class="pane-title">LIVE NEWS</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="news-filter-sel" onchange="filterNewsBySource()" style="background:var(--surface);border:1px solid var(--border2);font-family:var(--mono);font-size:0.62rem;color:var(--mid);padding:3px 7px;outline:none;">
+            <option value="ALL">ALL SOURCES</option>
+          </select>
+          <span class="pane-badge live">LIVE</span>
+        </div>
+      </div>
+      <div class="region-strip" id="news-region-strip">
+        <button class="rgn-btn active" onclick="filterNewsByRegion('ALL',this)">ALL</button>
+        <button class="rgn-btn" onclick="filterNewsByRegion('AMERICAS',this)">AMERICAS</button>
+        <button class="rgn-btn" onclick="filterNewsByRegion('EUROPE',this)">EUROPE</button>
+        <button class="rgn-btn" onclick="filterNewsByRegion('MIDDLE EAST',this)">MIDDLE EAST</button>
+        <button class="rgn-btn" onclick="filterNewsByRegion('GLOBAL',this)">GLOBAL</button>
+      </div>
+      <div class="pane-body" id="pb-news">
+        <div class="dash-loading"><span>LOADING NEWS...</span></div>
+      </div>
+    </div>
+
+    <!-- PANE 3: WORLD MONITOR -->
+    <div class="pane" id="pane-world">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-label">GLOBAL</div>
+          <div class="pane-title">WORLD MARKETS</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="ctrl-btn" style="padding:3px 10px;font-size:0.6rem;" onclick="refreshMonitor()">↻</button>
+          <span class="pane-badge live">LIVE</span>
+        </div>
+      </div>
+      <div class="region-strip" id="world-region-strip">
+        <button class="rgn-btn active" onclick="filterWorldByRegion('ALL',this)">ALL</button>
+        <button class="rgn-btn" onclick="filterWorldByRegion('AMERICAS',this)">AMERICAS</button>
+        <button class="rgn-btn" onclick="filterWorldByRegion('EUROPE',this)">EUROPE</button>
+        <button class="rgn-btn" onclick="filterWorldByRegion('MIDDLE EAST',this)">MIDDLE EAST</button>
+        <button class="rgn-btn" onclick="filterWorldByRegion('ASIA',this)">ASIA</button>
+      </div>
+      <div class="pane-body" id="pb-world">
+        <div class="dash-loading"><span>LOADING...</span></div>
+      </div>
+    </div>
+
+    <!-- PANE 4: YOUTUBE -->
+    <div class="pane" id="pane-yt">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-label">LAYER 5</div>
+          <div class="pane-title">FINANCIAL MEDIA</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="yt-ch-sel" onchange="filterYtByChannel()" style="background:var(--surface);border:1px solid var(--border2);font-family:var(--mono);font-size:0.62rem;color:var(--mid);padding:3px 7px;outline:none;">
+            <option value="ALL">ALL CHANNELS</option>
+          </select>
+          <span class="pane-badge live">YT</span>
+        </div>
+      </div>
+      <div class="pane-body" id="pb-yt">
+        <div class="dash-loading"><span>LOADING...</span></div>
+      </div>
+    </div>
+
+  </div><!-- /monitor-grid -->
+
+  <!-- ── FULL WORLD MONITOR ── -->
+  <div style="margin:24px 32px 0;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px;">
+      <div>
+        <div style="font-family:var(--title);font-size:1.05rem;font-weight:600;letter-spacing:-0.01em;">WORLD MONITOR</div>
+        <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.16em;color:var(--dim);margin-top:2px;">LIVE MARKET CLOCKS &nbsp;·&nbsp; SIGNAL TABLE &nbsp;·&nbsp; AUTO-REFRESH 60s</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span id="mon-updated" style="font-family:var(--mono);font-size:0.62rem;color:var(--dim);"></span>
+        <button class="ctrl-btn" onclick="refreshMonitor()">↻ REFRESH</button>
+      </div>
+    </div>
+
+    <!-- Clock row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:1px;background:var(--border);margin-bottom:1px;" id="mon-clocks-grid">
+      <div class="dash-loading" style="grid-column:1/-1;padding:20px"><span>LOADING CLOCKS...</span></div>
+    </div>
+
+    <!-- Ticker monitor table -->
+    <div style="background:var(--card);border:1px solid var(--border);overflow-x:auto;">
+      <table class="l-table" id="mon-ticker-table">
+        <thead><tr>
+          <th>TICKER</th>
+          <th>PRICE</th>
+          <th>TODAY</th>
+          <th>TREND</th>
+          <th>RSI</th>
+          <th>SIGNAL</th>
+          <th>CONFIDENCE</th>
+          <th>EMA FAST</th>
+          <th>EMA SLOW</th>
+        </tr></thead>
+        <tbody id="mon-ticker-body">
+          <tr><td colspan="9" style="text-align:center;padding:24px;font-family:var(--mono);font-size:0.72rem;color:var(--dim);">LOADING...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── LAYER TABS ── -->
+  <div class="layer-section">
+    <div class="layer-tab-strip">
+      <button class="layer-tab active" onclick="switchLayer('l1',this)"><span class="l-num">LAYER 01</span>EMA CROSSOVER</button>
+      <button class="layer-tab" onclick="switchLayer('l2',this)"><span class="l-num">LAYER 02</span>RSI</button>
+      <button class="layer-tab" onclick="switchLayer('l3',this)"><span class="l-num">LAYER 03</span>SENTIMENT</button>
+      <button class="layer-tab" onclick="switchLayer('l4',this)"><span class="l-num">LAYER 04</span>CONGRESS</button>
+      <button class="layer-tab" onclick="switchLayer('l5',this)"><span class="l-num">LAYER 05</span>YOUTUBE</button>
+    </div>
+
+    <!-- L1: EMA -->
+    <div class="layer-panel active" id="panel-l1">
+      <div class="lp-hdr">
+        <div>
+          <div class="lp-title">EMA Crossover Signals</div>
+          <div class="lp-desc">Exponential Moving Average fast (5-day) vs slow (13-day). A bullish crossover — fast crossing above slow — triggers a BUY consideration. Bearish crossunder triggers SELL.</div>
+        </div>
+        <span class="lp-status active">ACTIVE</span>
+      </div>
+      <div id="l1-content"><div class="dash-loading"><span>LOADING...</span></div></div>
+    </div>
+
+    <!-- L2: RSI -->
+    <div class="layer-panel" id="panel-l2">
+      <div class="lp-hdr">
+        <div>
+          <div class="lp-title">RSI — Relative Strength Index</div>
+          <div class="lp-desc">14-day RSI. Above 70 = overbought (sell pressure). Below 30 = oversold (buy opportunity). Between 30–60 = room to run. RSI above 60 blocks new entries even on bullish EMA.</div>
+        </div>
+        <span class="lp-status active">ACTIVE</span>
+      </div>
+      <div id="l2-content"><div class="dash-loading"><span>LOADING...</span></div></div>
+    </div>
+
+    <!-- L3: Sentiment -->
+    <div class="layer-panel" id="panel-l3">
+      <div class="lp-hdr">
+        <div>
+          <div class="lp-title">News Sentiment</div>
+          <div class="lp-desc">Finnhub API provides a bullish/bearish sentiment score per ticker based on news coverage. Score &gt;0.6 = positive, &lt;0.4 = negative. Negative sentiment blocks BUY signals even on bullish EMA + RSI.</div>
+        </div>
+        <span class="lp-status pending">CONNECT API KEY</span>
+      </div>
+      <div id="l3-content">
+        <div class="api-pending">
+          <div class="api-pending-icon">⚡</div>
+          <div class="api-pending-title">Finnhub API Key Not Connected</div>
+          <div class="api-pending-desc">Layer 3 requires a Finnhub API key to provide per-ticker sentiment scores.<br>Get a free key at finnhub.io and add it to <code style="font-family:var(--mono);background:var(--surface);padding:2px 6px;">brain/signal_engine.py</code>.<br><br>Below are the latest news articles being monitored across sources:</div>
+        </div>
+        <div id="l3-news-articles" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- L4: Congress -->
+    <div class="layer-panel" id="panel-l4">
+      <div class="lp-hdr">
+        <div>
+          <div class="lp-title">Congressional Trading — Layer 4</div>
+          <div class="lp-desc">US House and Senate members must disclose stock trades within 45 days. When a politician buys a ticker, it's a bullish signal. Multiple buys boost confidence. Data from House/Senate Stock Watcher.</div>
+        </div>
+        <span class="lp-status pending">FEEDS UNAVAILABLE</span>
+      </div>
+      <div id="l4-content"><div class="dash-loading"><span>LOADING...</span></div></div>
+    </div>
+
+    <!-- L5: YouTube -->
+    <div class="layer-panel" id="panel-l5">
+      <div class="lp-hdr">
+        <div>
+          <div class="lp-title">YouTube Sentiment — Layer 5</div>
+          <div class="lp-desc">Financial YouTube channels are scanned for ticker mentions and bullish/bearish framing. High video volume + positive language boosts confidence. Requires YouTube Data API key for full sentiment scoring.</div>
+        </div>
+        <span class="lp-status active">RSS ACTIVE</span>
+      </div>
+      <div id="l5-content"><div class="dash-loading"><span>LOADING...</span></div></div>
+    </div>
+
+  </div><!-- /layer-section -->
+
+  <footer>
+    <div>
+      <div class="ft-logo"><span>MIDAS</span> COMMAND CENTRE</div>
+      <div class="ft-note" style="margin-top:3px;">BY SALAHALDIN NIMERI &nbsp;·&nbsp; 5-LAYER AI TRADING INTELLIGENCE</div>
+    </div>
+    <div class="ft-note">Data: yfinance · Finnhub · House/Senate Stock Watcher · YouTube RSS<br>Signals refresh every 5 min · News every 10 min · YouTube every 30 min</div>
+  </footer>
+
+</div><!-- /page -->
+
+<!-- YouTube player overlay -->
+<div id="yt-player-overlay" onclick="closeYtPlayer(event)">
+  <div id="yt-player-box">
+    <button id="yt-player-mini-btn" onclick="shrinkToMini()" style="position:absolute;top:-36px;left:0;background:none;border:none;color:#fff;font-family:var(--mono);font-size:0.72rem;letter-spacing:0.14em;cursor:pointer;padding:4px 8px;">⊟ MINI</button>
+    <button id="yt-player-close" onclick="closeYtPlayer()">× CLOSE</button>
+    <iframe id="yt-iframe" src="" allowfullscreen allow="autoplay;encrypted-media"></iframe>
+  </div>
+</div>
+
+<script>
+const SIM = `http://${location.hostname === 'localhost' ? 'localhost' : '100.100.207.78'}:5050`;
+
+// ── Data stores ───────────────────────────────────────────────────────────────
+let _intel = null;
+let _news  = null;
+let _yt    = null;
+
+// ── World Monitor (from /api/monitor) ────────────────────────────────────────
+let _monitor = null;
+
+async function fetchMonitor(){
+  try{
+    const r=await fetch(`${SIM}/api/monitor`);
+    _monitor=await r.json();
+    renderWorldPane();
+    renderMonitorClocks();
+    renderMonitorTable();
+    const el=document.getElementById('mon-updated');
+    if(el)el.textContent='Updated '+new Date(_monitor.updated).toLocaleTimeString('en-US',{hour12:false});
+  }catch(e){
+    document.getElementById('pb-world').innerHTML=`<div class="dash-loading" style="color:var(--red)">Cannot connect</div>`;
+  }
+}
+
+function refreshMonitor(){ fetchMonitor(); }
+
+let _worldRegion='ALL';
+function filterWorldByRegion(r,btn){
+  _worldRegion=r;
+  document.querySelectorAll('#world-region-strip .rgn-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderWorldPane();
+}
+function renderWorldPane(){
+  if(!_monitor)return;
+  const el=document.getElementById('pb-world');
+  const clocks=_worldRegion==='ALL'?_monitor.clocks:_monitor.clocks.filter(c=>c.region===_worldRegion);
+  // Group by region when showing ALL
+  let html='';
+  if(_worldRegion==='ALL'){
+    const regions=['AMERICAS','EUROPE','MIDDLE EAST','ASIA'];
+    regions.forEach(r=>{
+      const rc=clocks.filter(c=>c.region===r);
+      if(!rc.length)return;
+      html+=`<div style="font-family:var(--mono);font-size:0.55rem;letter-spacing:0.22em;color:var(--dim);padding:6px 10px 2px;border-top:1px solid var(--border)">${r}</div>`;
+      rc.forEach(c=>html+=_clockRow(c));
+    });
+  }else{
+    clocks.forEach(c=>html+=_clockRow(c));
+  }
+  el.innerHTML=html||'<div class="dash-loading">NO DATA</div>';
+}
+function _clockRow(c){
+  return `<div class="clock-row">
+    <div class="clock-dot${c.open?' open':''}"></div>
+    <div class="clock-city-d">${c.city}</div>
+    <div class="clock-time-d">${c.time} <span style="font-size:0.6rem;color:var(--dim)">${c.date.split(' ')[0]}</span></div>
+    <div class="clock-status ${c.open?'open':'closed'}">${c.open?'OPEN':'CLOSED'}</div>
+  </div>`;
+}
+
+function renderMonitorClocks(){
+  if(!_monitor)return;
+  const el=document.getElementById('mon-clocks-grid');
+  let html='';
+  _monitor.clocks.forEach(c=>{
+    html+=`<div style="background:var(--card);padding:12px 14px;">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px;">
+        <div style="width:8px;height:8px;border-radius:50%;background:${c.open?'var(--green)':'var(--border2)'};flex-shrink:0;${c.open?'box-shadow:0 0 0 2px rgba(45,122,79,0.2)':''}"></div>
+        <span style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;color:var(--dim)">${c.city.toUpperCase()}</span>
+      </div>
+      <div style="font-family:var(--mono);font-size:1.1rem;font-weight:600;color:var(--text);letter-spacing:0.06em">${c.time}</div>
+      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--dim);margin-top:2px">${c.date}</div>
+      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.14em;margin-top:4px;${c.open?'color:var(--green)':'color:var(--dim)'}">${c.open?'● OPEN':'○ CLOSED'}</div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+function renderMonitorTable(){
+  if(!_monitor)return;
+  const tbody=document.getElementById('mon-ticker-body');
+  if(!_monitor.tickers.length){
+    tbody.innerHTML='<tr><td colspan="9" style="text-align:center;padding:24px;font-family:var(--mono);font-size:0.72rem;color:var(--dim)">No ticker data</td></tr>';
+    return;
+  }
+  let html='';
+  _monitor.tickers.forEach(t=>{
+    const sigCls=t.signal==='BUY'?'up':t.signal==='SELL'?'down':'neut';
+    const chgCls=t.chg_pct>=0?'up':'down';
+    const trendArrow=t.trend==='up'?'↑':'↓';
+    const trendCls=t.trend==='up'?'up':'down';
+    const confPct=Math.round(t.confidence);
+    const barW=Math.min(100,confPct);
+    html+=`<tr>
+      <td style="font-family:var(--mono);font-weight:700;font-size:0.85rem">${t.ticker}</td>
+      <td style="font-family:var(--mono)">$${t.price}</td>
+      <td class="${chgCls}" style="font-family:var(--mono)">${t.chg_pct>=0?'+':''}${t.chg_pct}%</td>
+      <td class="${trendCls}" style="font-family:var(--mono)">${trendArrow} ${t.trend.toUpperCase()}</td>
+      <td style="font-family:var(--mono)">
+        ${t.rsi}
+        <div style="height:3px;background:var(--border);width:50px;margin-top:3px">
+          <div style="height:100%;width:${Math.min(100,t.rsi)}%;background:${t.rsi>70?'var(--red)':t.rsi<30?'var(--green)':'var(--teal)'}"></div>
+        </div>
+      </td>
+      <td><span style="font-family:var(--mono);font-size:0.72rem;padding:2px 8px;border:1px solid currentColor;" class="${sigCls}">${t.signal}</span></td>
+      <td>
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="height:4px;background:var(--border);width:80px">
+            <div style="height:100%;width:${barW}%;background:${t.signal==='BUY'?'var(--green)':t.signal==='SELL'?'var(--red)':'var(--border2)'}"></div>
+          </div>
+          <span style="font-family:var(--mono);font-size:0.68rem;color:var(--mid)">${confPct}%</span>
+        </div>
+      </td>
+      <td style="font-family:var(--mono);font-size:0.75rem;color:var(--mid)">${t.fast_ema?'$'+parseFloat(t.fast_ema).toFixed(2):'—'}</td>
+      <td style="font-family:var(--mono);font-size:0.75rem;color:var(--mid)">${t.slow_ema?'$'+parseFloat(t.slow_ema).toFixed(2):'—'}</td>
+    </tr>`;
+  });
+  tbody.innerHTML=html;
+}
+
+// ── Live clock ────────────────────────────────────────────────────────────────
+function updateClock(){
+  document.getElementById('mon-clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});
+}
+updateClock();setInterval(updateClock,1000);
+
+// ── Fetch intelligence ────────────────────────────────────────────────────────
+async function fetchIntel(){
+  try{
+    const r=await fetch(`${SIM}/api/intelligence`);
+    _intel=await r.json();
+    renderSignalsPane();
+    renderL1();renderL2();renderL4();
+    // Update monitor table if monitor not loaded yet
+    if(!_monitor){renderMonitorTable();}
+  }catch(e){
+    document.getElementById('pb-signals').innerHTML=`<div class="dash-loading" style="color:var(--red)">Cannot connect — is sim_server.py running?</div>`;
+  }
+}
+
+function renderSignalsPane(){
+  if(!_intel)return;
+  const el=document.getElementById('pb-signals');
+  let html='';
+  _intel.tickers.forEach(t=>{
+    const cls=t.signal==='BUY'?'buy':t.signal==='SELL'?'sell':'hold';
+    const chgCls=t.chg_pct>=0?'up':'down';
+    html+=`<div class="sig-row">
+      <div>
+        <div class="sig-ticker-d">${t.ticker}</div>
+        <div class="conf-bar-d"><div class="conf-bar-d-fill" style="width:${Math.round(t.confidence)}%"></div></div>
+      </div>
+      <div class="sig-price">$${t.price}<br><span class="${chgCls}" style="font-size:0.65rem">${t.chg_pct>=0?'+':''}${t.chg_pct}%</span></div>
+      <div><span class="sig-badge-d ${cls}">${t.signal}</span><div class="sig-conf" style="margin-top:3px">${Math.round(t.confidence)}%</div></div>
+    </div>`;
+  });
+  el.innerHTML=html||'<div class="dash-loading">NO DATA</div>';
+}
+
+// ── Fetch news ────────────────────────────────────────────────────────────────
+async function fetchNews(){
+  try{
+    const r=await fetch(`${SIM}/api/news`);
+    _news=await r.json();
+    renderNewsPane();renderL3();
+    // Populate source filter
+    const sources=['ALL',...new Set(_news.articles.map(a=>a.source))];
+    const sel=document.getElementById('news-filter-sel');
+    const cur=sel.value;
+    sel.innerHTML=sources.map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('');
+  }catch(e){
+    document.getElementById('pb-news').innerHTML=`<div class="dash-loading" style="color:var(--red)">News feed unavailable</div>`;
+  }
+}
+
+let _newsRegion='ALL';
+function filterNewsByRegion(r,btn){
+  _newsRegion=r;
+  document.querySelectorAll('#news-region-strip .rgn-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  renderNewsPane();
+}
+function renderNewsPane(srcFilter){
+  if(!_news)return;
+  const el=document.getElementById('pb-news');
+  const src=srcFilter||document.getElementById('news-filter-sel').value||'ALL';
+  let articles=_news.articles;
+  if(_newsRegion!=='ALL') articles=articles.filter(a=>a.region===_newsRegion);
+  if(src!=='ALL') articles=articles.filter(a=>a.source===src);
+  let html='';
+  articles.slice(0,30).forEach(a=>{
+    const linkEl=a.link?`<a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>`:a.title;
+    html+=`<div class="news-item">
+      <div class="news-src">${a.source} <span style="color:var(--dim);font-size:0.55rem">${a.region||''}</span></div>
+      <div class="news-hl">${linkEl}</div>
+      <div class="news-dt">${a.pubdate||''}</div>
+    </div>`;
+  });
+  el.innerHTML=html||'<div class="dash-loading">NO ARTICLES</div>';
+}
+
+function filterNewsBySource(){
+  renderNewsPane(document.getElementById('news-filter-sel').value);
+}
+
+// ── Fetch YouTube ─────────────────────────────────────────────────────────────
+async function fetchYT(){
+  try{
+    const r=await fetch(`${SIM}/api/youtube`);
+    _yt=await r.json();
+    renderYTPane();renderL5();
+    // Populate channel filter
+    const channels=['ALL',...new Set(_yt.videos.map(v=>v.channel))];
+    const sel=document.getElementById('yt-ch-sel');
+    const cur=sel.value;
+    sel.innerHTML=channels.map(c=>`<option value="${c}"${c===cur?' selected':''}>${c}</option>`).join('');
+  }catch(e){
+    document.getElementById('pb-yt').innerHTML=`<div class="dash-loading" style="color:var(--red)">YouTube feed unavailable</div>`;
+  }
+}
+
+function renderYTPane(filter){
+  if(!_yt)return;
+  const el=document.getElementById('pb-yt');
+  const ch=filter||document.getElementById('yt-ch-sel').value||'ALL';
+  const vids=ch==='ALL'?_yt.videos:_yt.videos.filter(v=>v.channel===ch);
+  // Live buttons
+  let html=`<div class="yt-live-bar">${_yt.livestreams.map((ls,i)=>`
+    <button class="yt-live-btn" onclick="openMiniPlayer(${i})">
+      <span class="yt-live-dot"></span>LIVE: ${ls.label}
+    </button>`).join('')}</div>`;
+  html+=`<div class="yt-video-list">`;
+  vids.slice(0,20).forEach(v=>{
+    const dateStr=v.pubdate?new Date(v.pubdate).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+    const url=v.link||v.embedUrl||'';
+    html+=`<div class="yt-item" onclick="openMediaItem(${JSON.stringify(url)})">
+      ${v.thumb?`<img class="yt-thumb" src="${v.thumb}" loading="lazy">`:`<div class="yt-thumb"></div>`}
+      <div class="yt-info">
+        <div class="yt-ch">${v.channel}</div>
+        <div class="yt-ttl">${v.title}</div>
+        <div class="yt-date">${dateStr}</div>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+function filterYtByChannel(){
+  renderYTPane(document.getElementById('yt-ch-sel').value);
+}
+
+function openMediaItem(url){
+  if(!url)return;
+  if(url.includes('youtube.com/embed')||url.includes('youtu.be')){
+    document.getElementById('yt-iframe').src=url;
+    document.getElementById('yt-player-overlay').classList.add('show');
+  }else{
+    window.open(url,'_blank');
+  }
+}
+
+// Expose overlay so mini-player.js can use it for popout on this page
+window.openYtPlayerOverlay = function(src){
+  document.getElementById('yt-iframe').src=src;
+  document.getElementById('yt-player-overlay').classList.add('show');
+};
+
+function openLiveStream(channelId, label){
+  const idx = window.MP_STREAMS
+    ? window.MP_STREAMS.findIndex(s=>s.channelId===channelId)
+    : -1;
+  if(idx>=0) window.mpOpen(idx);
+  else window.openYtPlayerOverlay(`https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1`);
+}
+
+// Alias used by old onclick="openMiniPlayer(i)" in rendered HTML
+window.openMiniPlayer = function(idx){ window.mpOpen(idx); };
+
+function closeYtPlayer(e){
+  if(e&&e.target!==document.getElementById('yt-player-overlay')&&e.target!==document.getElementById('yt-player-close'))return;
+  document.getElementById('yt-iframe').src='';
+  document.getElementById('yt-player-overlay').classList.remove('show');
+}
+
+function shrinkToMini(){
+  document.getElementById('yt-iframe').src='';
+  document.getElementById('yt-player-overlay').classList.remove('show');
+  window.mpOpen();
+}
+
+// ── Layer 1: EMA ─────────────────────────────────────────────────────────────
+function renderL1(){
+  if(!_intel)return;
+  const el=document.getElementById('l1-content');
+  let html=`<table class="l-table">
+    <thead><tr>
+      <th>TICKER</th><th>PRICE</th><th>TREND</th>
+      <th>EMA FAST (5)</th><th>EMA SLOW (13)</th><th>SPREAD</th><th>SIGNAL</th>
+    </tr></thead><tbody>`;
+  _intel.tickers.forEach(t=>{
+    const spread=t.fast_ema&&t.slow_ema?((t.fast_ema-t.slow_ema)/t.slow_ema*100).toFixed(2):'—';
+    const trendCls=t.trend==='up'?'up':'down';
+    const arrow=t.trend==='up'?'↑':'↓';
+    const sigCls=t.signal==='BUY'?'up':t.signal==='SELL'?'down':'neut';
+    html+=`<tr>
+      <td style="font-family:var(--mono);font-weight:600">${t.ticker}</td>
+      <td style="font-family:var(--mono)">$${t.price}</td>
+      <td class="${trendCls}">${arrow} ${t.trend.toUpperCase()}</td>
+      <td style="font-family:var(--mono)">${t.fast_ema?'$'+parseFloat(t.fast_ema).toFixed(2):'—'}</td>
+      <td style="font-family:var(--mono)">${t.slow_ema?'$'+parseFloat(t.slow_ema).toFixed(2):'—'}</td>
+      <td class="${parseFloat(spread)>=0?'up':'down'}" style="font-family:var(--mono)">${spread!=='—'?(parseFloat(spread)>=0?'+':'')+spread+'%':'—'}</td>
+      <td class="${sigCls}" style="font-family:var(--mono);font-weight:600">${t.signal}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  el.innerHTML=html;
+}
+
+// ── Layer 2: RSI ──────────────────────────────────────────────────────────────
+function renderL2(){
+  if(!_intel)return;
+  const el=document.getElementById('l2-content');
+  let html=`<table class="l-table">
+    <thead><tr>
+      <th>TICKER</th><th>PRICE</th><th>RSI (14)</th><th>LEVEL</th><th>STATUS</th><th>SIGNAL IMPACT</th>
+    </tr></thead><tbody>`;
+  _intel.tickers.forEach(t=>{
+    const rsi=t.rsi;
+    const status=rsi>70?'OVERBOUGHT':rsi<30?'OVERSOLD':rsi>60?'HIGH':'NEUTRAL';
+    const statusCls=rsi>70?'down':rsi<30?'up':'neut';
+    const barPct=Math.min(100,Math.max(0,rsi));
+    const barCls=rsi>70?'rsi-danger':rsi<30?'rsi-safe':'';
+    const impact=rsi>70?'Blocks BUY, triggers SELL':rsi<30?'Strong BUY candidate':rsi>60?'BUY blocked':'Clear to enter';
+    html+=`<tr>
+      <td style="font-family:var(--mono);font-weight:600">${t.ticker}</td>
+      <td style="font-family:var(--mono)">$${t.price}</td>
+      <td style="font-family:var(--mono);font-weight:600">${rsi}</td>
+      <td><div class="rsi-bar"><div class="rsi-fill ${barCls}" style="width:${barPct}%"></div></div></td>
+      <td class="${statusCls}" style="font-family:var(--mono);font-size:0.72rem">${status}</td>
+      <td style="font-size:0.75rem;color:var(--mid)">${impact}</td>
+    </tr>`;
+  });
+  html+=`</tbody></table>`;
+  el.innerHTML=html;
+}
+
+// ── Layer 3: Sentiment ────────────────────────────────────────────────────────
+function renderL3(){
+  if(!_news)return;
+  const el=document.getElementById('l3-news-articles');
+  let html='';
+  _news.articles.slice(0,20).forEach(a=>{
+    const link=a.link?`<a href="${a.link}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${a.title}</a>`:a.title;
+    html+=`<div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px">${a.source}</div>
+      <div style="font-size:0.83rem;font-weight:500;color:var(--text);line-height:1.4">${link}</div>
+      ${a.desc?`<div style="font-size:0.75rem;color:var(--mid);margin-top:4px;line-height:1.5">${a.desc}</div>`:''}
+      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--dim);margin-top:4px">${a.pubdate||''}</div>
+    </div>`;
+  });
+  el.innerHTML=html;
+}
+
+// ── Layer 4: Congress ─────────────────────────────────────────────────────────
+function renderL4(){
+  if(!_intel)return;
+  const el=document.getElementById('l4-content');
+  const allTrades=[];
+  _intel.tickers.forEach(t=>{
+    (t.pol_recent||[]).forEach(entry=>{
+      allTrades.push({ticker:t.ticker,entry});
+    });
+  });
+  if(!allTrades.length){
+    el.innerHTML=`<div class="api-pending">
+      <div class="api-pending-icon">🏛</div>
+      <div class="api-pending-title">Congressional Data Unavailable</div>
+      <div class="api-pending-desc">House Stock Watcher and Senate Stock Watcher data sources are returning 403/404.<br>The feeds may be temporarily unavailable. Layer 4 defaults to neutral when no data is present.</div>
+    </div>`;
+    return;
+  }
+  let html='<div class="cong-feed">';
+  allTrades.forEach(({ticker,entry})=>{
+    const isBuy=entry.toLowerCase().includes('purchase')||entry.toLowerCase().includes('buy');
+    const typeCls=isBuy?'cong-type-buy':'cong-type-sell';
+    html+=`<div class="cong-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="cong-name">${entry.split('—')[0]||entry}</div>
+        <span style="font-family:var(--mono);font-size:0.65rem;color:var(--amber)">${ticker}</span>
+      </div>
+      <div class="cong-detail ${typeCls}">${entry}</div>
+    </div>`;
+  });
+  html+='</div>';
+  el.innerHTML=html;
+}
+
+// ── Layer 5: YouTube ──────────────────────────────────────────────────────────
+function renderL5(){
+  if(!_yt)return;
+  const el=document.getElementById('l5-content');
+  // Live streams at top
+  let html=`<div style="margin-bottom:20px;">
+    <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;color:var(--dim);margin-bottom:10px;">LIVE STREAMS — CLICK TO WATCH</div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+    ${_yt.livestreams.map((ls,i)=>`
+      <button onclick="openMiniPlayer(${i})" style="display:flex;align-items:center;gap:7px;padding:9px 18px;background:transparent;border:1px solid var(--red);font-family:var(--mono);font-size:0.68rem;letter-spacing:0.14em;color:var(--red);cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='var(--red)';this.style.color='#fff'" onmouseout="this.style.background='transparent';this.style.color='var(--red)'">
+        <span style="width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block;animation:badge-pulse 1.5s infinite"></span>LIVE: ${ls.label}
+      </button>`).join('')}
+    </div>
+  </div>`;
+  // Video grid
+  html+=`<div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.18em;color:var(--dim);margin-bottom:12px;">RECENT FINANCIAL NEWS — ${_yt.videos.length} ITEMS</div>`;
+  html+=`<div class="yt-grid">`;
+  _yt.videos.forEach(v=>{
+    const dateStr=v.pubdate?new Date(v.pubdate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
+    const url=v.link||v.embedUrl||'';
+    html+=`<div class="yt-card" onclick="openMediaItem(${JSON.stringify(url)})">
+      ${v.thumb?`<img class="yt-card-thumb" src="${v.thumb}" loading="lazy">`:`<div class="yt-card-thumb" style="background:var(--surface);display:flex;align-items:center;justify-content:center;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--dim)">${v.channel}</span></div>`}
+      <div class="yt-card-body">
+        <div class="yt-card-ch">${v.channel}</div>
+        <div class="yt-card-title">${v.title}</div>
+        <div class="yt-card-date">${dateStr}</div>
+      </div>
+    </div>`;
+  });
+  html+=`</div>`;
+  el.innerHTML=html;
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────────
+function switchLayer(id,btn){
+  document.querySelectorAll('.layer-tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.layer-panel').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-'+id).classList.add('active');
+}
+
+// ── Layout toggle (2x2 vs stacked) ───────────────────────────────────────────
+let _gridMode = '2x2';
+function toggleLayout(){
+  const g=document.getElementById('monitor-grid');
+  const btn=document.getElementById('btn-layout');
+  if(_gridMode==='2x2'){
+    g.style.gridTemplateColumns='1fr';
+    g.style.gridTemplateRows='repeat(4,320px)';
+    g.style.height='auto';
+    btn.textContent='1×4 STACK';
+    _gridMode='stack';
+  }else{
+    g.style.gridTemplateColumns='1fr 1fr';
+    g.style.gridTemplateRows='1fr 1fr';
+    g.style.height='520px';
+    btn.textContent='2×2 GRID';
+    _gridMode='2x2';
+  }
+}
+
+// ── Refresh all ───────────────────────────────────────────────────────────────
+function refreshAll(){
+  document.getElementById('pb-signals').innerHTML='<div class="dash-loading"><span>REFRESHING...</span></div>';
+  document.getElementById('pb-news').innerHTML='<div class="dash-loading"><span>REFRESHING...</span></div>';
+  document.getElementById('pb-yt').innerHTML='<div class="dash-loading"><span>REFRESHING...</span></div>';
+  fetchIntel();fetchNews();fetchYT();
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+fetchMonitor();   // clocks + tickers (60s refresh)
+fetchIntel();     // intelligence signals (5m)
+fetchNews();      // news feeds (10m)
+fetchYT();        // youtube feeds (30m)
+setInterval(fetchMonitor, 60000);
+setInterval(fetchIntel,  300000);
+setInterval(fetchNews,   600000);
+setInterval(fetchYT,    1800000);
+</script>
+<script src="mini-player.js"></script>
+</body>
+</html>

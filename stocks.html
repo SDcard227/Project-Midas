@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PROJECT MIDAS — Regular Stocks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8;--surface:#ede8dd;--card:#fff;--card2:#fff;
+      --border:#ddd8ce;--border2:#c4bdb0;
+      --text:#1e1a14;--mid:#5c5045;--dim:#9a9088;
+      --green:#2d7a4f;--teal:#1a7080;--amber:#9a7018;--red:#8a3030;
+      --gold:var(--amber);--cyan:var(--teal);
+      --dark:var(--bg);--dark2:var(--surface);--dark3:var(--card);
+      --muted:var(--dim);--green2:var(--green);--green3:var(--border);
+      --gw:rgba(45,122,79,0.07);--tw:rgba(26,112,128,0.07);
+      --shadow:0 1px 3px rgba(30,26,20,0.07),0 4px 16px rgba(30,26,20,0.05);
+      --mono:'Share Tech Mono','Courier New',monospace;
+      --title:'Outfit',sans-serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{scroll-behavior:smooth;}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6;}
+    a,button,input{cursor:pointer;position:relative;z-index:10;}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 40px;height:60px;background:rgba(245,240,232,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px);}
+    .nav-logo{font-family:var(--title);font-size:1.05rem;font-weight:600;color:var(--text);text-decoration:none;letter-spacing:0.08em;}
+    .nav-logo span{color:var(--amber);}
+    .nav-links{display:flex;gap:32px;list-style:none;}
+    .nav-links a{font-family:var(--title);color:var(--dim);text-decoration:none;font-size:0.82rem;letter-spacing:0.04em;transition:color 0.2s;font-weight:400;}
+    .nav-links a:hover,.nav-links a.active{color:var(--text);}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green)!important;padding:6px 20px;border-radius:2px;transition:background 0.2s!important;font-weight:500!important;}
+    .nav-cta:hover{background:var(--gw)!important;}
+    section{position:relative;z-index:2;}
+    .container{max-width:1100px;margin:0 auto;padding:0 40px;}
+    .glow-box{border:1px solid var(--border);background:var(--card);box-shadow:var(--shadow);}
+    .glow-box-cyan{border:1px solid var(--teal);background:var(--card);box-shadow:var(--shadow);}
+    .box-title{display:flex;align-items:center;gap:10px;padding:8px 16px;border-bottom:1px solid var(--border);font-size:0.7rem;letter-spacing:0.15em;color:var(--mid);}
+    .dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+    .dot.cyan{background:var(--teal);}
+    .dot.gold{background:var(--amber);}
+    @keyframes pulse{0%,100%{opacity:1;}50%{opacity:0.3;}}
+    .blink{animation:blink 1.2s step-end infinite;}
+    @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
+    .s-eye{font-size:0.68rem;letter-spacing:0.22em;text-transform:uppercase;color:var(--dim);margin-bottom:12px;display:block;font-family:var(--mono);}
+    .s-title{font-family:var(--title);font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:600;color:var(--text);line-height:1.15;letter-spacing:-0.01em;margin-bottom:16px;}
+    .s-sub{font-size:0.95rem;color:var(--mid);line-height:1.8;max-width:580px;font-weight:300;}
+    .fade-in{opacity:0;transform:translateY(20px);transition:opacity 0.7s ease,transform 0.7s ease;}
+    .fade-in.visible{opacity:1;transform:translateY(0);}
+    /* Hero */
+    #hero{min-height:60vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 32px 60px;background:var(--bg);}
+    .hero-badge{display:inline-flex;align-items:center;gap:10px;border:1px solid var(--border2);padding:6px 18px;font-size:0.72rem;letter-spacing:0.18em;color:var(--mid);margin-bottom:32px;}
+    h1{font-family:var(--title);font-size:clamp(2.2rem,5vw,3.8rem);font-weight:600;color:var(--text);letter-spacing:-0.01em;margin-bottom:8px;line-height:1.05;}
+    .hero-sub{font-size:1rem;color:var(--mid);max-width:560px;line-height:1.75;margin:16px auto 36px;font-weight:300;}
+    /* Signal table */
+    .signal-table{width:100%;border-collapse:collapse;font-size:0.82rem;}
+    .signal-table th{padding:10px 16px;text-align:left;color:var(--dim);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;border-bottom:1px solid var(--border2);}
+    .signal-table td{padding:12px 16px;border-bottom:1px solid var(--border);}
+    .signal-table tr:hover td{background:var(--surface);}
+    .t-ticker{color:var(--amber);font-weight:bold;}
+    .t-up{color:var(--green);}
+    .t-down{color:var(--red);}
+    .t-hold{color:var(--amber);}
+    .sig-buy{color:var(--green);font-weight:bold;}
+    .sig-sell{color:var(--red);font-weight:bold;}
+    .sig-hold{color:var(--amber);font-weight:bold;}
+    .conf-bar{display:inline-block;height:6px;background:var(--green);border-radius:1px;vertical-align:middle;margin-right:6px;}
+    /* Mode cards */
+    .mode-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+    .mode-card{padding:24px;border-left:2px solid var(--green);}
+    .mode-name{font-family:var(--title);font-size:0.9rem;color:var(--green);letter-spacing:0.1em;margin-bottom:8px;}
+    .mode-desc{font-size:0.8rem;color:var(--mid);line-height:1.7;}
+    /* Feature list */
+    .flist{list-style:none;display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+    .flist li{display:flex;gap:10px;font-size:0.82rem;color:var(--mid);line-height:1.5;}
+    .flist li::before{content:">";color:var(--green);flex-shrink:0;}
+    /* Setup steps */
+    .setup-steps{display:grid;grid-template-columns:repeat(2,1fr);gap:20px;}
+    .setup-step{padding:20px 24px;}
+    .step-n{font-family:var(--title);font-size:0.65rem;color:var(--amber);letter-spacing:0.15em;margin-bottom:10px;}
+    .step-h{font-family:var(--title);font-size:0.88rem;color:var(--text);letter-spacing:0.06em;margin-bottom:8px;}
+    .step-p{font-size:0.8rem;color:var(--mid);line-height:1.7;}
+    /* Terminal */
+    .terminal{font-size:0.8rem;line-height:2;padding:20px 24px;}
+    .tr-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--border);padding:3px 0;}
+    .tr-key{color:var(--dim);}
+    .tr-g{color:var(--green);}
+    .tr-gold{color:var(--amber);}
+    .tr-r{color:var(--red);}
+    .tr-c{color:var(--teal);}
+    hr.tr-div{border:none;border-top:1px solid var(--border2);margin:8px 0;}
+    /* Signup */
+    .signup-form{display:flex;gap:0;max-width:420px;margin-top:24px;}
+    .signup-form input{flex:1;background:var(--card);border:1px solid var(--border2);border-right:none;padding:11px 16px;color:var(--text);font-family:var(--mono);font-size:0.85rem;outline:none;cursor:text;}
+    .signup-form input::placeholder{color:var(--dim);}
+    .signup-form input:focus{border-color:var(--border2);}
+    .signup-form button{font-family:var(--mono);background:var(--text);color:var(--bg);font-size:0.8rem;letter-spacing:0.1em;padding:11px 20px;border:none;text-transform:uppercase;white-space:nowrap;transition:opacity 0.18s;}
+    .signup-form button:hover{opacity:0.8;}
+    .btn-back{font-family:var(--mono);background:transparent;color:var(--text);font-size:0.78rem;letter-spacing:0.12em;padding:10px 20px;border:1px solid var(--border2);text-decoration:none;text-transform:uppercase;display:inline-block;transition:border-color 0.2s;}
+    .btn-back:hover{border-color:var(--text);}
+    footer{background:var(--surface);border-top:1px solid var(--border);padding:28px 0;position:relative;z-index:2;}
+    .footer-inner{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px;}
+    .footer-logo{font-family:var(--title);font-size:0.9rem;color:var(--text);letter-spacing:0.12em;}
+    .footer-links{display:flex;gap:24px;list-style:none;}
+    .footer-links a{font-size:0.72rem;color:var(--dim);text-decoration:none;letter-spacing:0.08em;text-transform:uppercase;transition:color 0.2s;}
+    .footer-links a:hover{color:var(--green);}
+    .footer-copy{font-size:0.7rem;color:var(--dim);}
+    @media(max-width:900px){nav{padding:0 20px;}.nav-links{display:none;}.mode-grid{grid-template-columns:1fr;}.setup-steps{grid-template-columns:1fr;}}
+  </style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+  <ul class="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="stocks.html" class="active">Stocks</a></li>
+    <li><a href="penny.html">Penny</a></li>
+    <li><a href="index.html#signals">Signals</a></li>
+    <li><a href="intelligence.html">Intelligence</a></li>
+    <li><a href="dashboard.html">Dashboard</a></li>
+    <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
+  </ul>
+</nav>
+
+<!-- Hero -->
+<section id="hero">
+  <div class="hero-badge"><span class="blink">█</span> SWING TRADING ENGINE &nbsp;·&nbsp; ACTIVE</div>
+  <h1>REGULAR STOCKS</h1>
+  <p style="font-family:var(--title);font-size:1rem;color:var(--cyan);letter-spacing:0.2em;text-shadow:0 0 14px var(--cyan);">EMA TREND · RSI MOMENTUM · MULTI-DAY HOLDS</p>
+  <p class="hero-sub">Midas rides EMA crossovers on blue-chip stocks and ETFs. Enter at the start of a trend, hold for days or weeks, and exit before the reversal — automatically.</p>
+  <a class="btn-back" href="index.html">← BACK TO HOME</a>
+</section>
+
+<!-- Live signal mock -->
+<section style="padding:60px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div class="glow-box fade-in">
+      <div class="box-title"><div class="dot"></div> SIGNAL FEED &nbsp;·&nbsp; SWING MODE &nbsp;·&nbsp; SORTED BY CONFIDENCE</div>
+      <div style="padding:16px 0;">
+        <table class="signal-table">
+          <thead>
+            <tr>
+              <th>Ticker</th><th>Price</th><th>Chg</th><th>Trend</th><th>RSI</th><th>Signal</th><th>Confidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="t-ticker">NVDA</td><td>$492.10</td><td class="t-up">▲ 2.81%</td><td class="t-up">↑</td><td>52.1</td><td class="sig-buy">BUY</td><td><span class="conf-bar" style="width:72px"></span>88%</td></tr>
+            <tr><td class="t-ticker">AAPL</td><td>$189.42</td><td class="t-up">▲ 1.24%</td><td class="t-up">↑</td><td>48.3</td><td class="sig-buy">BUY</td><td><span class="conf-bar" style="width:60px"></span>72%</td></tr>
+            <tr><td class="t-ticker">SPY</td><td>$524.88</td><td class="t-up">▲ 0.47%</td><td class="t-up">↑</td><td>55.6</td><td class="sig-hold">HOLD</td><td><span class="conf-bar" style="width:41px"></span>51%</td></tr>
+            <tr><td class="t-ticker">MSFT</td><td>$415.00</td><td class="t-down">▼ 0.30%</td><td class="t-down">↓</td><td>38.2</td><td class="sig-hold">HOLD</td><td><span class="conf-bar" style="width:34px"></span>42%</td></tr>
+            <tr><td class="t-ticker">TSLA</td><td>$248.70</td><td class="t-down">▼ 0.53%</td><td class="t-down">↓</td><td>72.4</td><td class="sig-sell">SELL</td><td><span class="conf-bar" style="width:20px;background:var(--red);box-shadow:0 0 4px var(--red)"></span>24%</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <p style="font-size:0.7rem;color:var(--muted);margin-top:12px;letter-spacing:0.08em;">// sample data — run py monitor.py for live signals</p>
+  </div>
+</section>
+
+<!-- Trading modes -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:48px;">
+      <span class="s-eye">Strategy Modes</span>
+      <h2 class="s-title">PICK YOUR APPROACH</h2>
+      <p class="s-sub">Three modes control when Midas exits a position. Set in main.py or via py setup.py → [4] Trading.</p>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card glow-box fade-in">
+        <div class="mode-name">CLIMB</div>
+        <div class="mode-desc">Default. Rides the EMA trend and exits on a bearish crossunder or RSI overbought. Balanced risk/reward. Best for most situations.</div>
+      </div>
+      <div class="mode-card glow-box fade-in" style="border-left-color:var(--cyan);">
+        <div class="mode-name" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan);">PLATEAU</div>
+        <div class="mode-desc">Exits early when price goes sideways before a drop. More conservative — gives up some upside to avoid getting caught in a slow bleed.</div>
+      </div>
+      <div class="mode-card glow-box fade-in" style="border-left-color:var(--gold);">
+        <div class="mode-name" style="color:var(--gold);text-shadow:0 0 8px var(--gold);">SURGE</div>
+        <div class="mode-desc">Holds the longest. Only exits when the peak is actively breaking down. High conviction — captures the full move but carries more drawdown risk.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Floor protection -->
+<section style="padding:80px 0;background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:center;">
+      <div class="fade-in">
+        <span class="s-eye">Capital Protection</span>
+        <h2 class="s-title">FLOOR PROTECTION</h2>
+        <p class="s-sub" style="margin-bottom:20px;">Set a minimum balance. If the fund ever drops to that number, Midas exits all positions and stops trading — protecting your capital automatically.</p>
+        <ul class="flist">
+          <li>FIXED — hard floor, trading stops if fund hits the limit</li>
+          <li>TRAILING — floor rises as your fund grows, locks in gains</li>
+          <li>LOCKED — floor amount kept in cash, never invested</li>
+          <li>PRINCIPAL — original investment locked forever, only trades profits</li>
+        </ul>
+      </div>
+      <div class="terminal glow-box fade-in">
+        <div class="box-title"><div class="dot gold"></div> FLOOR MONITOR &nbsp;·&nbsp; TRAILING MODE</div>
+        <div style="padding:14px 20px;">
+          <div class="tr-row"><span class="tr-key">fund_value</span><span class="tr-gold">$1,284.50</span></div>
+          <div class="tr-row"><span class="tr-key">peak_value</span><span class="tr-gold">$1,310.00</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">floor_pct</span><span class="tr-key">15%</span></div>
+          <div class="tr-row"><span class="tr-key">floor_value</span><span class="tr-g">$1,113.50</span></div>
+          <div class="tr-row"><span class="tr-key">cushion</span><span class="tr-g">$171.00 above floor</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">status</span><span class="tr-g">TRADING ●</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How to set up -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:48px;">
+      <span class="s-eye">Getting Started</span>
+      <h2 class="s-title">SET UP IN 4 STEPS</h2>
+    </div>
+    <div class="setup-steps">
+      <div class="setup-step glow-box fade-in">
+        <div class="step-n">STEP 01 // API KEYS</div>
+        <div class="step-h">CONNECT ALPACA</div>
+        <p class="step-p">Run <span style="color:var(--green)">py setup.py → [2] API Keys</span>. Enter your free Alpaca paper trading keys from alpaca.markets. No real money needed to start.</p>
+      </div>
+      <div class="setup-step glow-box fade-in">
+        <div class="step-n">STEP 02 // WATCHLIST</div>
+        <div class="step-h">ADD YOUR STOCKS</div>
+        <p class="step-p">Run <span style="color:var(--green)">py setup.py → [6] Watchlist</span>. Add any NYSE/NASDAQ ticker — AAPL, NVDA, SPY, or anything you want to track.</p>
+      </div>
+      <div class="setup-step glow-box fade-in">
+        <div class="step-n">STEP 03 // FUND</div>
+        <div class="step-h">SET YOUR BALANCE</div>
+        <p class="step-p">Run <span style="color:var(--green)">py setup.py → [3] Fund</span>. Set your starting balance, floor amount, and how much to deploy per trade (default 10%).</p>
+      </div>
+      <div class="setup-step glow-box fade-in">
+        <div class="step-n">STEP 04 // LAUNCH</div>
+        <div class="step-h">START TRADING</div>
+        <p class="step-p">Double-click <span style="color:var(--green)">start.bat → [5] Trade</span>. Midas runs in paper mode by default — watch it trade with fake money before going live.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Trade frequency -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:48px;">
+      <span class="s-eye">Trade Frequency</span>
+      <h2 class="s-title">HOW OFTEN DOES IT BUY?</h2>
+      <p class="s-sub">Independent from mode — controls how tight the entry conditions are. Pair with any trading mode.</p>
+    </div>
+    <div class="mode-grid">
+      <div class="mode-card glow-box fade-in" style="border-left-color:var(--muted);">
+        <div class="mode-name" style="color:var(--text);">NORMAL</div>
+        <div class="mode-desc">Strictest filter. Only buys on a confirmed EMA bullish crossover while RSI is below 60 and sentiment is clean. EMA 12/26 periods. Fewest trades — every one is high conviction.</div>
+      </div>
+      <div class="mode-card glow-box fade-in" style="border-left-color:var(--cyan);">
+        <div class="mode-name" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan);">ACTIVE</div>
+        <div class="mode-desc">Everything NORMAL does, plus: buys RSI dips below 40 while the overall trend is up. EMA 5/13 periods. Catches mid-trend pullbacks that NORMAL would sit out. Recommended default.</div>
+      </div>
+      <div class="mode-card glow-box fade-in">
+        <div class="mode-name">AGGRESSIVE</div>
+        <div class="mode-desc">Buys whenever fast EMA is above slow EMA — no crossover required. Stays in the full uptrend. Also catches RSI dips. EMA 5/13. Most trades. Best in strong bull years like 2021 and 2023.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Re-entry watcher -->
+<section style="padding:80px 0;background:var(--dark2);border-top:1px solid var(--border);border-bottom:1px solid var(--border);">
+  <div class="container">
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:56px;align-items:start;" class="fade-in">
+      <div>
+        <span class="s-eye">Smart Re-Entry</span>
+        <h2 class="s-title">SELL HIGH.<br>BUY BACK LOWER.</h2>
+        <p class="s-sub" style="margin-bottom:20px;">After every sell, Midas doesn't immediately chase back in. It places a watcher on the stock, waits for a confirmed post-sell peak, then triggers a re-buy when price dips 4% from that peak.</p>
+        <ul class="flist">
+          <li>75% of sell proceeds reserved for re-entry</li>
+          <li>Remaining 25% stays liquid as a buffer</li>
+          <li>Watcher expires after 60 days — funds returned if no dip</li>
+          <li>PLATEAU mode uses 8% dip threshold (flat-to-down moves overshoot)</li>
+          <li>Multiple watchers can run simultaneously across tickers</li>
+        </ul>
+      </div>
+      <div class="terminal glow-box">
+        <div class="box-title"><div class="dot cyan"></div> RE-ENTRY WATCHER &nbsp;·&nbsp; NVDA</div>
+        <div style="padding:14px 20px;">
+          <div class="tr-row"><span class="tr-key">sell_price</span><span class="tr-c">$295.11</span></div>
+          <div class="tr-row"><span class="tr-key">post_sell_high</span><span class="tr-gold">$318.40</span></div>
+          <div class="tr-row"><span class="tr-key">dip_threshold</span><span class="tr-key">$305.66  (-4%)</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">current_price</span><span class="tr-g">$308.22</span></div>
+          <div class="tr-row"><span class="tr-key">status</span><span class="tr-c">WATCHING ···</span></div>
+          <div class="tr-row"><span class="tr-key">days_watching</span><span class="tr-key">14 / 60</span></div>
+          <div class="tr-row"><span class="tr-key">reinvest_amount</span><span class="tr-gold">$74.25</span></div>
+          <hr class="tr-div"/>
+          <div class="tr-row"><span class="tr-key">action</span><span class="tr-c">waiting for $305.66</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Cost and tax model -->
+<section style="padding:80px 0;">
+  <div class="container">
+    <div class="fade-in" style="margin-bottom:48px;">
+      <span class="s-eye">Cost &amp; Tax Model</span>
+      <h2 class="s-title">REAL NUMBERS.<br>NO SURPRISES.</h2>
+      <p class="s-sub">Transaction costs and taxes are deducted at execution — not estimated after the fact. Every reinvestment and compounding calculation uses real after-friction capital.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;" class="fade-in">
+      <div class="glow-box" style="padding:28px;">
+        <div style="font-size:0.68rem;color:var(--cyan);letter-spacing:0.15em;margin-bottom:16px;text-shadow:0 0 6px var(--cyan);">TRANSACTION COSTS</div>
+        <div class="tr-row"><span class="tr-key">commission</span><span class="tr-g">$0.00 per side</span></div>
+        <div class="tr-row"><span class="tr-key">spread_pct</span><span class="tr-g">0.03% per side</span></div>
+        <div class="tr-row"><span class="tr-key">round-trip cost</span><span class="tr-key">0.06% of trade value</span></div>
+        <hr class="tr-div"/>
+        <p style="font-size:0.78rem;color:var(--text);line-height:1.7;opacity:0.75;margin-top:8px;">Commission = $0 because Alpaca is commission-free. Spread of 0.03% (3 bps) is a conservative estimate for liquid large-caps like AAPL, MSFT, NVDA, and SPY.</p>
+      </div>
+      <div class="glow-box" style="padding:28px;">
+        <div style="font-size:0.68rem;color:var(--gold);letter-spacing:0.15em;margin-bottom:16px;text-shadow:0 0 6px var(--gold);">TAX MODEL</div>
+        <div class="tr-row"><span class="tr-key">method</span><span class="tr-gold">short-term capital gains</span></div>
+        <div class="tr-row"><span class="tr-key">rate</span><span class="tr-gold">22% (configurable)</span></div>
+        <div class="tr-row"><span class="tr-key">applied</span><span class="tr-key">at sell, trade-by-trade</span></div>
+        <hr class="tr-div"/>
+        <p style="font-size:0.78rem;color:var(--text);line-height:1.7;opacity:0.75;margin-top:8px;">Conservative model — treats every gain as short-term income regardless of hold time. Tax deducted at sell execution, so reinvestment amounts reflect real after-tax proceeds. Losses get no tax benefit (conservative).</p>
+      </div>
+    </div>
+    <p style="margin-top:16px;font-size:0.72rem;color:var(--muted);letter-spacing:0.06em;">// adjust COMMISSION, SPREAD_PCT, TAX_RATE in compare.py — or via the simulator game tax field</p>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-logo">PROJECT MIDAS</div>
+      <ul class="footer-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="stocks.html">Stocks</a></li>
+        <li><a href="penny.html">Penny</a></li>
+        <li><a href="index.html#simulator">Simulator</a></li>
+        <li><a href="index.html#signup">Get Access</a></li>
+      </ul>
+      <p class="footer-copy">© 2026 Salahaldin Nimeri &nbsp;·&nbsp; Project Midas &nbsp;·&nbsp; Not financial advice.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const obs = new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting)x.target.classList.add("visible");}),{threshold:0.1});
+  document.querySelectorAll(".fade-in").forEach(el=>obs.observe(el));
+</script>
+<script src="mini-player.js"></script>
+</body>
+</html>
