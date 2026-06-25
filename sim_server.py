@@ -537,6 +537,18 @@ def api_ticker(symbol):
                         "direction": "neutral", "events": [], "error": str(e)})
 
 
+@app.route("/api/health")
+def api_health():
+    """Which API keys the server can see (presence only, never values).
+    Confirms whether env vars are set in production."""
+    return jsonify({
+        "alpaca_key":    bool(os.getenv("ALPACA_API_KEY")),
+        "alpaca_secret": bool(os.getenv("ALPACA_SECRET_KEY")),
+        "finnhub":       bool(os.getenv("FINNHUB_API_KEY")),
+        "anthropic":     bool(os.getenv("ANTHROPIC_API_KEY")),
+    })
+
+
 @app.route("/api/rate", methods=["POST"])
 def api_rate():
     """Crowd review: a user rates a source reliable or not. Feeds the trust model.
