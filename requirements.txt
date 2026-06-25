@@ -6,3 +6,4 @@ python-dotenv
 yfinance
 flask
 gunicorn
+anthropic

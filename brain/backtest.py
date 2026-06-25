@@ -1,10 +1,13 @@
+import os
 import logging
-import yfinance as yf
 import pandas as pd
 from datetime import datetime, timedelta
+from alpaca.data.historical import StockHistoricalDataClient
+from alpaca.data.requests import StockBarsRequest
+from alpaca.data.timeframe import TimeFrame
 from .indicators import ema_crossover, rsi, plateau_detected, surge_exit_approaching
 
-log = logging.getLogger("Mitas.Backtest")
+log = logging.getLogger("Midas.Backtest")
 
 
 class Backtest:
@@ -105,6 +108,7 @@ class Backtest:
         # Trade log
         self.trades = []
         self.daily_snapshots = []
+        self.signal_timeline = []   # per-day direction + confidence for the practice grid
 
     # -------------------------------------------------------------------------
     # Run
@@ -128,14 +132,10 @@ class Backtest:
         all_data = {}
         for ticker in self.watchlist:
             print(f"Downloading {ticker}...")
-            df = yf.download(ticker, start=fetch_start, end=self.end_date, auto_adjust=True, progress=False)
-            # Flatten MultiIndex columns returned by newer yfinance versions
-            if isinstance(df.columns, pd.MultiIndex):
-                df.columns = df.columns.get_level_values(0)
+            df = self._download(ticker, fetch_start, self.end_date)
             if df.empty:
                 print(f"  WARNING: No data returned for {ticker}, skipping.")
                 continue
-            df.index = pd.to_datetime(df.index)
             all_data[ticker] = df
 
         if not all_data:
@@ -155,6 +155,46 @@ class Backtest:
         self._print_report(self.results)
 
     # -------------------------------------------------------------------------
+    # Data (Alpaca historical — replaces the dead yfinance feed)
+    # -------------------------------------------------------------------------
+
+    def _download(self, ticker: str, fetch_start: str, end: str) -> pd.DataFrame:
+        """Daily closes for [fetch_start, end] from Alpaca. Returns a DataFrame
+        with a single 'Close' column on a tz-naive daily DatetimeIndex — the same
+        shape the simulator expects. Needs free ALPACA_API_KEY/SECRET in .env."""
+        key = os.getenv("ALPACA_API_KEY")
+        secret = os.getenv("ALPACA_SECRET_KEY")
+        if not (key and secret):
+            raise RuntimeError(
+                "Backtest needs ALPACA_API_KEY and ALPACA_SECRET_KEY in your .env "
+                "(free paper keys work for historical data). yfinance is no longer used."
+            )
+        client = StockHistoricalDataClient(key, secret)
+        req = StockBarsRequest(
+            symbol_or_symbols=ticker,
+            timeframe=TimeFrame.Day,
+            start=datetime.strptime(fetch_start, "%Y-%m-%d"),
+            end=datetime.strptime(end, "%Y-%m-%d"),
+        )
+        try:
+            bars = client.get_stock_bars(req)
+        except Exception as e:
+            log.warning(f"Alpaca download failed for {ticker}: {e}")
+            return pd.DataFrame()
+        df = getattr(bars, "df", None)
+        if df is None or df.empty:
+            return pd.DataFrame()
+        df = df.reset_index()
+        if "symbol" in df.columns:
+            df = df[df["symbol"] == ticker]
+        if df.empty or "close" not in df.columns or "timestamp" not in df.columns:
+            return pd.DataFrame()
+        idx = pd.to_datetime(df["timestamp"], utc=True).dt.tz_localize(None).dt.normalize()
+        out = pd.DataFrame({"Close": df["close"].astype(float).values}, index=idx)
+        out.index.name = "Date"
+        return out.sort_index()
+
+    # -------------------------------------------------------------------------
     # Single day simulation
     # -------------------------------------------------------------------------
 
@@ -172,7 +212,7 @@ class Backtest:
             log.warning(f"{day.date()} | FLOOR HIT — trading paused. Total value: ${total_value:.2f}")
 
         if self.paused:
-            self._snapshot(day, all_data)
+            self._snapshot(day, all_data, action="FLOOR")
             return
 
         # Reset monthly counter when the simulated month changes
@@ -242,7 +282,12 @@ class Backtest:
             self._buy(ticker, day, data["price"], confidence=data["result"]["confidence"])
             self._monthly_trade_count += 1
 
-        self._snapshot(day, all_data)
+        # Summarize the day for the practice grid: avg confidence + what we did.
+        confs = [d["result"]["confidence"] for d in ticker_data.values() if "result" in d]
+        sigs  = [d["result"]["signal"] for d in ticker_data.values() if "result" in d]
+        day_conf = round(sum(confs) / len(confs), 1) if confs else None
+        day_action = "BUY" if "BUY" in sigs else "SELL" if "SELL" in sigs else "HOLD"
+        self._snapshot(day, all_data, confidence=day_conf, action=day_action)
 
     # -------------------------------------------------------------------------
     # Signal (no sentiment — neutral by default in simulation)
@@ -446,12 +491,30 @@ class Backtest:
             and self._deployable_balance() >= self.entry_point
         )
 
-    def _snapshot(self, day: pd.Timestamp, all_data: dict):
+    def _snapshot(self, day: pd.Timestamp, all_data: dict, confidence=None, action="HOLD"):
+        total = round(self._total_value(day, all_data), 2)
         self.daily_snapshots.append({
             "date": day.date(),
-            "total_value": round(self._total_value(day, all_data), 2),
+            "total_value": total,
             "cash": round(self.balance, 2),
             "open_positions": list(self.positions.keys()),
+        })
+        # Per-day record for the practice grid: market direction + avg confidence.
+        pcts = []
+        for df in all_data.values():
+            h = df.loc[:day]["Close"]
+            if len(h) > 1:
+                prev = float(h.iloc[-2])
+                if prev:
+                    pcts.append(float(h.iloc[-1]) / prev - 1.0)
+        avg = sum(pcts) / len(pcts) if pcts else 0.0
+        self.signal_timeline.append({
+            "date": str(day.date()),
+            "value": total,
+            "pct": round(avg * 100, 2),
+            "direction": "up" if avg > 0.001 else "down" if avg < -0.001 else "flat",
+            "confidence": confidence,
+            "action": action,
         })
 
     # -------------------------------------------------------------------------
@@ -492,6 +555,7 @@ class Backtest:
             "floor_triggered": self.paused,
             "trade_log": self.trades,
             "daily_snapshots": self.daily_snapshots,
+            "signal_timeline": self.signal_timeline,
         }
 
     def _print_report(self, r: dict):

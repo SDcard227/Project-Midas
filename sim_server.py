@@ -107,6 +107,7 @@ def simulate():
         "floor_triggered":         bt.results["floor_triggered"],
         "trades":                  trades,
         "snapshots":               snapshots,
+        "timeline":                bt.results.get("signal_timeline", []),
     })
 
 
@@ -114,17 +115,48 @@ def simulate():
 import time as _time
 import threading as _threading
 import logging as _logging
-import yfinance as _yf
-from datetime import datetime as _dt
+import pandas as _pd
+from datetime import datetime as _dt, timedelta as _timedelta
+from dotenv import load_dotenv as _load_dotenv
+from alpaca.data.historical import StockHistoricalDataClient as _StockClient
+from alpaca.data.requests import StockBarsRequest as _BarsReq
+from alpaca.data.timeframe import TimeFrame as _TF
 from brain.indicators import ema_crossover as _ema_x, rsi as _rsi
 from brain.politician import PoliticianTracker as _PolTracker
 
+_load_dotenv()
 _log        = _logging.getLogger("Midas.Server")
 _WATCHLIST  = ["AAPL","MSFT","NVDA","SPY","TSLA","AMD","META","AMZN","PLTR","SOFI","GME","SNDL","GOOGL","NFLX","COIN"]
 _intel_data = None
 _intel_ts   = 0.0
 _intel_lock = _threading.Lock()
 _pol        = _PolTracker(lookback_days=90)
+
+
+def _alpaca_closes(ticker, days=370):
+    """Daily closes for the past `days` from Alpaca (replaces dead yfinance).
+    Returns a pandas Series of floats, or None if unavailable / no keys set."""
+    key = os.getenv("ALPACA_API_KEY")
+    sec = os.getenv("ALPACA_SECRET_KEY")
+    if not (key and sec):
+        _log.warning("Live data off — set ALPACA_API_KEY/SECRET in .env.")
+        return None
+    try:
+        client = _StockClient(key, sec)
+        req = _BarsReq(symbol_or_symbols=ticker, timeframe=_TF.Day,
+                       start=_dt.now() - _timedelta(days=days), end=_dt.now())
+        df = getattr(client.get_stock_bars(req), "df", None)
+    except Exception as e:
+        _log.debug(f"Alpaca closes {ticker}: {e}")
+        return None
+    if df is None or df.empty:
+        return None
+    df = df.reset_index()
+    if "symbol" in df.columns:
+        df = df[df["symbol"] == ticker]
+    if df.empty or "close" not in df.columns:
+        return None
+    return _pd.Series(df["close"].astype(float).values).dropna()
 
 
 @app.after_request
@@ -139,16 +171,8 @@ def intelligence_page():
 
 
 def _ticker_stats(ticker):
-    import pandas as _pd
-    df = _yf.download(ticker, period="3mo", interval="1d",
-                      progress=False, auto_adjust=True)
-    if df.empty or len(df) < 15:
-        return None
-    closes = df["Close"]
-    if isinstance(closes, _pd.DataFrame):
-        closes = closes.iloc[:, 0]
-    closes = closes.dropna()
-    if len(closes) < 15:
+    closes = _alpaca_closes(ticker, days=370)
+    if closes is None or len(closes) < 15:
         return None
 
     trend   = _ema_x(closes, fast=5, slow=13)
@@ -173,17 +197,9 @@ def _ticker_stats(ticker):
     pol_conf = 100.0 if pol["score"] == 1 else 50.0 if pol["score"] == 0 else 0.0
     conf     = round(rsi_conf * 0.40 + spr_conf * 0.40 + pol_conf * 0.20, 1)
 
-    df1y = _yf.download(ticker, period="1y", interval="1d",
-                        progress=False, auto_adjust=True)
-    h52 = l52 = None
-    if not df1y.empty:
-        cl1y = df1y["Close"]
-        if isinstance(cl1y, _pd.DataFrame):
-            cl1y = cl1y.iloc[:, 0]
-        cl1y = cl1y.dropna()
-        if not cl1y.empty:
-            h52 = round(float(cl1y.max()), 2)
-            l52 = round(float(cl1y.min()), 2)
+    # 52-week high/low from the same ~1y Alpaca series
+    h52 = round(float(closes.max()), 2)
+    l52 = round(float(closes.min()), 2)
 
     return {
         "ticker":             ticker.upper(),
@@ -481,6 +497,62 @@ def api_news():
                 _news_data = _build_news()
                 _news_ts   = _time.time()
     return jsonify(_news_data)
+
+
+# ── WHISPERS — AI news edge (feeds → Claude filter → corroboration ledger) ────
+_whisper_data = None
+_whisper_ts   = 0.0
+_whisper_lock = _threading.Lock()
+
+
+@app.route("/api/whispers")
+def api_whispers():
+    """Early-signal feed: rising news events not yet mainstream. Cached 10 min
+    because each refresh runs Claude over the latest headlines."""
+    global _whisper_data, _whisper_ts
+    if _whisper_data is None or _time.time() - _whisper_ts > 600:
+        with _whisper_lock:
+            if _whisper_data is None or _time.time() - _whisper_ts > 600:
+                try:
+                    from brain.news_pipeline import run_scan
+                    _whisper_data = run_scan()
+                except Exception as e:
+                    _log.warning(f"Whisper scan failed: {e}")
+                    _whisper_data = {"updated": _dt.now().isoformat(),
+                                     "whispers": [], "top": [], "error": str(e)}
+                _whisper_ts = _time.time()
+    return jsonify(_whisper_data)
+
+
+@app.route("/api/ticker/<symbol>")
+def api_ticker(symbol):
+    """Confidence + clickable source feed for one ticker. Powers the user flow:
+    search a ticker -> see its confidence -> drill into the live source feed."""
+    try:
+        from brain.signal_ledger import SignalLedger
+        return jsonify(SignalLedger().ticker_feed(symbol))
+    except Exception as e:
+        _log.warning(f"Ticker feed failed: {e}")
+        return jsonify({"ticker": symbol.upper(), "confidence": 0.0,
+                        "direction": "neutral", "events": [], "error": str(e)})
+
+
+@app.route("/api/rate", methods=["POST"])
+def api_rate():
+    """Crowd review: a user rates a source reliable or not. Feeds the trust model.
+    Body: {"source": "r/wallstreetbets", "helpful": true}"""
+    data = request.get_json(silent=True) or {}
+    source = (data.get("source") or "").strip()
+    if not source:
+        return jsonify({"error": "source required"}), 400
+    try:
+        from brain.signal_ledger import SignalLedger
+        led = SignalLedger()
+        led.record_rating(source, bool(data.get("helpful")))
+        return jsonify({"ok": True, "source": source, "trust": led.source_trust(source)})
+    except Exception as e:
+        _log.warning(f"Rate failed: {e}")
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
