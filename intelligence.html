@@ -279,7 +279,7 @@
           <span class="last-upd" id="last-updated">Connecting...</span>
           <button class="refresh-btn" onclick="doRefresh()">↺ REFRESH</button>
         </div>
-        <div class="cd-line">Auto-refresh in <span id="countdown">300</span>s · Layers 1–2 + 4 live</div>
+        <div class="cd-line">Auto-refresh in <span id="countdown">300</span>s · L1–2 free (Yahoo) · L3–5 need keys</div>
       </div>
     </div>
 
@@ -368,8 +368,8 @@
         <div class="footer-by">BY SALAHALDIN NIMERI</div>
       </div>
       <div class="footer-note">
-        L1–L2: Yahoo Finance (live) · L4: House &amp; Senate disclosures (live, no key)<br>
-        L3 Finnhub + L5 YouTube require API keys · Not financial advice.
+        L1–L2: Yahoo Finance (free, often blocked on cloud hosts) · L4: Congress via FMP<br>
+        L3 Finnhub · L4 FMP · L5 YouTube require API keys · Not financial advice.
       </div>
     </div>
   </div>
@@ -488,7 +488,7 @@ function renderPicks(tickers){
   </div>`;
 
   const shown=[...buys,...holds.slice(0,3),...sells.slice(0,2)];
-  if(!shown.length){c.innerHTML=html+'<div class="no-data">No signal data available — check sim_server connection.</div>';return;}
+  if(!shown.length){c.innerHTML=html+'<div class="no-data">No signals yet. The free Yahoo feed is often blocked on cloud hosts; an Alpaca key gives reliable data.</div>';return;}
 
   html+='<div class="picks-grid">';
   shown.forEach(t=>{
