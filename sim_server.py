@@ -1428,7 +1428,8 @@ def api_parlor_create():
     data = request.get_json(silent=True) or {}
     res = parlor.create_market(data.get("question", ""), data.get("ticker", ""),
                                data.get("rule", ""), data.get("closes_at", ""),
-                               data.get("category", ""), u["id"])
+                               data.get("category", ""), u["id"],
+                               threshold=data.get("threshold"), ticker2=data.get("ticker2", ""))
     return jsonify(res), (400 if res.get("error") else 200)
 
 
@@ -1667,7 +1668,14 @@ def _parlor_autoresolve():
             closes = _alpaca_closes(m["ticker"], days=15)
             if closes is None or len(closes) < 2:
                 continue
-            outcome = parlor.eval_rule(m["rule"], list(closes))
+            closes2 = None
+            if m.get("rule") == "beats" and m.get("ticker2"):
+                c2 = _alpaca_closes(m["ticker2"], days=15)
+                if c2 is None or len(c2) < 2:
+                    continue            # need both legs to call the race
+                closes2 = list(c2)
+            outcome = parlor.eval_rule(m["rule"], list(closes),
+                                       threshold=m.get("threshold"), closes2=closes2)
             if outcome in ("yes", "no"):
                 parlor.resolve_market(m["id"], outcome)
                 done += 1

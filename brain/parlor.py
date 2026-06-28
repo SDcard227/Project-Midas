@@ -18,7 +18,7 @@ from brain import db
 START_CREDITS = 1000          # everyone's opening play-money balance
 MIN_STAKE     = 10
 MAX_STAKE     = 1000
-_AUTO_RULES   = ("close_green", "week_up_3")   # rules the price feed can settle on its own
+_AUTO_RULES   = ("close_green", "week_up_3", "above_price", "below_price", "beats")  # price-settleable
 
 
 def _conn():
@@ -42,12 +42,20 @@ def init_db():
             category   TEXT,
             ticker     TEXT,
             rule       TEXT,
+            threshold  REAL,
+            ticker2    TEXT,
             closes_at  TEXT,
             status     TEXT NOT NULL DEFAULT 'open',
             outcome    TEXT,
             created_by INTEGER,
             created_at TEXT NOT NULL
         )""")
+        # migrate older Parlor DBs to the price-threshold + head-to-head columns
+        mcols = [r["name"] for r in c.execute("PRAGMA table_info(parlor_markets)").fetchall()]
+        if "threshold" not in mcols:
+            c.execute("ALTER TABLE parlor_markets ADD COLUMN threshold REAL")
+        if "ticker2" not in mcols:
+            c.execute("ALTER TABLE parlor_markets ADD COLUMN ticker2 TEXT")
         c.execute("""CREATE TABLE IF NOT EXISTS parlor_bets (
             id         INTEGER PRIMARY KEY AUTOINCREMENT,
             market_id  INTEGER NOT NULL,
@@ -91,9 +99,11 @@ def _pools(c, market_id):
 def _market_view(c, m):
     yes_pool, no_pool, n = _pools(c, m["id"])
     total = yes_pool + no_pool
+    keys = m.keys()
     return {
         "id": m["id"], "question": m["question"], "category": m["category"] or "Markets",
         "ticker": m["ticker"] or "", "closes_at": m["closes_at"] or "",
+        "ticker2": (m["ticker2"] if "ticker2" in keys and m["ticker2"] else ""),
         "status": m["status"], "outcome": m["outcome"],
         "yes_pool": yes_pool, "no_pool": no_pool, "total": total, "bets": n,
         # crowd-implied probability + the parimutuel multiplier each side pays
@@ -122,17 +132,39 @@ def get_market(market_id):
         return _market_view(c, m) if m else None
 
 
-def create_market(question, ticker="", rule="", closes_at="", category="", created_by=None):
+def _default_close(rule):
+    """Default settle time for an auto-rule market: ~next US close for the daily rules,
+    a week out for the weekly ones, none for manual."""
+    now = datetime.now(timezone.utc)
+    if rule in ("close_green", "above_price", "below_price"):
+        eod = now.replace(hour=21, minute=30, second=0, microsecond=0)
+        if eod <= now:
+            eod = eod + timedelta(days=1)
+        return eod.isoformat()
+    if rule in ("week_up_3", "beats"):
+        return (now + timedelta(days=7)).isoformat()
+    return ""
+
+
+def create_market(question, ticker="", rule="", closes_at="", category="",
+                  created_by=None, threshold=None, ticker2=""):
     question = (question or "").strip()
     if len(question) < 8:
         return {"error": "Question is too short."}
+    rule = (rule or "").lower()
+    try:
+        threshold = float(threshold) if threshold not in (None, "") else None
+    except (TypeError, ValueError):
+        threshold = None
+    closes_at = (closes_at or "") or _default_close(rule)   # auto close time for auto-rules
     init_db()
     with _conn() as c:
         cur = c.execute(
-            "INSERT INTO parlor_markets (question, category, ticker, rule, closes_at, status, created_by, created_at)"
-            " VALUES (?,?,?,?,?,'open',?,?)",
+            "INSERT INTO parlor_markets (question, category, ticker, rule, threshold, ticker2,"
+            " closes_at, status, created_by, created_at) VALUES (?,?,?,?,?,?,?,'open',?,?)",
             (question[:200], (category or "Markets")[:40], (ticker or "").upper()[:6],
-             (rule or "")[:40], (closes_at or "")[:40], created_by, _now()))
+             rule[:40], threshold, (ticker2 or "").upper()[:6], (closes_at or "")[:40],
+             created_by, _now()))
         return {"id": cur.lastrowid}
 
 
@@ -268,9 +300,14 @@ def record(user_id):
 
 # ── auto-resolution (price-backed rules) ─────────────────────────────────────
 
-def eval_rule(rule, closes):
+def eval_rule(rule, closes, threshold=None, closes2=None):
     """Evaluate an auto-rule against recent daily closes (oldest..newest). Pure +
-    testable; the caller supplies the price series. -> 'yes' / 'no' / None."""
+    testable; the caller supplies the price series. -> 'yes' / 'no' / None.
+      close_green  today's close > yesterday's
+      week_up_3    > +3% over ~5 sessions
+      above_price  latest close > threshold
+      below_price  latest close < threshold
+      beats        ticker's week move > ticker2's (closes2) week move"""
     try:
         closes = [float(x) for x in closes]
     except (TypeError, ValueError):
@@ -285,6 +322,24 @@ def eval_rule(rule, closes):
             return None
         chg = (closes[-1] / closes[-6] - 1) * 100 if closes[-6] else 0
         return "yes" if chg > 3 else "no"
+    if rule in ("above_price", "below_price"):
+        try:
+            threshold = float(threshold)
+        except (TypeError, ValueError):
+            return None
+        if rule == "above_price":
+            return "yes" if closes[-1] > threshold else "no"
+        return "yes" if closes[-1] < threshold else "no"
+    if rule == "beats":
+        try:
+            closes2 = [float(x) for x in (closes2 or [])]
+        except (TypeError, ValueError):
+            return None
+        if len(closes) < 6 or len(closes2) < 6 or not closes[-6] or not closes2[-6]:
+            return None
+        a = closes[-1] / closes[-6] - 1
+        b = closes2[-1] / closes2[-6] - 1
+        return "yes" if a > b else "no"
     return None
 
 
@@ -295,8 +350,10 @@ def markets_due():
     now = _now()
     with _conn() as c:
         rows = c.execute(
-            "SELECT id, ticker, rule, closes_at FROM parlor_markets WHERE status='open'").fetchall()
-    return [{"id": m["id"], "ticker": m["ticker"], "rule": m["rule"]}
+            "SELECT id, ticker, rule, threshold, ticker2, closes_at FROM parlor_markets"
+            " WHERE status='open'").fetchall()
+    return [{"id": m["id"], "ticker": m["ticker"], "rule": m["rule"],
+             "threshold": m["threshold"], "ticker2": m["ticker2"] or ""}
             for m in rows
             if m["rule"] in _AUTO_RULES and (m["ticker"] or "")
             and (m["closes_at"] or "") and m["closes_at"] <= now]
@@ -309,27 +366,30 @@ _DEFAULT_MARKETS = [
      "rule": "close_green", "category": "The Market"},
     {"question": "Will NVDA finish the week up more than 3%?", "ticker": "NVDA",
      "rule": "week_up_3", "category": "The Market"},
+    {"question": "Will NVDA close above $170 today?", "ticker": "NVDA",
+     "rule": "above_price", "threshold": 170, "category": "The Market"},
+    {"question": "The Race: will NVDA outrun AMD this week?", "ticker": "NVDA",
+     "ticker2": "AMD", "rule": "beats", "category": "The Races"},
     {"question": "Will any megacap (AAPL/MSFT/NVDA/AMZN/GOOGL) pop 5%+ today?", "ticker": "",
      "rule": "manual", "category": "The Races"},
     {"question": "Will Bitcoin trade above its monthly open at the close?", "ticker": "",
      "rule": "manual", "category": "Crypto"},
     {"question": "Will the Fed CUT rates at the next FOMC meeting?", "ticker": "",
      "rule": "manual", "category": "Macro"},
+    {"question": "Will the reigning champion repeat this season?", "ticker": "",
+     "rule": "manual", "category": "Sports"},
+    {"question": "Will a major bill clear Congress this month?", "ticker": "",
+     "rule": "manual", "category": "Politics"},
 ]
 
 
 def seed_if_empty():
-    """Lay down a starter card of markets the first time the Parlor is opened."""
+    """Lay down a starter card of markets the first time the Parlor is opened.
+    create_market() stamps auto-rule markets with a close time on its own."""
     init_db()
     with _conn() as c:
         n = c.execute("SELECT COUNT(*) AS n FROM parlor_markets").fetchone()["n"]
     if n:
         return
-    now = datetime.now(timezone.utc)
-    eod = now.replace(hour=21, minute=30, second=0, microsecond=0)   # ~after the US close
-    if eod <= now:
-        eod = eod + timedelta(days=1)
-    week = (now + timedelta(days=7)).isoformat()
     for mk in _DEFAULT_MARKETS:
-        ca = eod.isoformat() if mk["rule"] == "close_green" else (week if mk["rule"] == "week_up_3" else "")
-        create_market(closes_at=ca, **mk)
+        create_market(**mk)
