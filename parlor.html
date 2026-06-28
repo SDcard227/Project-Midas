@@ -117,6 +117,7 @@
         <div class="lbl">Your stake</div>
         <div class="amt" id="bal">—</div>
         <div id="wallet-sub"></div>
+        <div id="wallet-rec" class="lbl" style="margin-top:4px"></div>
       </div>
     </div>
 
@@ -166,6 +167,7 @@ function tab(t){
 async function boot(){
   try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
   if(ME && ME.is_admin) $('adminBox').style.display='block';
+  refreshMe();
   loadMarkets();
 }
 
@@ -212,6 +214,20 @@ function setBal(b){
     $('wallet-sub').innerHTML='<span class="lbl">Midas Bucks</span>';
   }
 }
+function setRecord(rec){
+  if(!rec || !rec.bets){ $('wallet-rec').innerHTML=''; return; }
+  const wr=(rec.win_rate!==null&&rec.win_rate!==undefined)?rec.win_rate+'% win':'unsettled';
+  const net=(rec.net>=0?'+':'')+Number(rec.net).toLocaleString();
+  $('wallet-rec').innerHTML=rec.wins+'-'+rec.losses+' · '+wr+' · <span class="'+(rec.net>=0?'win':'loss')+'">'+net+' ₿</span>';
+}
+async function refreshMe(){
+  if(!ME){ setBal(null); $('wallet-rec').innerHTML=''; return; }
+  try{
+    const r=await (await fetch('/api/parlor/me')).json();
+    if('balance' in r) setBal(r.balance);
+    if(r.record) setRecord(r.record);
+  }catch(e){}
+}
 
 async function bet(mid, side){
   if(!ME){ midasToast('Log in to place a bet.','error'); return; }
@@ -223,7 +239,7 @@ async function bet(mid, side){
     if(r.error){ midasToast(r.error,'error'); return; }
     if('balance' in r) setBal(r.balance);
     midasToast('Bet placed — '+stake+' ₿ on '+side.toUpperCase()+'.');
-    loadMarkets();
+    refreshMe(); loadMarkets();
   }catch(e){ midasToast('Bet failed.','error'); }
 }
 
@@ -232,6 +248,7 @@ async function loadMine(){
   try{
     const r=await (await fetch('/api/parlor/me')).json();
     if('balance' in r) setBal(r.balance);
+    if(r.record) setRecord(r.record);
     const b=r.bets||[];
     if(!b.length){ $('mine').innerHTML='<div class="muted">No bets yet. Hit The Card.</div>'; return; }
     $('mine').innerHTML='<div class="panel"><table><thead><tr><th>Market</th><th>Side</th><th class="mono">Stake</th><th>Status</th><th class="mono">Result</th></tr></thead><tbody>'+
@@ -259,15 +276,22 @@ async function loadResults(){
   }catch(e){ $('results').innerHTML='<div class="muted">Could not load results.</div>'; }
 }
 
+let BOARDSORT='rich';
+function boardSort(s){ BOARDSORT=s; loadBoard(); }
 async function loadBoard(){
+  const toggle='<div class="tabs" style="margin:0 0 12px"><button class="tab'+(BOARDSORT==='rich'?' active':'')+'" onclick="boardSort(\'rich\')">Richest</button><button class="tab'+(BOARDSORT==='sharp'?' active':'')+'" onclick="boardSort(\'sharp\')">Sharpest</button></div>';
   try{
-    const r=await (await fetch('/api/parlor/leaderboard')).json();
+    const r=await (await fetch('/api/parlor/leaderboard?sort='+BOARDSORT)).json();
     const L=r.leaders||[];
-    if(!L.length){ $('board').innerHTML='<div class="muted">No players yet. Be the first in the Circle.</div>'; return; }
-    $('board').innerHTML='<div class="panel"><table><thead><tr><th class="mono">#</th><th>Player</th><th class="mono">Bucks</th><th class="mono">Bets</th><th class="mono">Wins</th></tr></thead><tbody>'+
-      L.map((x,i)=>'<tr><td class="mono">'+(i+1)+'</td><td>'+esc(x.name)+'</td><td class="mono win">'+Number(x.credits).toLocaleString()+'</td><td class="mono">'+x.bets+'</td><td class="mono">'+x.wins+'</td></tr>').join('')+
+    if(!L.length){ $('board').innerHTML=toggle+'<div class="muted">'+(BOARDSORT==='sharp'?'No one has 3+ settled bets yet.':'No players yet. Be the first in the Circle.')+'</div>'; return; }
+    $('board').innerHTML=toggle+'<div class="panel"><table><thead><tr><th class="mono">#</th><th>Player</th><th class="mono">Bucks</th><th class="mono">Win %</th><th class="mono">Net</th><th class="mono">Bets</th></tr></thead><tbody>'+
+      L.map((x,i)=>{
+        const wr=(x.win_rate!==null&&x.win_rate!==undefined)?x.win_rate+'%':'—';
+        const net=(x.net>=0?'+':'')+Number(x.net).toLocaleString();
+        return '<tr><td class="mono">'+(i+1)+'</td><td>'+esc(x.name)+'</td><td class="mono win">'+Number(x.credits).toLocaleString()+'</td><td class="mono">'+wr+'</td><td class="mono '+(x.net>=0?'win':'loss')+'">'+net+'</td><td class="mono">'+x.bets+'</td></tr>';
+      }).join('')+
       '</tbody></table></div>';
-  }catch(e){ $('board').innerHTML='<div class="muted">Could not load the Circle.</div>'; }
+  }catch(e){ $('board').innerHTML=toggle+'<div class="muted">Could not load the Circle.</div>'; }
 }
 
 // ── admin ──
