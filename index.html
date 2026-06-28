@@ -225,11 +225,12 @@
     .perf-tab { flex: 1; padding: 10px; font-family: var(--mono); font-size: 0.75rem; letter-spacing: 0.12em; background: transparent; border: none; border-right: 1px solid var(--border); color: var(--dim); cursor: pointer; transition: all 0.2s; text-transform: uppercase; }
     .perf-tab:last-child { border-right: none; }
     .perf-tab.active { background: var(--card2); color: var(--green); border-bottom: 2px solid var(--green); }
-    .perf-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    .perf-table { width: 100%; min-width: 440px; border-collapse: collapse; font-size: 0.82rem; }
     .perf-table th { padding: 10px 20px; text-align: left; color: var(--dim); font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; border-bottom: 1px solid var(--border2); }
     .perf-table th.r { text-align: right; }
     .perf-table td { padding: 12px 20px; border-bottom: 1px solid var(--border); }
     .perf-table td.r { text-align: right; }
+    @media (max-width: 600px) { .perf-table th, .perf-table td { padding: 9px 12px; font-size: 0.78rem; } }
     .perf-table tr:hover td { background: var(--surface); }
     .rank-badge { font-size: 0.6rem; padding: 2px 6px; border: 1px solid var(--amber); color: var(--amber); margin-left: 8px; vertical-align: middle; }
 
@@ -525,7 +526,7 @@
           <button class="perf-tab active" onclick="showYear(2023)" id="tab-2023">2023 — BULL</button>
           <button class="perf-tab" onclick="showYear(2024)" id="tab-2024">2024 — MIXED</button>
         </div>
-        <div class="glow-box" style="border-top:none;">
+        <div class="glow-box" style="border-top:none;overflow-x:auto;-webkit-overflow-scrolling:touch;">
           <table class="perf-table">
             <thead>
               <tr>
