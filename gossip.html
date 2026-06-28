@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — The Floor</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .wrap{max-width:1040px;margin:0 auto;padding:104px 32px 90px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:14px}
+    h1{font-size:clamp(2.2rem,5vw,3.2rem);font-weight:600;margin-bottom:6px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;max-width:560px;margin-bottom:8px}
+    .legal{font-family:var(--mono);font-size:.62rem;color:var(--dim);margin-bottom:22px;line-height:1.6}
+
+    .trend{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-family:var(--mono);font-size:.66rem;
+      color:var(--dim);background:var(--surface);border:1px solid var(--border);padding:10px 16px;margin-bottom:18px}
+    .trend a{color:var(--teal);text-decoration:none;border:1px solid var(--border2);padding:2px 8px;border-radius:2px}
+    .trend a:hover{border-color:var(--teal)}
+
+    .post-box{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px;margin-bottom:18px}
+    .post-box textarea{width:100%;font-family:var(--title);font-size:.92rem;border:1px solid var(--border2);background:var(--bg);
+      padding:11px 13px;outline:none;resize:vertical;min-height:64px;color:var(--text)}
+    .post-row{display:flex;align-items:center;justify-content:space-between;margin-top:10px}
+    .post-hint{font-family:var(--mono);font-size:.6rem;color:var(--dim)}
+    .post-btn{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:9px 22px;cursor:pointer;border-radius:3px}
+    .post-btn:hover{opacity:.9}.post-btn:disabled{opacity:.5}
+    .login-prompt{background:var(--card);border:1px solid var(--border);padding:18px;margin-bottom:18px;font-family:var(--mono);font-size:.78rem;color:var(--mid)}
+    .login-prompt a{color:var(--teal)}
+
+    .sorter{display:flex;gap:8px;margin-bottom:12px}
+    #feed{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px;align-items:start}
+    .sbtn{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;background:transparent;
+      border:1px solid var(--border2);color:var(--mid);padding:5px 12px;cursor:pointer;border-radius:2px}
+    .sbtn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+
+    .gp{background:var(--card);border:1px solid var(--border);padding:14px 16px;cursor:pointer;transition:border-color .15s}
+    .gp:hover{border-color:var(--border2)}
+    .gp-h{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+    .gp-author{font-family:var(--mono);font-size:.7rem;color:var(--text);font-weight:600}
+    .gp-sent{font-family:var(--mono);font-size:.6rem;text-transform:uppercase}
+    .gp-votes{display:flex;gap:5px;margin-left:auto}
+    .gp-vote{font-family:var(--mono);font-size:.62rem;background:var(--surface);border:1px solid var(--border2);color:var(--mid);
+      cursor:pointer;padding:3px 8px;border-radius:2px}
+    .gp-vote.up:hover{border-color:var(--green);color:var(--green)}
+    .gp-vote.down:hover{border-color:var(--red);color:var(--red)}
+    .gp-text{font-size:.92rem;color:var(--text);line-height:1.5;word-wrap:break-word}
+    .gp-text a{color:var(--teal);text-decoration:none;font-family:var(--mono);font-weight:600}
+    .gp-foot{font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:9px}
+    .gp-foot .discuss{color:var(--teal)}
+    .empty{font-family:var(--mono);font-size:.8rem;color:var(--dim);text-align:center;padding:30px;grid-column:1/-1}
+    .tmodal{position:fixed;inset:0;z-index:400;background:rgba(30,26,20,.45);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:78px 16px 40px}
+    .tbox{background:var(--card);border:1px solid var(--border2);box-shadow:0 20px 60px rgba(30,26,20,.3);max-width:620px;width:100%;position:relative}
+    .tclose{position:absolute;top:9px;right:12px;background:none;border:none;font-size:1.1rem;color:var(--dim);cursor:pointer;z-index:2}
+    .troot{padding:24px 22px 16px;border-bottom:2px solid var(--border)}
+    .treply{padding:13px 22px;border-bottom:1px solid var(--border)}
+    .tr-text{font-size:.9rem;margin-top:3px;line-height:1.5}
+    .tr-text a{color:var(--teal);text-decoration:none;font-family:var(--mono);font-weight:600}
+    .treply-box{padding:15px 22px}
+    .treply-box textarea{width:100%;font-family:var(--title);font-size:.9rem;border:1px solid var(--border2);background:var(--bg);padding:10px 12px;outline:none;resize:vertical;min-height:56px;color:var(--text)}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html" class="active">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <span class="badge">Community · The trading floor</span>
+    <h1>THE <span>FLOOR</span></h1>
+    <p class="sub">What people are saying, popular opinions, and theories. The crowd talks here, the system listens.</p>
+    <p class="legal">Free and open, no subscription needed. Every post is sentiment-scanned and upvotable, tag tickers with $SYMBOL (e.g. $NVDA). Opinions, not advice, do your own research.</p>
+    <p style="margin-bottom:18px"><a href="leaderboard.html" style="font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;color:var(--amber);text-decoration:none;border:1px solid var(--amber);padding:6px 13px;border-radius:2px">The Leaders &rarr; who's been right</a> <a href="pit.html" style="font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;color:var(--teal);text-decoration:none;border:1px solid var(--teal);padding:6px 13px;border-radius:2px;margin-left:6px">The Pit &rarr; live rooms</a> <a href="funnies.html" style="font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;color:var(--mid);text-decoration:none;border:1px solid var(--border2);padding:6px 13px;border-radius:2px;margin-left:6px">The Funnies &rarr;</a></p>
+
+    <div class="trend" id="trend" style="display:none"></div>
+
+    <div id="poster"></div>
+
+    <div class="sorter">
+      <button class="sbtn active" id="sb-top" onclick="setSort('top')">Popular</button>
+      <button class="sbtn" id="sb-new" onclick="setSort('new')">Newest</button>
+    </div>
+
+    <div id="feed"><div class="empty">loading the floor…</div></div>
+  </div>
+
+  <div id="thread-modal" class="tmodal" style="display:none" onclick="if(event.target===this)closeThread()">
+    <div class="tbox"><button class="tclose" onclick="closeThread()">&#10005;</button>
+      <div id="thread-body"></div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ME=null, ROWS=[], SORT='top';
+const CH='gossip';
+
+function sentTag(s){
+  const c=s==='bullish'?'var(--green)':s==='bearish'?'var(--red)':'var(--dim)';
+  const a=s==='bullish'?'&#9650;':s==='bearish'?'&#9660;':'&middot;';
+  return '<span class="gp-sent" style="color:'+c+'">'+a+' '+esc(s)+'</span>';
+}
+function linkify(t){
+  return esc(t).replace(/\$([A-Za-z]{1,5})\b/g,(m,sym)=>
+    '<a href="whispers.html?q='+sym.toUpperCase()+'">$'+sym.toUpperCase()+'</a>');
+}
+function renderTrend(){
+  const counts={};
+  ROWS.forEach(r=>{ (r.text.match(/\$([A-Za-z]{1,5})\b/g)||[]).forEach(m=>{
+    const s=m.slice(1).toUpperCase(); counts[s]=(counts[s]||0)+1; }); });
+  const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const el=$('trend');
+  if(!top.length){ el.style.display='none'; return; }
+  el.style.display='flex';
+  el.innerHTML='<span>Trending:</span>'+top.map(([s,n])=>
+    '<a href="whispers.html?q='+s+'">$'+s+' &middot; '+n+'</a>').join('');
+}
+function renderFeed(){
+  const feed=$('feed');
+  if(!ROWS.length){ feed.innerHTML='<div class="empty">Quiet floor. Be the first to spill.</div>'; return; }
+  const rows=ROWS.slice().sort((a,b)=> SORT==='new' ? b.id-a.id : ((b.upvotes-b.downvotes)-(a.upvotes-a.downvotes))||(b.id-a.id));
+  feed.innerHTML=rows.map(r=>{
+    const rc=r.reply_count||0, hue=(r.rep&&r.rep.hue)?r.rep.hue:'var(--text)';
+    return '<div class="gp" onclick="openThread('+r.id+')"><div class="gp-h"><span class="gp-author" style="color:'+hue+'">'+esc(r.author)+'</span>'+sentTag(r.sentiment)+
+      '<span class="gp-votes"><button class="gp-vote up" onclick="vote('+r.id+',\'up\',event)">&#9650; '+(r.upvotes||0)+'</button>'+
+      '<button class="gp-vote down" onclick="vote('+r.id+',\'down\',event)">&#9660; '+(r.downvotes||0)+'</button></span></div>'+
+      '<div class="gp-text">'+linkify(r.text)+'</div>'+
+      '<div class="gp-foot">'+rc+(rc===1?' reply':' replies')+' &middot; <span class="discuss">discuss &rarr;</span></div></div>';
+  }).join('');
+}
+async function load(){
+  try{
+    const d=await (await fetch('/api/comments')).json();
+    ROWS=d.comments||[];
+    renderTrend(); renderFeed();
+  }catch(e){ $('feed').innerHTML='<div class="empty">Server not reachable.</div>'; }
+}
+function setSort(s){
+  SORT=s;
+  $('sb-top').classList.toggle('active',s==='top');
+  $('sb-new').classList.toggle('active',s==='new');
+  renderFeed();
+}
+async function post(){
+  const ta=$('gtext'); const text=(ta.value||'').trim();
+  if(!text) return;
+  const b=$('gpost'); b.disabled=true;
+  try{
+    const r=await (await fetch('/api/comments',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({event_id:CH,ticker:'',text})})).json();
+    if(r.error){ midasToast(r.error, 'error'); b.disabled=false; return; }
+    ta.value=''; await load();
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
+  b.disabled=false;
+}
+async function vote(id,dir,ev){
+  if(ev) ev.stopPropagation();
+  try{
+    const r=await (await fetch('/api/comments/vote',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({comment_id:id,dir:dir||'up'})})).json();
+    if(r.error){ if(/log in/i.test(r.error)) location.href='account.html'; else midasToast(r.error, 'error'); return; }
+    const row=ROWS.find(x=>x.id===id); if(row){ row.upvotes=r.upvotes; row.downvotes=r.downvotes; }
+    renderFeed();
+    if(THREAD_OPEN) refreshThread();
+  }catch(e){}
+}
+
+let THREAD_OPEN=null;
+function repHue(c){ return (c&&c.rep&&c.rep.hue) ? c.rep.hue : 'var(--text)'; }
+function cVotes(c){
+  return '<span class="gp-votes"><button class="gp-vote up" onclick="vote('+c.id+',\'up\',event)">&#9650; '+(c.upvotes||0)+'</button>'+
+    '<button class="gp-vote down" onclick="vote('+c.id+',\'down\',event)">&#9660; '+(c.downvotes||0)+'</button></span>';
+}
+async function openThread(id){
+  THREAD_OPEN=id; $('thread-modal').style.display='flex'; document.body.style.overflow='hidden';
+  $('thread-body').innerHTML='<div class="troot">loading…</div>';
+  await refreshThread();
+}
+function closeThread(){ THREAD_OPEN=null; $('thread-modal').style.display='none'; document.body.style.overflow=''; }
+async function refreshThread(){
+  if(!THREAD_OPEN) return;
+  try{
+    const d=await (await fetch('/api/comments/thread/'+THREAD_OPEN)).json();
+    if(d.error){ $('thread-body').innerHTML='<div class="troot">Couldn\'t load this thread.</div>'; return; }
+    renderThread(d);
+  }catch(e){}
+}
+function renderThread(d){
+  const r=d.root;
+  let h='<div class="troot"><div class="gp-h"><span class="gp-author" style="color:'+repHue(r)+'">'+esc(r.author)+'</span>'+sentTag(r.sentiment)+cVotes(r)+'</div>'+
+    '<div class="gp-text" style="font-size:1.02rem">'+linkify(r.text)+'</div></div>';
+  h+='<div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--dim);padding:13px 22px 2px;text-transform:uppercase">'+d.count+' '+(d.count===1?'reply':'replies')+'</div>';
+  h+=(d.replies||[]).map(c=>
+    '<div class="treply"><div class="gp-h"><span class="gp-author" style="color:'+repHue(c)+'">'+esc(c.author)+'</span>'+sentTag(c.sentiment)+cVotes(c)+'</div>'+
+    '<div class="tr-text">'+linkify(c.text)+'</div></div>').join('');
+  if(!d.replies.length) h+='<div style="padding:4px 22px 12px;font-family:var(--mono);font-size:.7rem;color:var(--dim)">No replies yet, start it off.</div>';
+  if(ME){
+    h+='<div class="treply-box"><textarea id="rtext" maxlength="500" placeholder="Add to the discussion…"></textarea>'+
+      '<div class="post-row"><span class="post-hint">replying as '+esc(ME.email.split("@")[0])+'</span>'+
+      '<button class="post-btn" onclick="postReply()">Reply</button></div></div>';
+  } else {
+    h+='<div class="treply-box"><div class="login-prompt" style="margin:0"><a href="account.html">Make a free account</a> to join the discussion.</div></div>';
+  }
+  $('thread-body').innerHTML=h;
+}
+async function postReply(){
+  const ta=$('rtext'); const text=(ta.value||'').trim(); if(!text) return;
+  const root=ROWS.find(x=>x.id===THREAD_OPEN);
+  try{
+    const r=await (await fetch('/api/comments',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({event_id:(root&&root.event_id)||CH,ticker:(root&&root.ticker)||'',text,parent_id:THREAD_OPEN})})).json();
+    if(r.error){ midasToast(r.error, 'error'); return; }
+    if(root){ root.reply_count=(root.reply_count||0)+1; renderFeed(); }
+    ta.value=''; await refreshThread();
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
+}
+function renderPoster(){
+  const p=$('poster');
+  if(ME){
+    p.innerHTML='<div class="post-box"><textarea id="gtext" maxlength="500" placeholder="Heard something? Spill it… tag tickers like $TSLA"></textarea>'+
+      '<div class="post-row"><span class="post-hint">Posting as '+esc(ME.email.split("@")[0])+' · sentiment auto-scanned</span>'+
+      '<button class="post-btn" id="gpost" onclick="post()">Post</button></div></div>';
+  } else {
+    p.innerHTML='<div class="login-prompt"><a href="account.html">Make a free account</a> to post, reading is open to everyone. No subscription needed.</div>';
+  }
+}
+(async()=>{
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){}
+  renderPoster(); load();
+})();
+</script>
+</body>
+</html>

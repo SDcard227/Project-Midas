@@ -53,7 +53,7 @@ const CSS = `
 @keyframes mp-pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .mp-lbl{flex:1;font-size:.6rem;letter-spacing:.18em;color:#c8b88a;
   overflow:hidden;white-space:nowrap;text-overflow:ellipsis;}
-.mp-b{background:none;border:none;color:#8a8078;font-size:.75rem;
+.mp-b{background:none;border:none;color:#8a8078;font-size:.56rem;letter-spacing:.08em;
   cursor:pointer;padding:3px 5px;line-height:1;transition:color .15s;flex-shrink:0;}
 .mp-b:hover{color:#fff;}
 .mp-b.mp-ba{color:#c8b88a;}
@@ -67,7 +67,7 @@ const CSS = `
 .mp-cb.mp-ca{color:#c8b88a;}
 .mp-sidx{font-size:.56rem;color:#4a4540;padding:0 3px;white-space:nowrap;}
 .mp-vwrap{display:flex;align-items:center;gap:5px;flex:1;margin-left:4px;}
-.mp-vi{font-size:.68rem;color:#9a9088;cursor:pointer;flex-shrink:0;}
+.mp-vi{font-size:.54rem;letter-spacing:.08em;color:#9a9088;cursor:pointer;flex-shrink:0;min-width:40px;}
 .mp-vi:hover{color:#fff;}
 .mp-vs{-webkit-appearance:none;appearance:none;height:3px;flex:1;
   background:#3a3530;outline:none;cursor:pointer;border-radius:2px;}
@@ -86,8 +86,8 @@ const HTML = `
 <div id="mp-bar">
   <span class="mp-dot"></span>
   <span class="mp-lbl" id="mp-lbl">LIVE</span>
-  <button class="mp-b" id="mp-expand-btn" onclick="mpToggleExpand()" title="Show video">▭</button>
-  <button class="mp-b" onclick="mpPopout()" title="Full screen">⤢</button>
+  <button class="mp-b" id="mp-expand-btn" onclick="mpToggleExpand()" title="Show video">VIDEO</button>
+  <button class="mp-b" onclick="mpPopout()" title="Full screen">FULL</button>
   <button class="mp-b" onclick="mpClose()" title="Close">✕</button>
 </div>
 <div id="mp-ctrls">
@@ -96,7 +96,7 @@ const HTML = `
   <button class="mp-cb" onclick="mpNext()" title="Next">▶</button>
   <span class="mp-sidx" id="mp-sidx">1/6</span>
   <div class="mp-vwrap">
-    <span class="mp-vi" id="mp-vi" onclick="mpToggleMute()">🔊</span>
+    <span class="mp-vi" id="mp-vi" onclick="mpToggleMute()">MUTED</span>
     <input type="range" class="mp-vs" id="mp-vs" min="0" max="100" value="80" oninput="mpSetVol(this.value)">
   </div>
 </div>
@@ -115,7 +115,7 @@ document.body.appendChild(wrap);
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 function _ytUrl(cid){
-  return `https://www.youtube.com/embed/live_stream?channel=${cid}&autoplay=1&enablejsapi=1&controls=0&modestbranding=1&rel=0`;
+  return `https://www.youtube.com/embed/live_stream?channel=${cid}&autoplay=1&mute=1&enablejsapi=1&controls=0&modestbranding=1&rel=0`;
 }
 function _cmd(fn, args){
   const f = document.getElementById('mp-iframe');
@@ -133,17 +133,19 @@ window.mpOpen = function(idx){
   _idx    = (idx == null ? _idx : idx) % MP_STREAMS.length;
   _active = true;
   _paused = false;
+  _muted  = true;   // browsers only autoplay when muted; user taps the speaker to unmute
   _save();
   const frame = document.getElementById('mp-iframe');
   frame.src = _ytUrl(MP_STREAMS[_idx].channelId);
   _updateLabel();
   document.getElementById('mp-play').textContent = '⏸';
+  var _vi = document.getElementById('mp-vi'); if(_vi) _vi.textContent = 'MUTED';
   wrap.classList.remove('mp-off');
   // Restore expanded state
   const vbox = document.getElementById('mp-video-box');
   const ebtn = document.getElementById('mp-expand-btn');
-  if(_expanded){ vbox.classList.add('mp-show'); ebtn.textContent='▬'; }
-  else { vbox.classList.remove('mp-show'); ebtn.textContent='▭'; }
+  if(_expanded){ vbox.classList.add('mp-show'); ebtn.textContent='HIDE'; }
+  else { vbox.classList.remove('mp-show'); ebtn.textContent='VIDEO'; }
   setTimeout(()=>_cmd('setVolume',[_vol]),1500);
   if(_muted) setTimeout(()=>_cmd('mute'),1600);
 };
@@ -161,14 +163,14 @@ window.mpToggleExpand = function(){
   const vbox = document.getElementById('mp-video-box');
   const ebtn = document.getElementById('mp-expand-btn');
   vbox.classList.toggle('mp-show', _expanded);
-  ebtn.textContent = _expanded ? '▬' : '▭';
+  ebtn.textContent = _expanded ? 'HIDE' : 'VIDEO';
 };
 
 window.mpPopout = function(){
   const cid = MP_STREAMS[_idx].channelId;
   // Use dashboard overlay if available, otherwise new tab
   if(typeof openYtPlayerOverlay === 'function'){
-    openYtPlayerOverlay(`https://www.youtube.com/embed/live_stream?channel=${cid}&autoplay=1`);
+    openYtPlayerOverlay(`https://www.youtube.com/embed/live_stream?channel=${cid}&autoplay=1&mute=1`);
   } else {
     window.open(`https://www.youtube.com/watch?v=live_stream&channel=${cid}`, '_blank');
   }
@@ -183,14 +185,14 @@ window.mpTogglePlay = function(){
 
 window.mpToggleMute = function(){
   _muted = !_muted;
-  document.getElementById('mp-vi').textContent = _muted ? '🔇' : '🔊';
+  document.getElementById('mp-vi').textContent = _muted ? 'MUTED' : 'SOUND';
   _cmd(_muted ? 'mute' : 'unMute');
 };
 
 window.mpSetVol = function(v){
   _vol = parseInt(v);
   _cmd('setVolume',[_vol]);
-  document.getElementById('mp-vi').textContent = _vol===0 ? '🔇' : '🔊';
+  document.getElementById('mp-vi').textContent = _vol===0 ? 'MUTED' : 'SOUND';
 };
 
 window.mpNext = function(){ window.mpOpen((_idx+1) % MP_STREAMS.length); };

@@ -39,8 +39,8 @@ from datetime import datetime, timezone
 
 log = logging.getLogger("Midas.Ledger")
 
-_STORE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                      "signal_ledger.json")
+_STORE = os.getenv("LEDGER_PATH") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "signal_ledger.json")
 
 # Confidence saturates with corroboration: each independent, reliable source adds
 # diminishing lift. k sets how fast. ~3-4 good sources should feel "forming".
@@ -275,6 +275,22 @@ class SignalLedger:
                 "events": enriched}
 
     # ── learning ─────────────────────────────────────────────────────────────
+    def scoreable(self, min_age_hours: float = 24.0, limit: int = 30):
+        """Past predictions old enough to judge and not yet scored.
+        Returns [(event_id, ticker, first_seen)] — feed each a real move to learn."""
+        from datetime import timedelta
+        cutoff = _now() - timedelta(hours=min_age_hours)
+        out = []
+        for ev in self.state["events"].values():
+            if ev.get("outcome") or self.direction(ev) == "neutral":
+                continue
+            try:
+                if _parse(ev["first_seen"]) <= cutoff:
+                    out.append((ev["id"], ev["ticker"], ev["first_seen"]))
+            except Exception:
+                continue
+        return out[:limit]
+
     def record_outcome(self, event_id: str, move_pct: float, threshold: float = 1.0):
         """
         Teach the ledger. After an event, log the realized price move (%). If the

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Settings</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .wrap{max-width:680px;margin:0 auto;padding:104px 32px 80px}
+    h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:600;margin-bottom:4px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;margin-bottom:26px}
+
+    .card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);margin-bottom:20px}
+    .card-h{padding:13px 20px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.66rem;
+      letter-spacing:.18em;color:var(--dim);text-transform:uppercase}
+    .srow{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:15px 20px;border-bottom:1px solid var(--border)}
+    .srow:last-child{border-bottom:none}
+    .sname{font-size:.94rem;font-weight:500}
+    .sdesc{font-size:.76rem;color:var(--dim);margin-top:1px}
+    .sval{font-family:var(--mono);font-size:.8rem;color:var(--mid);text-align:right}
+
+    .tg{position:relative;width:46px;height:25px;flex:none}
+    .tg input{opacity:0;width:0;height:0}
+    .tg .sl{position:absolute;inset:0;background:var(--border2);border-radius:25px;cursor:pointer;transition:.2s}
+    .tg .sl:before{content:'';position:absolute;width:19px;height:19px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s}
+    .tg input:checked + .sl{background:var(--green)}
+    .tg input:checked + .sl:before{transform:translateX(21px)}
+
+    .badge{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:3px 9px;border-radius:2px;border:1px solid}
+    .b-free{color:var(--mid);border-color:var(--border2)}
+    .b-pro{color:var(--teal);border-color:var(--teal)}
+    .b-premium{color:var(--amber);border-color:var(--amber)}
+    .b-ok{color:var(--green);border-color:var(--green)}
+    .b-warn{color:var(--red);border-color:var(--red)}
+    .btn{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;
+      border:1px solid var(--border2);color:var(--mid);padding:7px 15px;cursor:pointer;border-radius:3px;text-decoration:none;display:inline-block}
+    .btn:hover{border-color:var(--text);color:var(--text)}
+    .btn.green{background:var(--green);color:#fff;border-color:var(--green)}
+    .btn.red{color:var(--red);border-color:var(--red)}
+    .btn.red:hover{background:var(--red);color:#fff}
+    .note{font-family:var(--mono);font-size:.62rem;color:var(--dim);padding:10px 20px;line-height:1.6}
+    .vlink{font-family:var(--mono);font-size:.66rem;color:var(--teal);word-break:break-all}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    html[data-theme="dark"] .nav-burger{color:#ece6da;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+    }
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="account.html" class="nav-cta">Account</a></li>
+    </ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <h1>SETT<span>INGS</span></h1>
+    <p class="sub">Make Midas yours. Appearance, your account, alerts, and what you share.</p>
+
+    <!-- APPEARANCE -->
+    <div class="card">
+      <div class="card-h">Appearance</div>
+      <div class="srow">
+        <div><div class="sname">Dark mode</div><div class="sdesc">Switch the whole site to a dark, low-glare theme. Saved on this device.</div></div>
+        <label class="tg"><input type="checkbox" id="tg-dark" onchange="onDark(this.checked)"><span class="sl"></span></label>
+      </div>
+    </div>
+
+    <!-- ACCOUNT -->
+    <div class="card">
+      <div class="card-h">Account</div>
+      <div id="acct"><div class="note">loading…</div></div>
+    </div>
+
+    <!-- MEMBERS-ONLY GATE (shown to guests in place of the gated cards) -->
+    <div class="card" id="guest-gate" style="display:none">
+      <div class="card-h">Members only</div>
+      <div class="note" style="padding:18px 20px;font-size:.78rem">Notifications, privacy, and account controls unlock once you have an account. Appearance (dark mode) works for everyone. <a class="vlink" href="account.html">Make a free account &rarr;</a></div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div class="card" id="card-notif">
+      <div class="card-h">Notifications</div>
+      <div class="srow"><div><div class="sname">Big-move alerts</div><div class="sdesc">Ping me when a watched ticker moves sharply.</div></div>
+        <label class="tg"><input type="checkbox" data-pref="notif_moves"><span class="sl"></span></label></div>
+      <div class="srow"><div><div class="sname">Reply notifications</div><div class="sdesc">Tell me when someone replies to my take on The Floor.</div></div>
+        <label class="tg"><input type="checkbox" data-pref="notif_replies"><span class="sl"></span></label></div>
+      <div class="srow"><div><div class="sname">Weekly wrap email</div><div class="sdesc">A Sunday digest of the wire + my reputation.</div></div>
+        <label class="tg"><input type="checkbox" data-pref="notif_weekly"><span class="sl"></span></label></div>
+    </div>
+
+    <!-- PRIVACY / PERMISSIONS -->
+    <div class="card" id="card-privacy">
+      <div class="card-h">Privacy &amp; permissions</div>
+      <div class="srow"><div><div class="sname">Show my calls publicly</div><div class="sdesc">Let others see the bullish/bearish calls behind my reputation.</div></div>
+        <label class="tg"><input type="checkbox" data-pref="perm_calls" checked><span class="sl"></span></label></div>
+      <div class="srow"><div><div class="sname">Appear on leaderboards</div><div class="sdesc">Rank me on the world / country / state boards.</div></div>
+        <label class="tg"><input type="checkbox" data-pref="perm_board" checked><span class="sl"></span></label></div>
+      <div class="srow"><div><div class="sname">Show my portfolio</div><div class="sdesc">Let people see my holdings + P&amp;L on my profile.</div></div>
+        <label class="tg"><input type="checkbox" data-pref="perm_folio"><span class="sl"></span></label></div>
+      <div class="note">These are saved on this device for now. When accounts go fully live they'll sync to your profile and actually gate what others can see.</div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ME=null;
+
+// dark mode reflects saved state
+$('tg-dark').checked = (window.midasIsDark && window.midasIsDark());
+function onDark(){ if(window.midasToggleTheme) window.midasToggleTheme(); }
+
+// local prefs (toggles) persist per-device
+document.querySelectorAll('[data-pref]').forEach(el=>{
+  const k='midas-pref-'+el.dataset.pref;
+  const saved=localStorage.getItem(k);
+  if(saved!==null) el.checked = saved==='1';
+  el.addEventListener('change',()=>localStorage.setItem(k, el.checked?'1':'0'));
+});
+
+function tierBadge(t){
+  const c=t==='premium'?'b-premium':t==='pro'?'b-pro':'b-free';
+  return '<span class="badge '+c+'">'+esc(t||'free')+'</span>';
+}
+function renderAcct(){
+  const el=$('acct');
+  if(!ME){
+    el.innerHTML='<div class="note">You\'re browsing as a guest. '+
+      '<a class="vlink" href="account.html">Log in or make a free account →</a></div>';
+    return;
+  }
+  const v=ME.verified;
+  el.innerHTML=
+    '<div class="srow"><div><div class="sname">'+esc(ME.name||'—')+'</div><div class="sdesc">'+(ME.nickname?'Goes by &ldquo;'+esc(ME.nickname)+'&rdquo; &middot; '+esc(ME.real_name||''):'Shown as first initial + last name')+'</div></div>'+
+      tierBadge(ME.tier)+'</div>'+
+    '<div class="srow"><div style="flex:1"><div class="sname">Nickname</div><div class="sdesc">Optional. Shows on your profile as a &ldquo;goes by&rdquo;. Posts always use your first initial + last name.</div>'+
+      '<div style="display:flex;gap:8px;margin-top:9px"><input id="nick-in" maxlength="24" placeholder="what you go by" value="'+esc(ME.nickname||'')+'" style="flex:1;max-width:200px;font-family:var(--mono);font-size:.82rem;background:var(--bg);border:1px solid var(--border2);color:var(--text);padding:7px 10px;border-radius:3px;outline:none">'+
+      '<button class="btn green" onclick="saveNick()">Save</button></div>'+
+      '<div id="nick-msg" style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:6px;min-height:12px"></div></div></div>'+
+    '<div class="srow"><div><div class="sname">Email</div><div class="sdesc">'+esc(ME.email)+'</div></div>'+
+      (v?'<span class="badge b-ok">✓ Verified</span>'
+        :'<span class="badge b-warn">Unverified</span>')+'</div>'+
+    (v?'':'<div class="srow" id="verify-row"><div><div class="sname">Verify your email</div>'+
+      '<div class="sdesc">Confirms you\'re real — required later for leaderboards &amp; trading.</div></div>'+
+      '<button class="btn green" onclick="resendVerify()">Send link</button></div>')+
+    '<div class="srow"><div><div class="sname">Subscription</div><div class="sdesc">Social + The Wire are free. Automation is the paid part.</div></div>'+
+      '<a class="btn" href="account.html">Manage plan</a></div>'+
+    '<div class="srow"><div><div class="sname">Session</div><div class="sdesc">Sign out of this device.</div></div>'+
+      '<button class="btn red" onclick="logout()">Log out</button></div>';
+}
+async function saveNick(){
+  const v=$('nick-in').value.trim(); const m=$('nick-msg');
+  try{
+    const r=await (await fetch('/api/set-nickname',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({nickname:v})})).json();
+    if(r.error){ m.style.color='var(--red)'; m.textContent=r.error; return; }
+    ME=r.user; renderAcct();
+  }catch(e){ m.style.color='var(--red)'; m.textContent='Error saving.'; }
+}
+async function resendVerify(){
+  const row=$('verify-row');
+  try{
+    const r=await (await fetch('/api/resend-verify',{method:'POST'})).json();
+    if(r.error){ midasToast(r.error, 'error'); return; }
+    if(r.already){ load(); return; }
+    if(r.sent){ row.innerHTML='<div class="note" style="padding:0">Check your inbox for the verification link.</div>'; }
+    else if(r.link){ row.innerHTML='<div style="flex:1"><div class="sname">Dev mode — click to verify:</div>'+
+        '<a class="vlink" href="'+r.link+'" target="_blank">'+r.link+'</a></div>'; }
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
+}
+async function logout(){
+  try{ await fetch('/api/logout',{method:'POST'}); }catch(e){}
+  location.reload();
+}
+async function load(){
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
+  // Most settings are account-bound — gate them. Appearance stays open to everyone.
+  const guest=!ME;
+  $('card-notif').style.display = guest?'none':'';
+  $('card-privacy').style.display = guest?'none':'';
+  $('guest-gate').style.display = guest?'':'none';
+  renderAcct();
+}
+// if we just came back from the verify link
+if(new URLSearchParams(location.search).get('verified')==='1') setTimeout(()=>{},0);
+load();
+</script>
+</body>
+</html>

@@ -7,3 +7,5 @@ yfinance
 flask
 gunicorn
 anthropic
+stripe
+psycopg2-binary

@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Leaders</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:26px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .wrap{max-width:740px;margin:0 auto;padding:104px 32px 90px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:14px}
+    h1{font-size:clamp(2.2rem,5vw,3.2rem);font-weight:600;margin-bottom:6px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;max-width:580px;margin-bottom:6px}
+    .legal{font-family:var(--mono);font-size:.63rem;color:var(--dim);margin-bottom:24px;line-height:1.6}
+
+    .tabs{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap}
+    .tab{font-family:var(--mono);font-size:.64rem;letter-spacing:.06em;text-transform:uppercase;background:transparent;
+      border:1px solid var(--border2);color:var(--mid);padding:7px 14px;cursor:pointer;border-radius:2px}
+    .tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .tab:disabled{opacity:.4;cursor:default}
+
+    .lb{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow)}
+    .lrow{display:flex;align-items:center;gap:14px;padding:13px 18px;border-top:1px solid var(--border)}
+    .lrow:first-child{border-top:none}
+    .rank{font-family:var(--mono);font-size:1rem;font-weight:700;color:var(--dim);min-width:34px;text-align:right}
+    .rank.top{color:var(--amber)}
+    .lname{font-family:var(--title);font-size:1rem;font-weight:600;cursor:pointer}
+    .lname:hover{text-decoration:underline}
+    .lloc{font-family:var(--mono);font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.08em}
+    .lstats{margin-left:auto;text-align:right;font-family:var(--mono);font-size:.66rem;color:var(--mid)}
+    .lscore{font-family:var(--title);font-size:1.3rem;font-weight:700}
+    .empty{font-family:var(--mono);font-size:.82rem;color:var(--dim);text-align:center;padding:34px 20px}
+
+    .overlay{position:fixed;inset:0;background:rgba(30,26,20,.5);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:50px 20px;overflow-y:auto}
+    .pcard{background:var(--bg);border:1px solid var(--border2);box-shadow:0 20px 60px rgba(0,0,0,.3);max-width:560px;width:100%;position:relative;border-radius:4px;padding:30px 28px}
+    .pclose{position:absolute;top:6px;right:14px;background:none;border:none;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--mid)}
+    .ph2{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin:18px 0 8px}
+    .muted{color:var(--dim);font-size:.85rem;padding:8px 0}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html" class="active">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <span class="badge">The standings</span>
+    <h1>THE <span>LEADERS</span></h1>
+    <p class="sub">Who's actually been right. Ranked by reputation , earned from calls, never bought.</p>
+    <p class="legal">Reputation comes from your <b>calls</b> (bullish/bearish comments on a ticker) scored against the <b>real price move</b>. Green name = been right. Real names only, no anonymity. <a href="gossip.html" style="color:var(--teal)">&larr; back to The Floor</a></p>
+
+    <div class="tabs">
+      <button class="tab active" id="tab-world" onclick="setScope('world')">World</button>
+      <button class="tab" id="tab-country" onclick="setScope('country')">My country</button>
+      <button class="tab" id="tab-state" onclick="setScope('state')">My state</button>
+    </div>
+
+    <div class="lb" id="board"><div class="empty">loading the standings…</div></div>
+  </div>
+
+<div id="prof-ov" class="overlay" style="display:none" onclick="if(event.target===this)closeProf()">
+  <div class="pcard"><button class="pclose" onclick="closeProf()">&times;</button><div id="prof-body"></div></div>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(''+(s==null?'':s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ME=null, SCOPE='world';
+
+function setScope(s){
+  SCOPE=s;
+  ['world','country','state'].forEach(x=>$('tab-'+x).classList.toggle('active',x===s));
+  load();
+}
+async function load(){
+  const b=$('board'); b.innerHTML='<div class="empty">scoring everyone\'s calls…</div>';
+  let url='/api/leaderboard?scope='+SCOPE;
+  if(SCOPE==='country' && ME&&ME.country) url+='&country='+encodeURIComponent(ME.country);
+  if(SCOPE==='state' && ME&&ME.state) url+='&state='+encodeURIComponent(ME.state);
+  try{
+    const d=await (await fetch(url)).json();
+    const L=d.leaders||[];
+    if(!L.length){ b.innerHTML='<div class="empty">No ranked traders yet'+(SCOPE!=='world'?' in your area':'')+'. Reputation builds as people make calls and the market resolves them.</div>'; return; }
+    b.innerHTML=L.map((u,i)=>{
+      const acc=(u.accuracy!=null)?Math.round(u.accuracy*100)+'%':'—';
+      const loc=[u.state,u.country].filter(Boolean).join(', ');
+      return '<div class="lrow"><div class="rank '+(i<3?'top':'')+'">'+(i+1)+'</div>'+
+        '<div><div class="lname" style="color:'+u.hue+'" onclick="openProf('+u.id+')">'+esc(u.name)+'</div>'+
+        (loc?'<div class="lloc">'+esc(loc)+'</div>':'')+'</div>'+
+        '<div class="lstats">acc '+acc+' &middot; '+u.correct+'/'+u.total+' calls</div>'+
+        '<div class="lscore" style="color:'+u.hue+'">'+Math.round(u.score)+'</div></div>';
+    }).join('');
+  }catch(e){ b.innerHTML='<div class="empty">Server not reachable.</div>'; }
+}
+async function openProf(uid){
+  if(!uid) return;
+  $('prof-ov').style.display='flex'; document.body.style.overflow='hidden';
+  const body=$('prof-body'); body.innerHTML='<div class="muted">scoring their calls…</div>';
+  try{
+    const d=await (await fetch('/api/profile/'+uid)).json();
+    if(d.error){ body.innerHTML='<div class="muted">'+esc(d.error)+'</div>'; return; }
+    const r=d.reputation||{}, hue=r.hue||'#9a9088';
+    const acc=(r.accuracy!=null)?Math.round(r.accuracy*100)+'%':'—';
+    let h='<div style="font-family:var(--mono);font-size:1.5rem;color:'+hue+';letter-spacing:.06em">'+esc(d.name)+(d.verified?' <span style="font-size:.72rem;color:var(--green)" title="ID-verified">&#10003;</span>':'')+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2px 0 18px">'+(d.real_name?esc(d.real_name)+' &middot; ':'')+(d.nickname?'goes by &ldquo;'+esc(d.nickname)+'&rdquo; &middot; ':'')+esc(d.tier)+' member'+(d.verified?' &middot; verified':'')+'</div>';
+    h+='<div style="display:flex;gap:26px;margin-bottom:20px">'+
+       '<div><div style="font-size:2rem;font-weight:700;color:'+hue+'">'+Math.round(r.score||50)+'</div><div class="ph2" style="margin:0">Reputation</div></div>'+
+       '<div><div style="font-size:2rem;font-weight:700">'+acc+'</div><div class="ph2" style="margin:0">Accuracy</div></div>'+
+       '<div><div style="font-size:2rem;font-weight:700">'+(r.correct||0)+'/'+(r.total||0)+'</div><div class="ph2" style="margin:0">Right / scored</div></div></div>';
+    const t=d.takes||{}; const takes=t.takes||[];
+    h+='<div class="ph2">Top takes'+(t.total?' &middot; '+t.total+' posted &middot; &#9650;'+(t.total_upvotes||0)+' earned':'')+'</div>';
+    if(takes.length){
+      h+=takes.map(c=>{
+        const sc=c.sentiment==='bullish'?'var(--green)':c.sentiment==='bearish'?'var(--red)':'var(--dim)';
+        const tk=c.ticker?'<span style="font-weight:600;color:var(--text)">$'+esc(c.ticker)+'</span> ':'';
+        return '<div style="padding:9px 0;border-top:1px solid var(--border)">'+
+          '<div style="font-size:.86rem;color:var(--text);line-height:1.45">'+tk+esc(c.text)+'</div>'+
+          '<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:4px">'+
+          '<span style="color:'+sc+'">'+esc(c.sentiment)+'</span> &middot; &#9650;'+c.upvotes+' &#9660;'+c.downvotes+(c.is_reply?' &middot; reply':'')+'</div></div>';
+      }).join('');
+    } else { h+='<div class="muted">No takes yet.</div>'; }
+    const p=d.portfolio||{};
+    if(p.holdings && p.holdings.length){
+      const pc=p.total_pnl>=0?'var(--green)':'var(--red)';
+      h+='<div class="ph2">Portfolio &middot; <span style="color:'+pc+'">'+(p.total_pnl>=0?'+':'')+'$'+p.total_pnl+' ('+(p.total_pnl_pct>=0?'+':'')+p.total_pnl_pct+'%)</span></div>';
+      h+=p.holdings.map(x=>{const c=x.pnl>=0?'var(--green)':'var(--red)';
+        return '<div style="display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-family:var(--mono);font-size:.72rem"><span style="min-width:56px;font-weight:600">'+esc(x.ticker)+'</span><span style="color:var(--dim)">'+x.shares+' sh @ $'+x.entry+'</span><span style="margin-left:auto;color:'+c+'">$'+x.value+' ('+(x.pnl_pct>=0?'+':'')+x.pnl_pct+'%)</span></div>';}).join('');
+    }
+    h+='<div class="ph2">Their calls (scored vs real price moves)</div>';
+    const calls=r.calls||[];
+    h+= calls.length ? calls.slice(0,25).map(c=>{
+      const col=c.correct===true?'var(--green)':c.correct===false?'var(--red)':'var(--dim)';
+      const mark=c.correct===true?'&#10003;':c.correct===false?'&#10007;':'&middot;';
+      const mv=(c.move_pct!=null)?((c.move_pct>0?'+':'')+c.move_pct+'%'):'pending';
+      return '<div style="display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-family:var(--mono);font-size:.72rem">'+
+        '<span style="color:'+col+';width:14px">'+mark+'</span><span style="min-width:56px;font-weight:600">'+esc(c.ticker)+'</span>'+
+        '<span style="color:'+(c.direction==='bullish'?'var(--green)':'var(--red)')+'">'+esc(c.direction)+'</span>'+
+        '<span style="margin-left:auto;color:var(--mid)">'+mv+'</span></div>';
+    }).join('') : '<div class="muted">No scored calls yet.</div>';
+    body.innerHTML=h;
+  }catch(e){ body.innerHTML='<div class="muted">Could not load profile.</div>'; }
+}
+function closeProf(){ $('prof-ov').style.display='none'; document.body.style.overflow=''; }
+document.addEventListener('keydown',e=>{ if(e.key==='Escape') closeProf(); });
+
+(async()=>{
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){}
+  if(!ME||!ME.country){ $('tab-country').disabled=true; }
+  if(!ME||!ME.state){ $('tab-state').disabled=true; }
+  load();
+})();
+</script>
+</body>
+</html>

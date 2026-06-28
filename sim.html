@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MIDAS — Trading Simulator</title>
+  <script src="midas-theme.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -187,8 +188,16 @@ body{background:var(--bg);color:var(--text);font-family:'Share Tech Mono',monosp
 .tut-close{background:none;border:none;font-size:14px;color:var(--dim);cursor:pointer;padding:0 4px;line-height:1;}
 .tut-close:hover{color:var(--text);}
 </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
 </head>
 <body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
 
 <!-- ── TITLE ── -->
 <div id="s-title" class="screen active">

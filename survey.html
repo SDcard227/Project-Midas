@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Assessment</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:26px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .wrap{max-width:760px;margin:0 auto;padding:104px 32px 90px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:14px}
+    h1{font-size:clamp(2.2rem,5vw,3.2rem);font-weight:600;margin-bottom:6px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;max-width:580px;margin-bottom:6px}
+    .legal{font-family:var(--mono);font-size:.64rem;color:var(--dim);letter-spacing:.02em;margin-bottom:30px}
+
+    .q{margin-bottom:26px}
+    .q-h{font-family:var(--title);font-size:1rem;font-weight:600;margin-bottom:12px}
+    .q-h .n{font-family:var(--mono);font-size:.74rem;color:var(--amber);margin-right:8px}
+    .opts{display:flex;flex-wrap:wrap;gap:10px}
+    .opt{font-family:var(--title);font-size:.86rem;background:var(--card);border:1px solid var(--border2);
+      color:var(--mid);padding:11px 16px;cursor:pointer;border-radius:3px;transition:all .15s;text-align:left}
+    .opt:hover{border-color:var(--text);color:var(--text)}
+    .opt.sel{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .opts.multi .opt.sel{background:var(--green);border-color:var(--green)}
+
+    .cta{font-family:var(--mono);font-size:.84rem;letter-spacing:.1em;text-transform:uppercase;
+      background:var(--green);color:#fff;border:none;padding:14px 30px;cursor:pointer;border-radius:3px;margin-top:8px}
+    .cta:hover{opacity:.9}
+    .cta:disabled{opacity:.45;cursor:default}
+
+    #profile{margin-top:34px}
+    .pcard{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:26px 28px}
+    .pcard h2{font-family:var(--title);font-size:1.4rem;font-weight:600;margin-bottom:4px}
+    .pcard .ptag{font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:16px}
+    .prow{display:flex;gap:12px;padding:12px 0;border-top:1px solid var(--border);align-items:flex-start;flex-wrap:wrap}
+    .prow .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);min-width:120px;padding-top:4px}
+    .prow .v{flex:1;font-size:.92rem;color:var(--text)}
+    .chips{display:flex;flex-wrap:wrap;gap:7px}
+    .chip{font-family:var(--mono);font-size:.7rem;background:var(--surface);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:2px}
+    .pcta{display:flex;gap:12px;flex-wrap:wrap;margin-top:22px}
+    .pcta a{font-family:var(--mono);font-size:.74rem;letter-spacing:.08em;text-transform:uppercase;text-decoration:none;padding:11px 18px;border-radius:3px}
+    .pcta .a-green{background:var(--green);color:#fff}
+    .pcta .a-line{border:1px solid var(--border2);color:var(--mid)}
+    .pcta a:hover{opacity:.88}
+    .pnote{font-family:var(--mono);font-size:.62rem;color:var(--dim);margin-top:16px;line-height:1.6}
+    .retake{font-family:var(--mono);font-size:.7rem;color:var(--teal);text-decoration:none;display:inline-block;margin-top:14px}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <span class="badge">Assessment · 60 seconds</span>
+    <h1>ASSESS<span>MENT</span></h1>
+    <p class="sub">A quick read on how you like to invest, so Midas filters the firehose down to what's actually relevant to you.</p>
+    <p class="legal">This tailors what you SEE, it is not buy/sell advice. You always decide.</p>
+
+    <form id="quiz">
+      <div class="q">
+        <div class="q-h"><span class="n">1</span>If a position dropped 15% in a week, you'd...</div>
+        <div class="opts" data-key="risk">
+          <button type="button" class="opt" data-val="conservative">Sell, protect what's left</button>
+          <button type="button" class="opt" data-val="balanced">Hold and wait it out</button>
+          <button type="button" class="opt" data-val="aggressive">Buy more on the dip</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">2</span>How do you want to play it?</div>
+        <div class="opts" data-key="style">
+          <button type="button" class="opt" data-val="swing">Set it, check in weekly</button>
+          <button type="button" class="opt" data-val="day">Watch daily, quick moves</button>
+          <button type="button" class="opt" data-val="mix">A mix of both</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">3</span>What are you into? (pick any)</div>
+        <div class="opts multi" data-key="sectors">
+          <button type="button" class="opt" data-val="Tech &amp; AI">Tech &amp; AI</button>
+          <button type="button" class="opt" data-val="Energy">Energy</button>
+          <button type="button" class="opt" data-val="Healthcare">Healthcare</button>
+          <button type="button" class="opt" data-val="Finance &amp; Banks">Finance &amp; Banks</button>
+          <button type="button" class="opt" data-val="Consumer &amp; Retail">Consumer &amp; Retail</button>
+          <button type="button" class="opt" data-val="Autos &amp; EVs">Autos &amp; EVs</button>
+          <button type="button" class="opt" data-val="Industrials">Industrials</button>
+          <button type="button" class="opt" data-val="Biotech">Biotech</button>
+          <button type="button" class="opt" data-val="Media &amp; Entertainment">Media &amp; Entertainment</button>
+          <button type="button" class="opt" data-val="Crypto-adjacent">Crypto-adjacent</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">4</span>How hands-on do you want Midas to be?</div>
+        <div class="opts" data-key="mode">
+          <button type="button" class="opt" data-val="manual">Just inform me, I'll trade</button>
+          <button type="button" class="opt" data-val="semi">Suggest it, I'll approve</button>
+          <button type="button" class="opt" data-val="auto">Run it on its own</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">5</span>How much have you traded before?</div>
+        <div class="opts" data-key="xp">
+          <button type="button" class="opt" data-val="new">Brand new</button>
+          <button type="button" class="opt" data-val="some">A little</button>
+          <button type="button" class="opt" data-val="experienced">Experienced</button>
+        </div>
+      </div>
+
+      <div style="border-top:1px solid var(--border);margin:30px 0 22px;padding-top:24px">
+        <span class="badge" style="color:var(--teal);border-color:var(--teal)">Part 2 · how you think</span>
+        <p class="sub" style="margin-bottom:0">Four quick reads on your instincts. This sets your <strong>trader personality</strong> and spreads the crowd out, so your edge stays your edge.</p>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">6</span>A stock you don't follow rips 20% on no news. You...</div>
+        <div class="opts" data-key="p1">
+          <button type="button" class="opt" data-val="analyst">Dig into why before touching it</button>
+          <button type="button" class="opt" data-val="contrarian">Assume it's overdone, watch to fade it</button>
+          <button type="button" class="opt" data-val="momentum">Hop on, momentum is momentum</button>
+          <button type="button" class="opt" data-val="gut">Trust your read and act</button>
+          <button type="button" class="opt" data-val="sentinel">Leave it, not your setup</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">7</span>Your edge really comes from...</div>
+        <div class="opts" data-key="p2">
+          <button type="button" class="opt" data-val="analyst">Reading the data others skim</button>
+          <button type="button" class="opt" data-val="contrarian">Going against the consensus</button>
+          <button type="button" class="opt" data-val="momentum">Catching trends early and riding</button>
+          <button type="button" class="opt" data-val="gut">Pattern instinct you can't fully explain</button>
+          <button type="button" class="opt" data-val="sentinel">Discipline and patience</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">8</span>The market's euphoric, everyone's greedy. You feel...</div>
+        <div class="opts" data-key="p3">
+          <button type="button" class="opt" data-val="analyst">Skeptical, time to check the data</button>
+          <button type="button" class="opt" data-val="contrarian">Like it's a top, get defensive</button>
+          <button type="button" class="opt" data-val="momentum">Good, ride it till it breaks</button>
+          <button type="button" class="opt" data-val="gut">Energized, go with the flow</button>
+          <button type="button" class="opt" data-val="sentinel">Cautious, trim and protect</button>
+        </div>
+      </div>
+
+      <div class="q">
+        <div class="q-h"><span class="n">9</span>You size into a winner by...</div>
+        <div class="opts" data-key="p4">
+          <button type="button" class="opt" data-val="analyst">What the data supports</button>
+          <button type="button" class="opt" data-val="contrarian">Going heaviest when others doubt it</button>
+          <button type="button" class="opt" data-val="momentum">Adding as it confirms and runs</button>
+          <button type="button" class="opt" data-val="gut">Going big when it feels right</button>
+          <button type="button" class="opt" data-val="sentinel">Staying small and controlled</button>
+        </div>
+      </div>
+
+      <button type="button" class="cta" id="seeBtn" onclick="showProfile()">See my profile →</button>
+      <div id="quizMsg" style="font-family:var(--mono);font-size:.72rem;color:var(--red);margin-top:12px;min-height:16px"></div>
+    </form>
+
+    <div id="profile"></div>
+  </div>
+
+<script>
+const answers={risk:null,style:null,sectors:[],mode:null,xp:null,p1:null,p2:null,p3:null,p4:null};
+
+document.querySelectorAll('.opts').forEach(group=>{
+  const key=group.dataset.key, multi=group.classList.contains('multi');
+  group.querySelectorAll('.opt').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const val=btn.dataset.val;
+      if(multi){
+        btn.classList.toggle('sel');
+        answers[key]=[...group.querySelectorAll('.opt.sel')].map(b=>b.dataset.val);
+      }else{
+        group.querySelectorAll('.opt').forEach(b=>b.classList.remove('sel'));
+        btn.classList.add('sel'); answers[key]=val;
+      }
+    });
+  });
+});
+
+const RISK={conservative:'Cautious',balanced:'Balanced',aggressive:'Bold'};
+const STYLE={swing:'Swing trading (patient, multi-day holds)',day:'Day trading (active, intraday moves)',mix:'A swing + day mix'};
+const STYLEHINT={swing:'SWING',day:'DAY',mix:'SWING + DAY'};
+const MODE={manual:'Hands-on, Midas only informs, you place every trade',
+            semi:'Approve-first, Midas suggests, you tap yes/no (the safe sweet spot)',
+            auto:'Hands-off, Midas runs on its own'};
+const XP={new:'new to this',some:'getting started',experienced:'experienced'};
+const ARCH={
+  analyst:{name:'The Analyst',icon:'',blurb:'You trust the numbers, charts, filings, data over hype. Conviction is earned, not felt.',tune:'Midas leans your feed toward fundamentals, filings, and the data desks.'},
+  contrarian:{name:'The Contrarian',icon:'',blurb:"You zag when they zig. The crowd's exit is your entry, and consensus makes you suspicious.",tune:'Midas surfaces crowded trades and the dissent under them, so you can fade with eyes open.'},
+  momentum:{name:'The Momentum Rider',icon:'',blurb:"You ride what's moving and don't fight the tape. Early in, disciplined out.",tune:'Midas prioritizes breakouts, rising whispers, and trend confirmation for you.'},
+  gut:{name:'The Gut Trader',icon:'',blurb:'You feel the market. Conviction first, spreadsheet later, your instinct is the edge.',tune:'Midas keeps it fast and signal-first, less clutter, more live pulse.'},
+  sentinel:{name:'The Sentinel',icon:'',blurb:'Capital preservation first. You wait for the fat pitch and never overexpose.',tune:'Midas flags risk, downgrades hype, and waits for corroboration before it whispers to you.'},
+};
+function computeArchetype(){
+  const tally={};
+  ['p1','p2','p3','p4'].forEach(k=>{ if(answers[k]) tally[answers[k]]=(tally[answers[k]]||0)+1; });
+  const entries=Object.entries(tally);
+  if(!entries.length) return null;
+  entries.sort((a,b)=>b[1]-a[1]);
+  return Object.assign({key:entries[0][0],spread:entries.length>=3}, ARCH[entries[0][0]]);
+}
+
+function showProfile(){
+  const _m=document.getElementById('quizMsg');
+  if(!answers.risk||!answers.style||!answers.mode){
+    if(_m) _m.textContent='Pick at least your risk (1), style (2), and how hands-on (4).';
+    return;
+  }
+  if(_m) _m.textContent='';
+  const sectors=answers.sectors&&answers.sectors.length?answers.sectors:['No sectors picked, you’ll see everything'];
+  const sectorChips=(answers.sectors&&answers.sectors.length?answers.sectors:['All sectors'])
+    .map(s=>'<span class="chip">'+s+'</span>').join('');
+  localStorage.setItem('midas_profile',JSON.stringify(answers));
+
+  const arch=computeArchetype();
+  const headline = RISK[answers.risk]+' '+(answers.xp?XP[answers.xp]:'')+' investor';
+  document.getElementById('profile').innerHTML =
+    '<div class="pcard">'+
+      '<div class="ptag">Your Midas profile</div>'+
+      '<h2>'+headline+'</h2>'+
+      (arch?'<div class="prow" style="border-top:none;padding-top:4px"><div class="k">Personality</div><div class="v"><span style="font-size:1.02rem;font-weight:600">'+arch.name+'</span><div style="font-size:.85rem;color:var(--mid);margin-top:3px">'+arch.blurb+'</div></div></div>':'')+
+      '<div class="prow"><div class="k">Focus areas</div><div class="v"><div class="chips">'+sectorChips+'</div></div></div>'+
+      '<div class="prow"><div class="k">Suggested style</div><div class="v">'+STYLE[answers.style]+'</div></div>'+
+      '<div class="prow"><div class="k">How it runs</div><div class="v">'+MODE[answers.mode]+'</div></div>'+
+      (arch?'<div class="prow"><div class="k">How Midas tunes</div><div class="v">'+arch.tune+(arch.spread?' <span style="color:var(--teal)">Plus an anti-herd nudge, similar profiles get spread across different ideas so your edge stays yours.</span>':'')+'</div></div>':'')+
+      '<div class="pcta">'+
+        '<a class="a-green" href="whispers.html">See The Wire for your areas →</a>'+
+        '<a class="a-line" href="practice.html">Replay the '+STYLEHINT[answers.style]+' style →</a>'+
+      '</div>'+
+      '<div class="pnote">Heads up: this filters what surfaces to your interests and comfort, it is education + tooling, not a recommendation to buy or sell any specific stock. You always make the call.</div>'+
+    '</div>'+
+    '<a class="retake" href="javascript:void(0)" onclick="location.reload()">↻ Retake the quiz</a>';
+  document.getElementById('profile').scrollIntoView({behavior:'smooth'});
+}
+
+// Restore a saved profile summary on return (so it is not lost)
+(function(){
+  try{
+    const saved=JSON.parse(localStorage.getItem('midas_profile')||'null');
+    if(saved&&saved.risk){
+      // pre-select the saved single answers visually
+      for(const key of ['risk','style','mode','xp','p1','p2','p3','p4']){
+        if(saved[key]){
+          const b=document.querySelector('.opts[data-key="'+key+'"] .opt[data-val="'+saved[key]+'"]');
+          if(b) b.click();
+        }
+      }
+      if(Array.isArray(saved.sectors)) saved.sectors.forEach(s=>{
+        const b=document.querySelector('.opts[data-key="sectors"] .opt[data-val="'+s.replace(/"/g,'&quot;')+'"]');
+        if(b) b.click();
+      });
+    }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>

@@ -1,129 +1,90 @@
+import os
 import logging
 import requests
 from datetime import datetime, timedelta
 
 log = logging.getLogger("Midas.Politician")
 
-# Primary + fallback URLs per chamber
-HOUSE_URLS = [
-    "https://house-stock-watcher-data.s3-us-west-2.amazonaws.com/data/all_transactions.json",
-    "https://raw.githubusercontent.com/house-stock-watcher/house-stock-watcher-data/master/data/all_transactions.json",
-]
-SENATE_URLS = [
-    "https://senate-stock-watcher-data.s3-us-west-2.amazonaws.com/aggregate/all_transactions.json",
-    "https://raw.githubusercontent.com/eleqtrizit/senate-stock-watcher-data/master/aggregate/all_transactions.json",
-]
+# Layer 4 — congressional trade signal.
+#
+# The old free source (House/Senate Stock Watcher public S3 buckets) had its public
+# access revoked — every URL now returns 403/404. We query Financial Modeling Prep
+# per symbol instead: Senate + House trades. Uses FMP_API_KEY (the SAME free key as
+# the company-dossier ownership pie). No key -> graceful neutral (no crash, no signal).
+_FMP_SENATE = "https://financialmodelingprep.com/stable/senate-trades"
+_FMP_HOUSE  = "https://financialmodelingprep.com/stable/house-trades"
+HEADERS = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120 Safari/537.36"}
+CACHE_HOURS = 6
 
-HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36"
-}
 
-CACHE_HOURS = 6  # Refresh congressional data every 6 hours
+def _key():
+    return os.getenv("FMP_API_KEY")
 
 
 class PoliticianTracker:
-    """
-    Layer 4 — Congressional trade signal.
+    """Congressional buy/sell signal for a ticker (FMP Senate + House, per symbol).
 
-    Pulls public House + Senate stock disclosure data (no API key required).
-    Scores each ticker based on recent politician buy/sell activity.
-
-    If politicians are buying: mild bullish boost.
-    If politicians are selling: mild bearish flag.
-    Neutral or no activity: no effect.
-
-    Data source: House Stock Watcher + Senate Stock Watcher (public S3 buckets)
-    Refreshes every CACHE_HOURS hours — no need to download every cycle.
+    If politicians are buying: mild bullish boost. Selling: mild bearish flag.
+    Per-ticker cache (CACHE_HOURS) keeps us well inside FMP's free rate limit.
     """
 
     def __init__(self, lookback_days: int = 90):
         self.lookback_days = lookback_days
-        self._cache = []
-        self._last_fetch = None
+        self._cache = {}   # ticker -> (fetched_at, [trades])
 
-    # -------------------------------------------------------------------------
-    # Data fetch + cache
-    # -------------------------------------------------------------------------
-
-    def _refresh(self):
-        """Download fresh congressional trade data and merge both chambers."""
+    def _fetch(self, ticker):
+        key = _key()
+        if not key:
+            return []
         trades = []
-
-        for urls, chamber in [(HOUSE_URLS, "House"), (SENATE_URLS, "Senate")]:
-            raw = None
-            for url in urls:
-                try:
-                    resp = requests.get(url, headers=HEADERS, timeout=15)
-                    if resp.ok:
-                        raw = resp.json()
-                        break
-                    log.warning(f"Politician tracker: {chamber} URL returned {resp.status_code} — trying fallback")
-                except Exception as e:
-                    log.warning(f"Politician tracker: {chamber} URL failed ({e}) — trying fallback")
-            if raw is None:
-                log.warning(f"Politician tracker: all {chamber} URLs failed — skipping")
-                continue
+        for url, chamber in [(_FMP_SENATE, "Senate"), (_FMP_HOUSE, "House")]:
             try:
-                for t in raw:
-                    ticker = str(t.get("ticker", "")).strip().upper()
-                    trade_type = str(t.get("type", "")).strip().lower()
-                    date_str = t.get("transaction_date") or t.get("disclosure_date", "")
-                    name = t.get("representative") or t.get("senator", "Unknown")
-
-                    if not ticker or not date_str:
+                r = requests.get(url, params={"symbol": ticker, "apikey": key},
+                                 headers=HEADERS, timeout=12)
+                if not r.ok:
+                    continue
+                data = r.json()
+                if not isinstance(data, list):
+                    continue
+                for t in data:
+                    typ = str(t.get("type") or t.get("transaction") or "").lower()
+                    ds = (t.get("transactionDate") or t.get("transaction_date")
+                          or t.get("disclosureDate") or t.get("dateRecieved") or "")
+                    if not ds:
                         continue
-
                     try:
-                        date = datetime.strptime(date_str[:10], "%Y-%m-%d")
+                        date = datetime.strptime(str(ds)[:10], "%Y-%m-%d")
                     except ValueError:
                         continue
-
-                    trades.append({
-                        "ticker":  ticker,
-                        "type":    trade_type,
-                        "date":    date,
-                        "name":    name,
-                        "chamber": chamber,
-                    })
-                log.info(f"Politician tracker: loaded {len(raw)} {chamber} trades")
+                    name = (t.get("representative") or t.get("senator")
+                            or (str(t.get("firstName", "")) + " " + str(t.get("lastName", ""))).strip()
+                            or t.get("office") or "Unknown")
+                    trades.append({"type": typ, "date": date, "name": name, "chamber": chamber})
             except Exception as e:
-                log.warning(f"Politician tracker: failed to load {chamber} data — {e}")
+                log.warning(f"Politician (FMP {chamber}) failed: {e}")
+        return trades
 
-        self._cache = trades
-        self._last_fetch = datetime.now()
-
-    def _ensure_fresh(self):
-        if self._last_fetch is None or (datetime.now() - self._last_fetch).seconds > CACHE_HOURS * 3600:
-            self._refresh()
-
-    # -------------------------------------------------------------------------
-    # Signal
-    # -------------------------------------------------------------------------
+    def _get(self, ticker):
+        now = datetime.now()
+        hit = self._cache.get(ticker)
+        if hit and (now - hit[0]).total_seconds() < CACHE_HOURS * 3600:
+            return hit[1]
+        trades = self._fetch(ticker)
+        self._cache[ticker] = (now, trades)
+        return trades
 
     def get_signal(self, ticker: str) -> dict:
-        """
-        Returns a Layer 4 signal for the given ticker.
-
-        signal: "positive" | "neutral" | "negative"
-        score:  +1, 0, or -1
-        buys:   number of purchase transactions in lookback window
-        sells:  number of sale transactions in lookback window
-        recent: list of the 3 most recent trades
-        """
+        """signal: positive|neutral|negative · score +1/0/-1 · buys/sells · recent[]."""
         try:
-            self._ensure_fresh()
+            trades = self._get((ticker or "").upper())
         except Exception as e:
             log.warning(f"Politician tracker unavailable: {e}")
             return _neutral()
 
         cutoff = datetime.now() - timedelta(days=self.lookback_days)
-        relevant = [
-            t for t in self._cache
-            if t["ticker"] == ticker.upper() and t["date"] >= cutoff
-        ]
-
-        buys  = sum(1 for t in relevant if "purchase" in t["type"])
-        sells = sum(1 for t in relevant if "sale" in t["type"])
+        relevant = [t for t in trades if t["date"] >= cutoff]
+        buys  = sum(1 for t in relevant if "purchase" in t["type"] or "buy" in t["type"])
+        sells = sum(1 for t in relevant if "sale" in t["type"] or "sell" in t["type"])
 
         if buys > sells:
             signal, score = "positive", 1
@@ -134,18 +95,11 @@ class PoliticianTracker:
 
         recent = sorted(relevant, key=lambda x: x["date"], reverse=True)[:3]
         recent_str = [
-            f"{t['name']} ({t['chamber']}) — {t['type'].title()} on {t['date'].strftime('%Y-%m-%d')}"
+            f"{t['name']} ({t['chamber']}) — {t['type'].title() or 'Trade'} on {t['date'].strftime('%Y-%m-%d')}"
             for t in recent
         ]
-
-        return {
-            "signal":  signal,
-            "score":   score,
-            "buys":    buys,
-            "sells":   sells,
-            "total":   len(relevant),
-            "recent":  recent_str,
-        }
+        return {"signal": signal, "score": score, "buys": buys, "sells": sells,
+                "total": len(relevant), "recent": recent_str}
 
 
 def _neutral() -> dict:

@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PROJECT MIDAS — AI TRADING SYSTEM</title>
+  <script src="midas-theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -311,6 +312,17 @@
       #tut-grid { grid-template-columns: 1fr !important; }
     }
   </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
 </head>
 <body>
 
@@ -318,16 +330,15 @@
   <nav>
     <a class="nav-logo" href="#hero">PROJECT <span>MIDAS</span></a>
     <ul class="nav-links">
-      <li><a href="index.html" class="active">Home</a></li>
-      <li><a href="stocks.html">Stocks</a></li>
-      <li><a href="penny.html">Penny</a></li>
-      <li><a href="#signals">Signals</a></li>
-      <li><a href="intelligence.html">Intelligence</a></li>
-      <li><a href="whispers.html">Whispers</a></li>
-      <li><a href="practice.html">Practice</a></li>
-      <li><a href="dashboard.html">Dashboard</a></li>
-      <li><a href="#signup" class="nav-cta">Get Access</a></li>
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
     </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
   </nav>
 
 
@@ -350,6 +361,14 @@
     <div class="hero-actions">
       <a class="btn-primary" href="#signup" onclick="document.getElementById('signup').scrollIntoView({behavior:'smooth'}); return false;">INITIALIZE ACCESS</a>
       <a class="btn-secondary" href="#how" onclick="document.getElementById('how').scrollIntoView({behavior:'smooth'}); return false;">VIEW SYSTEM DOCS</a>
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-family:var(--mono);font-size:0.74rem;letter-spacing:0.08em;">
+      <a href="survey.html" style="color:var(--text);text-decoration:none;font-weight:600;">Assessment &rarr;</a>
+      <a href="whispers.html" style="color:var(--teal);text-decoration:none;">Whispers &rarr;</a>
+      <a href="practice.html" style="color:var(--amber);text-decoration:none;">Practice &rarr;</a>
+      <a href="trade.html" style="color:var(--green);text-decoration:none;">Trade &rarr;</a>
+      <a href="dashboard.html" style="color:var(--mid);text-decoration:none;">Dashboard &rarr;</a>
     </div>
 
     <!-- Live ticker terminal -->
@@ -963,31 +982,26 @@
       <div class="layers">
         <div class="layer glow-box fade-in">
           <div class="layer-num">LAYER 01</div>
-          <span class="layer-icon">📈</span>
           <h4>EMA TREND</h4>
           <p>Fast/slow moving average crossovers detect trend starts and ends.</p>
         </div>
         <div class="layer glow-box fade-in">
           <div class="layer-num">LAYER 02</div>
-          <span class="layer-icon">⚡</span>
           <h4>RSI MOMENTUM</h4>
           <p>Filters overbought entries. Confirms genuine dip opportunities.</p>
         </div>
         <div class="layer glow-box fade-in">
           <div class="layer-num">LAYER 03</div>
-          <span class="layer-icon">📰</span>
           <h4>NEWS SENTIMENT</h4>
           <p>Live financial headlines scored for bullish and bearish language.</p>
         </div>
         <div class="layer glow-box fade-in">
           <div class="layer-num">LAYER 04</div>
-          <span class="layer-icon">🏛️</span>
           <h4>CONGRESS TRADES</h4>
           <p>Public House and Senate stock disclosures tracked automatically.</p>
         </div>
         <div class="layer glow-box fade-in">
           <div class="layer-num">LAYER 05</div>
-          <span class="layer-icon">▶</span>
           <h4>YOUTUBE LIVE</h4>
           <p>Live video coverage scanned for breakout signals and warnings.</p>
         </div>
@@ -996,13 +1010,17 @@
   </section>
 
 
-  <!-- ── SIMULATOR ── -->
   <!-- ── SIMULATOR (full version lives on practice.html) ── -->
   <section id="simulator" style="padding:100px 0;border-bottom:1px solid var(--border);background:var(--surface);">
     <div class="container" style="text-align:center;">
       <span class="s-eye">Practice Mode</span>
       <h2 class="s-title">TRADE WITHOUT RISK.</h2>
-      <p class="s-sub" style="margin:0 auto 36px;">Configure a fund, pick a strategy, and watch Midas trade a full real year in seconds, with a day-by-day grid of the market's ups, downs, and the system's confidence. Mock money, zero risk.</p>
+      <p class="s-sub" style="margin:0 auto 30px;">Configure a fund, pick a strategy, and watch Midas trade a full real year in seconds, with a day-by-day grid of the market's ups, downs, and the system's confidence. Mock money, zero risk.</p>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:38px;font-family:var(--mono);font-size:0.7rem;letter-spacing:0.1em;color:var(--mid);text-transform:uppercase;">
+        <span style="border:1px solid var(--border2);padding:8px 16px;">4 Real Market Years</span>
+        <span style="border:1px solid var(--border2);padding:8px 16px;">Ups / Downs + Confidence Grid</span>
+        <span style="border:1px solid var(--border2);padding:8px 16px;">See What You'd Have Made</span>
+      </div>
       <a class="btn-primary" href="practice.html">OPEN THE SIMULATOR ›</a>
     </div>
   </section>
@@ -1097,7 +1115,7 @@
             <div style="font-size:0.6rem; letter-spacing:0.16em; color:var(--green); margin-top:4px; text-align:center;">LIVE</div>
           </div>
           <div style="padding:24px 28px;">
-            <div style="font-family:var(--title); font-size:0.95rem; color:var(--green); text-shadow:0 0 12px rgba(0,255,65,0.5); letter-spacing:0.06em; margin-bottom:8px;">GO LIVE — REAL MONEY</div>
+            <div style="font-family:var(--title); font-size:0.95rem; color:var(--green); letter-spacing:0.06em; margin-bottom:8px;">GO LIVE — REAL MONEY</div>
             <p style="font-size:0.82rem; color:var(--text); line-height:1.75; opacity:0.8; margin-bottom:14px;">Once paper trading confirms the strategy is performing as expected, switch to live. Start with a small amount — enough to be real but not enough to hurt. The floor protection will stop the fund automatically if it ever drops to your minimum. You can always check py monitor.py to see what's happening.</p>
             <div style="font-family:var(--mono); font-size:0.72rem; color:var(--text); background:var(--surface); border:1px solid var(--border2); padding:12px 16px; margin-top:4px; line-height:1.9;">
               <span style="color:var(--dim)"># When you're ready:</span><br>
@@ -1146,9 +1164,6 @@
       <div class="footer-inner">
         <div class="footer-logo">PROJECT MIDAS</div>
         <ul class="footer-links">
-          <li><a href="index.html">Home</a></li>
-          <li><a href="stocks.html">Stocks</a></li>
-          <li><a href="penny.html">Penny</a></li>
           <li><a href="#signals">Signals</a></li>
           <li><a href="#simulator">Simulator</a></li>
           <li><a href="#tutorial">Tutorial</a></li>
@@ -1275,7 +1290,7 @@
         return `<tr>
           <td style="color:${mc};font-family:var(--title);font-size:0.8rem;letter-spacing:0.06em;">${r.mode}${badge}</td>
           <td style="color:var(--muted);font-size:0.78rem;">${r.freq}</td>
-          <td class="r" style="color:${rc};text-shadow:0 0 6px ${rc};font-weight:bold;">${pos?"+":""}${r.ret}%</td>
+          <td class="r" style="color:${rc};};font-weight:bold;">${pos?"+":""}${r.ret}%</td>
           <td class="r" style="color:var(--text);">${r.trades}</td>
           <td class="r" style="color:var(--text);">${r.win}%</td>
           <td class="r" style="color:var(--gold);">+$${r.best}</td>

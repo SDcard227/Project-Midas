@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Account</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:26px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .wrap{max-width:640px;margin:0 auto;padding:104px 32px 90px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:14px}
+    h1{font-size:clamp(2.2rem,5vw,3.2rem);font-weight:600;margin-bottom:6px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;max-width:560px;margin-bottom:28px}
+
+    .card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);margin-top:22px}
+    .card-h{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--border);
+      font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+    .formwrap{padding:20px 22px;display:flex;flex-direction:column;gap:14px}
+    .fld{display:flex;flex-direction:column;gap:5px}
+    .fld label{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+    .fld input{font-family:var(--mono);background:var(--bg);border:1px solid var(--border2);padding:12px 13px;font-size:.92rem;outline:none;color:var(--text)}
+    .fld input:focus{border-color:var(--text)}
+    .btn{font-family:var(--mono);font-size:.82rem;letter-spacing:.1em;padding:13px 24px;border:none;cursor:pointer;text-transform:uppercase;border-radius:3px}
+    .btn-buy{background:var(--green);color:#fff;margin-top:4px}.btn-buy:hover{opacity:.9}
+    .btn:disabled{opacity:.5;cursor:default}
+    .btn-sell{background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 14px;font-size:.7rem;cursor:pointer;font-family:var(--mono);letter-spacing:.08em;border-radius:2px}
+    .btn-sell:hover{background:rgba(138,48,48,.08)}
+    .msg{font-family:var(--mono);font-size:.72rem;color:var(--red);min-height:16px}
+    .toggle{font-family:var(--mono);font-size:.74rem;color:var(--dim)}
+    .namerow{display:flex;gap:10px}
+    .namehint{font-family:var(--mono);font-size:.6rem;color:var(--dim);line-height:1.5}
+    .toggle a{color:var(--teal);text-decoration:none}
+
+    .acct-body{padding:6px 0}
+    .acct-body .row{display:flex;justify-content:space-between;padding:13px 20px;border-bottom:1px solid var(--border)}
+    .acct-body .row:last-child{border-bottom:none}
+    .acct-body .k{font-family:var(--mono);font-size:.64rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+    .acct-body .v{font-size:.95rem}
+    .tier{font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;background:var(--surface);border:1px solid var(--border2);color:var(--amber);padding:3px 10px;border-radius:2px}
+    .plans{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border-top:1px solid var(--border)}
+    .plan{padding:18px;border-right:1px solid var(--border)}
+    .plan:last-child{border-right:none}
+    .pn{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;text-transform:uppercase;color:var(--mid)}
+    .pp{font-family:var(--title);font-size:1.3rem;font-weight:600;margin:4px 0}
+    .pd{font-size:.74rem;color:var(--dim);line-height:1.5}
+    .plan-note{font-family:var(--mono);font-size:.62rem;color:var(--dim);padding:14px 20px;border-top:1px solid var(--border);line-height:1.6}
+    .planbtn{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;margin-top:10px;background:var(--green);color:#fff;border:none;padding:8px 14px;border-radius:3px;cursor:pointer}
+    .planbtn:hover{opacity:.9}
+    .planbtn:disabled{background:var(--surface);color:var(--dim);cursor:default;border:1px solid var(--border2)}
+    .plan.cur{background:var(--surface)}
+    .plan.cur .pn{color:var(--green)}
+    @media(max-width:560px){.plans{grid-template-columns:1fr}.plan{border-right:none;border-bottom:1px solid var(--border)}}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta active">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <span class="badge">Account</span>
+    <h1>GET <span>ACCESS</span></h1>
+    <p class="sub">One login for Midas. Your money and investments stay at your own brokerage, this is just your key to the cockpit.</p>
+
+    <!-- AUTH (logged out) -->
+    <div class="card" id="authBox">
+      <div class="card-h"><span id="formTitle">Log in</span></div>
+      <div class="formwrap">
+        <div class="namerow" id="nameFlds" style="display:none">
+          <div class="fld" style="flex:1"><label>First name</label><input id="fn" placeholder="real first name" autocomplete="off" /></div>
+          <div class="fld" style="flex:1"><label>Last name</label><input id="ln" placeholder="real last name" autocomplete="off" /></div>
+        </div>
+        <div class="namerow" id="locFlds" style="display:none">
+          <div class="fld ac-fld" style="flex:1"><label>Country (for rankings)</label><input id="cty" placeholder="start typing…" autocomplete="off" /><div class="ac-menu" id="cty-menu"></div></div>
+          <div class="fld ac-fld" style="flex:1"><label>State / region</label><input id="st" placeholder="start typing…" autocomplete="off" /><div class="ac-menu" id="st-menu"></div></div>
+        </div>
+        <style>
+          .ac-fld{position:relative}
+          .ac-menu{position:absolute;left:0;right:0;top:100%;z-index:60;background:var(--card);border:1px solid var(--border2);border-top:none;max-height:230px;overflow-y:auto;box-shadow:0 14px 30px rgba(30,26,20,.18);display:none}
+          .ac-menu.open{display:block}
+          .ac-item{padding:9px 13px;font-family:var(--mono);font-size:.82rem;color:var(--mid);cursor:pointer;border-top:1px solid var(--border)}
+          .ac-item:first-child{border-top:none}
+          .ac-item:hover,.ac-item.active{background:var(--surface);color:var(--text)}
+          html[data-theme="dark"] .ac-menu{box-shadow:0 14px 30px rgba(0,0,0,.4)}
+        </style>
+        <script>
+        (function(){
+          const C=["USA","United Kingdom","Canada","Australia","Ireland","New Zealand","Germany","France","Spain","Italy","Netherlands","Belgium","Switzerland","Austria","Sweden","Norway","Denmark","Finland","Portugal","Greece","Poland","Czech Republic","Romania","Ukraine","Russia","Turkey","India","Pakistan","Bangladesh","China","Japan","South Korea","Singapore","Hong Kong","Malaysia","Indonesia","Thailand","Vietnam","Philippines","UAE","Saudi Arabia","Qatar","Kuwait","Israel","Jordan","Lebanon","Egypt","Sudan","Morocco","Nigeria","Ghana","Kenya","Ethiopia","South Africa","Brazil","Mexico","Argentina","Chile","Colombia","Peru","Other"];
+          const S=["Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut","Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa","Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan","Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada","New Hampshire","New Jersey","New Mexico","New York","North Carolina","North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island","South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont","Virginia","Washington","West Virginia","Wisconsin","Wyoming","Washington DC"];
+          const sortPin=(a,pin)=>{ let arr=a.filter(x=>x!=="Other").sort((x,y)=>x.localeCompare(y)); if(pin){arr=arr.filter(x=>x!==pin);arr.unshift(pin);} if(a.indexOf("Other")>-1)arr.push("Other"); return arr; };
+          function attachAC(inputId,menuId,items){
+            const inp=document.getElementById(inputId), menu=document.getElementById(menuId);
+            if(!inp||!menu) return;
+            let active=-1, shown=[];
+            function render(){
+              const q=inp.value.trim().toLowerCase();
+              shown=(q?items.filter(x=>x.toLowerCase().indexOf(q)>-1):items.slice()).slice(0,100);
+              if(!shown.length){ menu.classList.remove('open'); return; }
+              menu.innerHTML=shown.map((x,i)=>'<div class="ac-item'+(i===active?' active':'')+'" data-i="'+i+'">'+x+'</div>').join('');
+              menu.classList.add('open');
+            }
+            inp.addEventListener('input',()=>{active=-1;render();});
+            inp.addEventListener('focus',render);
+            inp.addEventListener('blur',()=>setTimeout(()=>menu.classList.remove('open'),160));
+            inp.addEventListener('keydown',e=>{
+              if(!menu.classList.contains('open')) return;
+              if(e.key==='ArrowDown'){active=Math.min(active+1,shown.length-1);render();e.preventDefault();}
+              else if(e.key==='ArrowUp'){active=Math.max(active-1,0);render();e.preventDefault();}
+              else if(e.key==='Enter'&&active>=0){inp.value=shown[active];menu.classList.remove('open');e.preventDefault();}
+              else if(e.key==='Escape'){menu.classList.remove('open');}
+            });
+            menu.addEventListener('mousedown',e=>{ const it=e.target.closest('.ac-item'); if(!it)return; inp.value=shown[+it.dataset.i]; menu.classList.remove('open'); });
+          }
+          attachAC('cty','cty-menu',sortPin(C,'USA'));
+          attachAC('st','st-menu',sortPin(S));
+        })();
+        </script>
+        <div class="namerow" id="nickFld" style="display:none">
+          <div class="fld" style="flex:1"><label>Nickname (optional)</label><input id="nick" maxlength="24" placeholder="what you go by (optional, shows on profile)" /></div>
+        </div>
+        <div class="fld"><label>Email</label><input id="email" type="email" placeholder="you@email.com" autocomplete="off" /></div>
+        <div class="fld"><label>Password</label><input id="pw" type="password" placeholder="8+ characters" autocomplete="current-password" onkeydown="if(event.key==='Enter')submitAuth()" /></div>
+        <button class="btn btn-buy" id="submitBtn" onclick="submitAuth()">Log in</button>
+        <div id="authMsg" class="msg"></div>
+        <div id="toggleTxt" class="toggle"></div>
+        <div class="namehint">Real first + last name, no usernames or avatars. (ID check coming.) You show as "F. Lastname" (or your nickname) on posts.</div>
+        <div class="namehint" style="margin-top:8px">By creating an account you agree to our <a href="terms.html" style="color:var(--teal)">Terms</a> and <a href="privacy.html" style="color:var(--teal)">Privacy Policy</a>.</div>
+      </div>
+    </div>
+
+    <!-- ACCOUNT (logged in) -->
+    <div class="card" id="acctBox" style="display:none">
+      <div class="card-h"><span>Your account</span><button class="btn-sell" onclick="logout()">Log out</button></div>
+      <div class="acct-body">
+        <div class="row"><span class="k">Name</span><span class="v" id="uName"></span></div>
+        <div class="row"><span class="k">Email</span><span class="v" id="uEmail"></span></div>
+        <div class="row"><span class="k">Plan</span><span class="v"><span class="tier" id="uTier">FREE</span></span></div>
+      </div>
+      <div class="plans">
+        <div class="plan" data-tier="free"><div class="pn">Free</div><div class="pp">$0</div><div class="pd">The Wire, The Floor, comments + practice. All the social, free.</div></div>
+        <div class="plan" data-tier="pro"><div class="pn">Pro</div><div class="pp">$29<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">Semi-auto trading: Midas suggests, you approve each trade.</div><button class="planbtn" id="btn-pro" onclick="upgrade('pro')">Upgrade</button></div>
+        <div class="plan" data-tier="premium"><div class="pn">Premium</div><div class="pp">$79<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">Full-auto trading: Midas runs it for you, hands-off.</div><button class="planbtn" id="btn-premium" onclick="upgrade('premium')">Upgrade</button></div>
+      </div>
+      <div class="plan-note" id="billNote">Loading plans…</div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+let MODE='login';
+
+function showAuth(){ $('authBox').style.display='block'; $('acctBox').style.display='none'; }
+function showAccount(u){
+  $('authBox').style.display='none'; $('acctBox').style.display='block';
+  $('uName').textContent=u.name||'';
+  $('uEmail').textContent=u.email;
+  $('uTier').textContent=(u.tier||'free').toUpperCase();
+  document.querySelectorAll('.plan').forEach(p=>{
+    const cur=p.getAttribute('data-tier')===(u.tier||'free');
+    p.classList.toggle('cur',cur);
+    const b=p.querySelector('.planbtn');
+    if(b && cur){ b.textContent='Current'; b.disabled=true; }
+  });
+}
+function setMode(m){
+  MODE=m;
+  $('formTitle').textContent = m==='login'?'Log in':'Create your account';
+  $('submitBtn').textContent = m==='login'?'Log in':'Sign up';
+  $('pw').setAttribute('autocomplete', m==='login'?'current-password':'new-password');
+  $('nameFlds').style.display = m==='signup'?'flex':'none';
+  $('locFlds').style.display = m==='signup'?'flex':'none';
+  $('nickFld').style.display = m==='signup'?'flex':'none';
+  $('toggleTxt').innerHTML = m==='login'
+    ? "New here? <a href='javascript:void(0)' onclick=\"setMode('signup')\">Create an account</a>"
+    : "Have an account? <a href='javascript:void(0)' onclick=\"setMode('login')\">Log in</a>";
+  $('authMsg').textContent='';
+}
+async function submitAuth(){
+  const email=$('email').value.trim(), pw=$('pw').value;
+  if(!email||!pw){ $('authMsg').textContent='Enter email and password.'; return; }
+  const body={email,password:pw};
+  if(MODE==='signup'){
+    body.first_name=$('fn').value.trim(); body.last_name=$('ln').value.trim();
+    body.country=$('cty').value.trim(); body.state=$('st').value.trim();
+    body.nickname=$('nick').value.trim();
+    if(!body.first_name||!body.last_name){ $('authMsg').textContent='Real first and last name required.'; return; }
+  }
+  $('submitBtn').disabled=true; $('authMsg').textContent='';
+  try{
+    const r=await (await fetch('/api/'+(MODE==='login'?'login':'register'),{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(body)})).json();
+    if(r.error){ $('authMsg').textContent=r.error; }
+    else { showAccount(r.user); }
+  }catch(e){ $('authMsg').textContent='Server error: '+e.message; }
+  finally{ $('submitBtn').disabled=false; }
+}
+async function logout(){
+  try{ await fetch('/api/logout',{method:'POST'}); }catch(e){}
+  $('email').value=''; $('pw').value=''; setMode('login'); showAuth();
+}
+async function refresh(){
+  try{
+    const d=await (await fetch('/api/me')).json();
+    if(d && d.user){ showAccount(d.user); } else { showAuth(); }
+  }catch(e){ showAuth(); }
+}
+let BILLING={configured:false};
+async function checkBilling(){
+  try{ BILLING=await (await fetch('/api/billing/status')).json(); }catch(e){ BILLING={configured:false}; }
+  const note=$('billNote');
+  if(!BILLING.configured){
+    ['pro','premium'].forEach(t=>{const b=$('btn-'+t); if(b && !b.disabled){ b.disabled=true; b.textContent='Soon'; }});
+    if(note) note.textContent='Subscriptions are wired up, Stripe just is not connected yet. Add Stripe keys + price IDs and these go live. You trade on your own brokerage, this is a software subscription.';
+  } else if(note){
+    note.textContent='Pick a plan to subscribe through Stripe. You trade on your own brokerage, this is a software subscription, not an investment account.';
+  }
+}
+async function upgrade(tier){
+  const b=$('btn-'+tier);
+  if(b){ b.disabled=true; b.textContent='...'; }
+  try{
+    const r=await (await fetch('/api/billing/checkout',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tier})})).json();
+    if(r.url){ window.location=r.url; return; }
+    midasToast(r.error||'Could not start checkout.', 'error');
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
+  if(b){ b.disabled=false; b.textContent='Upgrade'; }
+}
+if(new URLSearchParams(location.search).get('upgraded')==='1'){
+  setTimeout(()=>midasToast('Subscription active, welcome aboard! Your plan updates in a moment.'),300);
+}
+setMode('login'); refresh(); checkBilling();
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Company</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .wrap{max-width:1000px;margin:0 auto;padding:104px 32px 80px}
+
+    .chead{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap;margin-bottom:6px}
+    .ctk{font-family:var(--mono);font-size:2.4rem;font-weight:700;letter-spacing:.04em}
+    .cname{font-size:1rem;color:var(--mid);font-weight:300}
+    .cprice{font-family:var(--title);font-size:1.8rem;font-weight:700;margin-left:auto}
+    .cchg{font-family:var(--mono);font-size:1rem}
+    .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--dim)}
+
+    .card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);margin-top:20px}
+    .card-h{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--border);
+      font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+    .ranges{display:flex;gap:6px}
+    .rg{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;background:transparent;border:1px solid var(--border2);
+      color:var(--mid);padding:4px 10px;cursor:pointer;border-radius:2px}
+    .rg.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    canvas{display:block;width:100%}
+    .hint{font-family:var(--mono);font-size:.62rem;color:var(--dim);margin-top:8px;text-align:center}
+
+    .cols{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+    @media(max-width:720px){.cols{grid-template-columns:1fr}}
+    .own-wrap{display:flex;gap:18px;align-items:center;padding:18px 20px;flex-wrap:wrap}
+    .legend{font-family:var(--mono);font-size:.7rem;color:var(--mid);display:flex;flex-direction:column;gap:6px}
+    .legend .lg{display:flex;align-items:center;gap:7px}
+    .legend .sw{width:11px;height:11px;border-radius:2px}
+    .holders{border-top:1px solid var(--border)}
+    .hrow{display:flex;justify-content:space-between;padding:9px 20px;border-top:1px solid var(--border);font-family:var(--mono);font-size:.72rem}
+    .hrow:first-child{border-top:none}
+    .nrow{padding:11px 20px;border-top:1px solid var(--border)}
+    .nrow:first-child{border-top:none}
+    .nt{font-size:.9rem;color:var(--text);text-decoration:none}
+    .nt:hover{color:var(--teal);text-decoration:underline}
+    .nm{font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:3px}
+    .muted{padding:18px 20px;color:var(--dim);font-size:.84rem}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <div class="chead">
+      <span class="ctk" id="ctk">—</span>
+      <span class="cname" id="cname"></span>
+      <span class="cprice" id="cprice"></span>
+      <span class="cchg" id="cchg"></span>
+    </div>
+    <p style="font-family:var(--mono);font-size:.7rem;color:var(--dim);margin-bottom:6px"><a href="whispers.html" style="color:var(--teal);text-decoration:none">&larr; The Wire</a> &nbsp;·&nbsp; <a href="trade.html" id="tradeLink" style="color:var(--green);text-decoration:none">Trade this &rarr;</a></p>
+
+    <div class="card">
+      <div class="card-h"><span>Price history</span>
+        <div class="ranges" id="ranges">
+          <button class="rg" data-r="1D" onclick="setRange('1D')">1D</button>
+          <button class="rg" data-r="1W" onclick="setRange('1W')">1W</button>
+          <button class="rg active" data-r="1M" onclick="setRange('1M')">1M</button>
+          <button class="rg" data-r="1Y" onclick="setRange('1Y')">1Y</button>
+          <button class="rg" data-r="max" onclick="setRange('max')">MAX</button>
+        </div>
+      </div>
+      <div style="padding:18px 20px 10px"><canvas id="chart" height="220"></canvas>
+        <div class="hint" id="chart-hint">click a point on the line to see the news from that day</div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="card">
+        <div class="card-h"><span>Ownership · who holds what</span></div>
+        <div id="ownership"><div class="muted">loading ownership…</div></div>
+      </div>
+      <div class="card">
+        <div class="card-h"><span id="daynews-h">News on a day</span></div>
+        <div id="daynews"><div class="muted">click a day on the chart above.</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span>Latest news</span></div>
+      <div id="news"><div class="muted">loading news…</div></div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(''+(s==null?'':s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const TK=(new URLSearchParams(location.search).get('ticker')||'AAPL').toUpperCase().replace(/[^A-Z0-9.\-]/g,'');
+let CHART=[], RANGE='1M';
+document.title='MIDAS — '+TK;
+$('ctk').textContent=TK;
+$('tradeLink').href='trade.html?ticker='+TK;
+
+function drawChart(pts){
+  const cv=$('chart'); const w=cv.clientWidth||700; cv.width=w; cv.height=220;
+  const ctx=cv.getContext('2d'); ctx.clearRect(0,0,w,220);
+  if(!pts.length){ ctx.fillStyle='#9a9088'; ctx.font='13px monospace'; ctx.fillText('no price data',20,110); return; }
+  const vals=pts.map(p=>p.c), min=Math.min(...vals), max=Math.max(...vals), span=(max-min)||1;
+  const x=i=>(i/(pts.length-1||1))*(w-8)+4, y=v=>210-((v-min)/span)*194;
+  ctx.beginPath(); pts.forEach((p,i)=>{const px=x(i),py=y(p.c); i?ctx.lineTo(px,py):ctx.moveTo(px,py);});
+  const up=pts[pts.length-1].c>=pts[0].c; ctx.strokeStyle=up?'#2d7a4f':'#8a3030'; ctx.lineWidth=2; ctx.stroke();
+  ctx.lineTo(x(pts.length-1),220); ctx.lineTo(x(0),220); ctx.closePath();
+  ctx.fillStyle=up?'rgba(45,122,79,.08)':'rgba(138,48,48,.08)'; ctx.fill();
+  CHART=pts;
+}
+$('chart').addEventListener('click',e=>{
+  if(!CHART.length) return;
+  const r=e.target.getBoundingClientRect(), ratio=(e.clientX-r.left)/r.width;
+  const i=Math.max(0,Math.min(CHART.length-1,Math.round(ratio*(CHART.length-1))));
+  loadDayNews(CHART[i].t.slice(0,10));
+});
+async function setRange(rg){
+  RANGE=rg;
+  document.querySelectorAll('.rg').forEach(b=>b.classList.toggle('active',b.dataset.r===rg));
+  try{
+    const d=await (await fetch('/api/history/'+TK+'?range='+rg)).json();
+    drawChart(d.points||[]);
+    if(d.last!=null){
+      $('cprice').textContent='$'+d.last;
+      const c=d.change_pct||0, cls=c>0?'up':c<0?'down':'flat';
+      $('cchg').className='cchg '+cls;
+      $('cchg').textContent=(c>=0?'+':'')+c+'% ('+rg+')';
+    }
+  }catch(e){ drawChart([]); }
+}
+async function loadOwnership(){
+  try{
+    const d=await (await fetch('/api/ownership/'+TK)).json();
+    if(d.name) $('cname').textContent=d.name;
+    const inst=d.institutional_pct;
+    let h='';
+    if(inst!=null){
+      const pub=Math.max(0,100-inst);
+      h+='<div class="own-wrap"><canvas id="pie" width="160" height="160" style="width:160px;height:160px;flex:none"></canvas>'+
+        '<div class="legend"><div class="lg"><span class="sw" style="background:var(--teal)"></span>Institutions '+inst+'%</div>'+
+        '<div class="lg"><span class="sw" style="background:var(--border2)"></span>Public / retail '+pub.toFixed(1)+'%</div>'+
+        (d.shares_outstanding?'<div style="color:var(--dim);margin-top:4px">'+d.shares_outstanding+'M shares out</div>':'')+'</div></div>';
+    }
+    if(d.holders && d.holders.length){
+      h+='<div class="holders"><div class="hrow" style="color:var(--dim)"><span>Top holders</span><span>shares</span></div>'+
+        d.holders.map(x=>{const ch=x.change; const cc=ch>0?'var(--green)':ch<0?'var(--red)':'var(--dim)';
+          return '<div class="hrow"><span>'+esc(x.name)+'</span><span>'+(x.shares?Number(x.shares).toLocaleString():'—')+' <span style="color:'+cc+'">'+(ch?((ch>0?'+':'')+Number(ch).toLocaleString()):'')+'</span></span></div>';
+        }).join('')+'</div>';
+    }
+    if(!h) h='<div class="muted">Ownership data is not available for '+esc(TK)+' on the current data tier.</div>';
+    $('ownership').innerHTML=h;
+    if(inst!=null){ const ctx=$('pie').getContext('2d'); let a=-Math.PI/2;
+      [['#1a7080',inst],['#c4bdb0',Math.max(0,100-inst)]].forEach(([col,v])=>{const ang=v/100*Math.PI*2;
+        ctx.beginPath(); ctx.moveTo(80,80); ctx.arc(80,80,70,a,a+ang); ctx.closePath(); ctx.fillStyle=col; ctx.fill(); a+=ang;});
+    }
+  }catch(e){ $('ownership').innerHTML='<div class="muted">Ownership unavailable.</div>'; }
+}
+function newsRows(arr){
+  return arr.map(a=>{const link=a.link?'<a class="nt" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title||a.headline||'')+'</a>':'<span class="nt">'+esc(a.title||a.headline||'')+'</span>';
+    return '<div class="nrow">'+link+'<div class="nm">'+esc(a.source||'')+'</div></div>';}).join('');
+}
+async function loadNews(){
+  try{
+    const d=await (await fetch('/api/find?q='+TK)).json();
+    const n=d.news||[];
+    $('news').innerHTML = n.length ? newsRows(n.slice(0,15)) : '<div class="muted">No recent news.</div>';
+  }catch(e){ $('news').innerHTML='<div class="muted">News unavailable.</div>'; }
+}
+async function loadDayNews(date){
+  $('daynews-h').textContent='News on '+date;
+  $('daynews').innerHTML='<div class="muted">pulling '+date+'…</div>';
+  try{
+    const d=await (await fetch('/api/daynews?date='+date+'&tickers='+TK)).json();
+    const n=d.news||[];
+    $('daynews').innerHTML = n.length ? newsRows(n.slice(0,12)) : '<div class="muted">No headlines indexed for '+date+' (free tier = recent dates only).</div>';
+  }catch(e){ $('daynews').innerHTML='<div class="muted">unavailable</div>'; }
+}
+setRange('1M'); loadOwnership(); loadNews();
+window.addEventListener('resize',()=>drawChart(CHART));
+</script>
+</body>
+</html>

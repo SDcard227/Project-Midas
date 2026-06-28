@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>MIDAS — Whispers</title>
+  <script src="midas-theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root{
@@ -84,32 +85,120 @@
     .row .r-src{font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-left:auto}
     .muted{padding:20px 22px;color:var(--dim);font-size:.85rem}
     .grid2{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+    /* ── Newspaper "wire" ── */
+    .masthead{text-align:center;border-top:3px double var(--text);border-bottom:1px solid var(--text);padding:16px 0 13px;margin-top:32px;}
+    .mh-name{font-family:Georgia,'Times New Roman',serif;font-size:clamp(2.6rem,6vw,3.6rem);font-weight:700;letter-spacing:.03em;color:var(--text);line-height:1;}
+    .mh-tag{font-family:var(--mono);font-size:.58rem;letter-spacing:.26em;text-transform:uppercase;color:var(--dim);margin-top:8px;}
+    .mh-date{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--dim);margin-top:5px;}
+    .wire-key{display:flex;flex-wrap:wrap;gap:9px 24px;justify-content:center;font-family:var(--mono);font-size:.63rem;letter-spacing:.02em;color:var(--dim);background:var(--surface);border:1px solid var(--border);padding:11px 18px;margin-top:16px;}
+    .wire-key b{font-weight:400;color:var(--mid);}
+    .wire-sort{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:16px;}
+    .ws-label{font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);}
+    .ws-btn{font-family:var(--mono);font-size:.62rem;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border2);color:var(--mid);padding:5px 12px;cursor:pointer;border-radius:2px;}
+    .ws-btn:hover{border-color:var(--text);}
+    .ws-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
+    #wire{margin-top:18px;}
+    .wire-cols{column-count:3;column-gap:34px;column-rule:1px solid var(--border);margin-top:20px;}
+    @media(max-width:880px){.wire-cols{column-count:2;}}
+    @media(max-width:560px){.wire-cols{column-count:1;column-rule:none;}}
+    .story{break-inside:avoid;padding:0 0 20px;margin-bottom:20px;border-bottom:1px solid var(--border);}
+    .story.lead{padding-bottom:22px;margin-bottom:10px;border-bottom:2px solid var(--text);}
+    .story-kicker{font-family:var(--mono);font-size:.55rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim);margin-bottom:6px;}
+    .story-head{font-family:Georgia,serif;font-size:1.15rem;font-weight:700;line-height:1.2;margin-bottom:6px;letter-spacing:.01em;}
+    .story.lead .story-head{font-size:1.85rem;}
+    .story-dir{font-family:var(--title);font-size:.58em;font-weight:500;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);}
+    .story-byline{font-family:var(--mono);font-size:.58rem;letter-spacing:.05em;color:var(--dim);margin-bottom:8px;}
+    .story-body{font-size:.83rem;color:var(--mid);line-height:1.6;margin-bottom:10px;}
+    .story.lead .story-body{font-size:.95rem;max-width:640px;}
+    .story-trade{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;color:var(--green);text-decoration:none;text-transform:uppercase;}
+    .story-trade:hover{text-decoration:underline;}
+    .wire-empty{font-family:var(--mono);font-size:.8rem;color:var(--dim);text-align:center;padding:40px 20px;border:1px dashed var(--border);margin-top:18px;}
+    .gate-card{font-family:var(--mono);font-size:.74rem;color:var(--mid);background:var(--surface);border:1px dashed var(--border2);padding:18px;margin-top:20px;text-align:center;line-height:1.7}
+    .gate-card a{color:var(--green);text-decoration:none;font-weight:600}
+    .find-sec{font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);padding:14px 14px 6px;border-top:1px solid var(--border);margin-top:2px;}
+    .news-desc{font-size:.8rem;color:var(--dim);line-height:1.5;margin-top:3px;}
+    .rel-row{display:flex;flex-wrap:wrap;gap:8px;padding:6px 14px 14px;}
+    .rel-chip{font-family:var(--mono);font-size:.72rem;text-decoration:none;color:var(--mid);border:1px solid var(--border2);padding:5px 11px;border-radius:2px;}
+    .rel-chip:hover{background:var(--surface);}
+    /* ── Comments under wire stories ── */
+    .cmt-toggle{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;background:none;border:none;color:var(--teal);cursor:pointer;padding:0;margin-left:14px}
+    .cmt-toggle:hover{text-decoration:underline}
+    .cmt-panel{margin-top:12px;border-top:1px solid var(--border);padding-top:10px}
+    .cmt-lean{font-family:var(--mono);font-size:.62rem;color:var(--mid);margin-bottom:8px;line-height:1.5}
+    .cmt-list{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+    .cmt{border-left:2px solid var(--border2);padding:1px 0 1px 10px}
+    .cmt-h{display:flex;gap:8px;align-items:center}
+    .cmt-vote{font-family:var(--mono);font-size:.6rem;background:var(--surface);border:1px solid var(--border2);color:var(--mid);cursor:pointer;padding:2px 8px;border-radius:2px;margin-left:auto}
+    .cmt-vote:hover{border-color:var(--green);color:var(--green)}
+    .cmt-author{font-family:var(--mono);font-size:.66rem;color:var(--text);font-weight:600}
+    .cmt-text{font-size:.83rem;color:var(--mid);line-height:1.45}
+    .cmt-form{display:flex;flex-direction:column;gap:6px}
+    .cmt-form textarea{font-family:var(--title);font-size:.85rem;border:1px solid var(--border2);background:var(--bg);padding:8px 10px;outline:none;resize:vertical;min-height:52px;color:var(--text)}
+    .cmt-form button{align-self:flex-start;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:var(--text);color:var(--bg);border:none;padding:7px 16px;cursor:pointer;border-radius:2px}
+    .cmt-form button:disabled{opacity:.5}
+    .cmt-login{font-family:var(--mono);font-size:.72rem;color:var(--dim)}
+    .cmt-login a{color:var(--teal)}
+    /* ── Story detail overlay (sources | discussion, side by side) ── */
+    .overlay{position:fixed;inset:0;background:rgba(30,26,20,.55);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:40px 20px;overflow-y:auto}
+    .detail{background:var(--bg);border:1px solid var(--border2);box-shadow:0 24px 70px rgba(0,0,0,.35);max-width:1000px;width:100%;position:relative;border-radius:4px}
+    .detail-x{position:absolute;top:6px;right:14px;background:none;border:none;font-size:1.7rem;line-height:1;cursor:pointer;color:var(--mid);z-index:3}
+    .detail-x:hover{color:var(--text)}
+    .detail-cols{display:grid;grid-template-columns:1.15fr 1fr}
+    .detail-main{padding:28px 26px 32px;border-right:1px solid var(--border);min-width:0}
+    .detail-side{padding:28px 24px 32px;background:var(--surface);min-width:0}
+    @media(max-width:780px){.detail-cols{grid-template-columns:1fr}.detail-main{border-right:none;border-bottom:1px solid var(--border)}}
+    .detail-h2{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin:0 0 10px}
+    .rel-summary{font-size:.86rem;color:var(--mid);line-height:1.55;margin-bottom:6px}
+    .rel-src{padding:11px 0;border-top:1px solid var(--border)}
+    .detail-tk{font-family:var(--mono);font-size:1.5rem;letter-spacing:.08em;margin-bottom:6px}
     @media(max-width:760px){nav{padding:0 18px}.nav-links{display:none}.grid2{grid-template-columns:1fr}}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
   </style>
 </head>
 <body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
   <nav>
     <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="stocks.html">Stocks</a></li>
-      <li><a href="penny.html">Penny</a></li>
-      <li><a href="intelligence.html">Intelligence</a></li>
-      <li><a href="whispers.html" class="active">Whispers</a></li>
-      <li><a href="practice.html">Practice</a></li>
-      <li><a href="dashboard.html">Dashboard</a></li>
-      <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html" class="active">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
     </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
   </nav>
 
   <div class="wrap">
-    <span class="eye">Early-signal radar</span>
-    <h1>WHIS<span>PERS</span></h1>
-    <p class="sub">Search a ticker to see how much Midas trusts the news around it,
+    <div class="masthead">
+      <div class="mh-name">THE MIDAS WIRE</div>
+      <div class="mh-tag">Live market whispers &middot; before the outlets</div>
+      <div class="mh-date" id="wire-date"></div>
+    </div>
+    <p class="sub" style="text-align:center;max-width:580px;margin:18px auto 0">Search a ticker, company, or topic to pull the news and whispers around it,
       then click through to every source and rate how reliable each one is.</p>
 
     <div class="search">
-      <input id="q" placeholder="ticker e.g. NVDA" maxlength="6"
+      <input id="q" placeholder="ticker, company, or topic (NVDA, Apple, oil)" maxlength="40"
              onkeydown="if(event.key==='Enter')searchTicker()" />
       <button onclick="searchTicker()">Search</button>
     </div>
@@ -117,16 +206,21 @@
 
     <div id="result"></div>
 
-    <div class="grid2">
-      <div class="card" id="whisperCard">
-        <div class="card-h"><span class="dot" style="background:var(--amber)"></span> Edge zone &middot; rising</div>
-        <div id="whisperList" class="muted">loading…</div>
-      </div>
-      <div class="card" id="haulerCard">
-        <div class="card-h"><span class="dot"></span> Haulers &middot; peer-reviewed</div>
-        <div id="haulerList" class="muted">loading…</div>
-      </div>
+    <div class="wire-key">
+      <span><b style="color:var(--green)">&#9650; Bullish</b> = price likely up</span>
+      <span><b style="color:var(--red)">&#9660; Bearish</b> = price likely down</span>
+      <span><b>Conf</b> = 0-100 trust (more sources, higher)</span>
+      <span><b>Ladder:</b> leak &rarr; whisper &rarr; swell &rarr; hauler</span>
     </div>
+    <div class="wire-sort">
+      <span class="ws-label">Sort by:</span>
+      <button class="ws-btn" id="ws-foryou" onclick="setSort('foryou',this)">For you</button>
+      <button class="ws-btn active" onclick="setSort('recent',this)">Most recent</button>
+      <button class="ws-btn" onclick="setSort('confidence',this)">Confidence</button>
+      <button class="ws-btn" onclick="setSort('sources',this)">Most sources</button>
+      <span id="foryou-note" style="font-family:var(--mono);font-size:.58rem;color:var(--dim);"></span>
+    </div>
+    <div id="wire"><div class="wire-empty">loading the wire…</div></div>
   </div>
 
 <script>
@@ -136,47 +230,82 @@ const confColor = c => c>=70?"var(--green)":c>=40?"var(--amber)":"var(--dim)";
 const dirArrow = d => d==='bullish'?'&#9650; ':d==='bearish'?'&#9660; ':'';
 
 async function searchTicker(){
-  const tk = (document.getElementById('q').value||"").trim().toUpperCase();
+  const q = (document.getElementById('q').value||"").trim();
   const box = document.getElementById('result');
-  if(!tk){ box.innerHTML=""; return; }
-  box.innerHTML = '<div class="card"><div class="muted">searching '+esc(tk)+'…</div></div>';
+  if(!q){ box.innerHTML=""; return; }
+  box.innerHTML = '<div class="card"><div class="muted">searching '+esc(q)+'…</div></div>';
+  const backbar = '<div style="padding:7px 14px;border-bottom:1px solid var(--border)"><a href="javascript:void(0)" onclick="document.getElementById(\'result\').innerHTML=\'\';document.getElementById(\'q\').value=\'\';window.scrollTo({top:0,behavior:\'smooth\'})" style="font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;color:var(--teal);text-decoration:none">&larr; Back to the wire</a></div>';
   try{
-    const d = await (await fetch('/api/ticker/'+encodeURIComponent(tk))).json();
-    if(!d.events || !d.events.length){
-      box.innerHTML = '<div class="card"><div class="muted">No signals for '+esc(tk)+
-        ' yet. The scanner needs to run (with an API key) and hear something first.</div></div>';
-      return;
+    const d = await (await fetch('/api/find?q='+encodeURIComponent(q))).json();
+    let html = '<div class="card">' + backbar;
+    const w = d.whispers;
+    const hasW = w && w.events && w.events.length;
+
+    // ── WHISPER signal for the resolved ticker ──
+    if(hasW){
+      html += '<div class="conf-head">'+
+        '<div class="conf-num" style="color:'+confColor(w.confidence)+'">'+Math.round(w.confidence)+'</div>'+
+        '<div class="conf-meta"><div class="tk">'+esc(w.ticker)+'</div>'+
+        '<div><span class="chip '+stageClass(w.stage)+'">'+esc(w.stage)+'</span> '+
+        '<span class="chip '+esc(w.direction)+'">'+dirArrow(w.direction)+esc(w.direction)+'</span></div></div>'+
+        '<a href="trade.html?ticker='+encodeURIComponent(w.ticker)+'" style="margin-left:auto;font-family:var(--mono);font-size:.76rem;letter-spacing:.08em;background:var(--green);color:#fff;padding:10px 18px;text-decoration:none;text-transform:uppercase;border-radius:2px;white-space:nowrap;">Trade '+esc(w.ticker)+' &rarr;</a>'+
+        '</div>';
+      for(const ev of w.events){
+        html += '<div class="event"><div class="event-h">'+
+          '<span class="chip '+stageClass(ev.stage)+'">'+esc(ev.stage)+'</span>'+
+          '<span class="ev-type">'+esc(ev.event_type)+'</span>'+
+          '<span style="font-family:var(--mono);font-size:.7rem;color:var(--dim)">conf '+Math.round(ev.confidence)+' &middot; '+ev.source_count+' sources</span></div>';
+        for(const a of ev.articles){
+          const link = a.link ? '<a class="art-title" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title||a.link)+'</a>'
+                              : '<span class="art-title">'+esc(a.title||'(no title)')+'</span>';
+          const trust = Math.round((a.source_trust||0.5)*100);
+          html += '<div class="article"><div class="art-body">'+link+
+            '<div class="art-meta"><span class="src">'+esc(a.source)+'</span>'+
+            '<span class="chip '+esc(a.sentiment)+'" style="border:none;padding:0">'+esc(a.sentiment)+'</span>'+
+            '<span class="trust">trust '+trust+'%</span>'+
+            '<span class="rate" data-src="'+esc(a.source)+'">'+
+              '<button class="up" onclick="rate(this,1)" title="reliable source">&#9650;</button>'+
+              '<button class="down" onclick="rate(this,0)" title="unreliable source">&#9660;</button></span>'+
+            '</div></div></div>';
+        }
+        html += '</div>';
+      }
+    } else if(d.ticker){
+      html += '<div class="conf-head"><div class="conf-meta"><div class="tk">'+esc(d.ticker)+'</div>'+
+        '<div style="font-family:var(--mono);font-size:.72rem;color:var(--dim)">No whisper signal yet, here is the news.</div></div>'+
+        '<a href="trade.html?ticker='+encodeURIComponent(d.ticker)+'" style="margin-left:auto;font-family:var(--mono);font-size:.76rem;letter-spacing:.08em;background:var(--green);color:#fff;padding:10px 18px;text-decoration:none;text-transform:uppercase;border-radius:2px;white-space:nowrap;">Trade '+esc(d.ticker)+' &rarr;</a></div>';
     }
-    let html = '<div class="card"><div class="conf-head">'+
-      '<div class="conf-num" style="color:'+confColor(d.confidence)+'">'+d.confidence+'</div>'+
-      '<div class="conf-meta"><div class="tk">'+esc(d.ticker)+'</div>'+
-      '<div><span class="chip '+stageClass(d.stage)+'">'+esc(d.stage)+'</span> '+
-      '<span class="chip '+esc(d.direction)+'">'+dirArrow(d.direction)+esc(d.direction)+'</span></div></div></div>';
-    for(const ev of d.events){
-      html += '<div class="event"><div class="event-h">'+
-        '<span class="chip '+stageClass(ev.stage)+'">'+esc(ev.stage)+'</span>'+
-        '<span class="ev-type">'+esc(ev.event_type)+'</span>'+
-        '<span style="font-family:var(--mono);font-size:.7rem;color:var(--dim)">conf '+ev.confidence+
-        ' &middot; '+ev.source_count+' sources</span></div>';
-      for(const a of ev.articles){
-        const link = a.link ? '<a class="art-title" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title||a.link)+'</a>'
-                            : '<span class="art-title">'+esc(a.title||'(no title)')+'</span>';
-        const trust = Math.round((a.source_trust||0.5)*100);
+
+    // ── LATEST NEWS that mentions the query ──
+    if(d.news && d.news.length){
+      html += '<div class="find-sec">Latest news &middot; '+d.news.length+'</div>';
+      for(const a of d.news){
+        const link = a.link ? '<a class="art-title" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title)+'</a>'
+                            : '<span class="art-title">'+esc(a.title)+'</span>';
         html += '<div class="article"><div class="art-body">'+link+
+          (a.desc?'<div class="news-desc">'+esc(a.desc)+'</div>':'')+
           '<div class="art-meta"><span class="src">'+esc(a.source)+'</span>'+
-          '<span class="chip '+esc(a.sentiment)+'" style="border:none;padding:0">'+esc(a.sentiment)+'</span>'+
-          '<span class="trust">trust '+trust+'%</span>'+
-          '<span class="rate" data-src="'+esc(a.source)+'">'+
-            '<button class="up" onclick="rate(this,1)" title="reliable source">&#9650;</button>'+
-            '<button class="down" onclick="rate(this,0)" title="unreliable source">&#9660;</button></span>'+
-          '</div></div></div>';
+          (a.region?'<span class="trust">'+esc(a.region)+'</span>':'')+'</div></div></div>';
+      }
+    }
+
+    // ── OTHER tickers also in the news for this query ──
+    if(d.related && d.related.length){
+      html += '<div class="find-sec">Also moving</div><div class="rel-row">';
+      for(const r of d.related){
+        const col = r.direction==='bullish'?'var(--green)':r.direction==='bearish'?'var(--red)':'var(--dim)';
+        html += '<a class="rel-chip" href="javascript:void(0)" onclick="document.getElementById(\'q\').value=\''+esc(r.ticker)+'\';searchTicker()" style="border-color:'+col+'"><b style="color:'+col+'">'+esc(r.ticker)+'</b> '+Math.round(r.confidence)+'</a>';
       }
       html += '</div>';
     }
+
+    if(!hasW && !(d.news&&d.news.length) && !d.ticker){
+      html += '<div class="muted">Nothing found for "'+esc(q)+'" yet. Try a ticker (NVDA), a company (Apple), or a topic (oil, AI chips).</div>';
+    }
+
     box.innerHTML = html + '</div>';
   }catch(e){
-    box.innerHTML = '<div class="card"><div class="muted">Error loading '+esc(tk)+': '+esc(e.message)+
-      '. Is the server running?</div></div>';
+    box.innerHTML = '<div class="card">'+backbar+'<div class="muted">Error searching "'+esc(q)+'": '+esc(e.message)+'. Is the server running?</div></div>';
   }
 }
 
@@ -193,28 +322,274 @@ async function rate(btn, helpful){
   }
 }
 
+function wireStory(x, lead){
+  const arr = x.direction==='bullish'?'&#9650;':x.direction==='bearish'?'&#9660;':'&middot;';
+  const col = x.direction==='bullish'?'var(--green)':x.direction==='bearish'?'var(--red)':'var(--dim)';
+  const conf = Math.round(x.reviewed_confidence!=null?x.reviewed_confidence:x.confidence);
+  const arts = x.mentions_log||x.articles||[];
+  const latest = arts.length?arts[arts.length-1]:null;
+  const snippet = (latest&&latest.title) ? esc(latest.title)
+    : (x.source_count+' independent source'+(x.source_count==1?'':'s')+' corroborating a '+esc(x.direction)+' move.');
+  const dek = (x.review&&x.review.status) ? ' &middot; '+esc(x.review.status) : '';
+  const eid = esc(x.id||'');
+  return '<article class="story'+(lead?' lead':'')+'">'+
+    '<div class="story-kicker">'+esc(x.event_type||'signal')+' &middot; '+esc(x.stage)+'</div>'+
+    '<h3 class="story-head" style="color:'+col+';cursor:pointer" onclick="openDetail(\''+eid+'\',\''+esc(x.ticker)+'\')">'+arr+' '+esc(x.ticker)+
+      ' <span class="story-dir">'+esc(x.direction)+'</span></h3>'+
+    '<div class="story-byline">Conf '+conf+' &middot; '+x.source_count+' source'+(x.source_count==1?'':'s')+dek+'</div>'+
+    '<p class="story-body" style="cursor:pointer" onclick="openDetail(\''+eid+'\',\''+esc(x.ticker)+'\')">'+snippet+'</p>'+
+    '<a class="story-trade" href="trade.html?ticker='+encodeURIComponent(x.ticker)+'">Trade '+esc(x.ticker)+' &rarr;</a>'+
+    '<button class="cmt-toggle" onclick="openDetail(\''+eid+'\',\''+esc(x.ticker)+'\')">Sources &amp; discussion</button>'+
+    '</article>';
+}
+
+let WIRE_ROWS=[]; let WIRE_SORT='recent'; let GATE={};
+// ── Personalization: tune the wire to the saved assessment profile ──
+const TICKER_SECTOR={
+  AAPL:'Tech & AI',MSFT:'Tech & AI',NVDA:'Tech & AI',GOOGL:'Tech & AI',GOOG:'Tech & AI',
+  AMZN:'Tech & AI',META:'Tech & AI',AMD:'Tech & AI',PLTR:'Tech & AI',CRM:'Tech & AI',AVGO:'Tech & AI',
+  TSLA:'Autos & EVs',RIVN:'Autos & EVs',F:'Autos & EVs',GM:'Autos & EVs',LCID:'Autos & EVs',
+  SOFI:'Finance & Banks',JPM:'Finance & Banks',BAC:'Finance & Banks',V:'Finance & Banks',MA:'Finance & Banks',GS:'Finance & Banks',
+  COIN:'Crypto-adjacent',MSTR:'Crypto-adjacent',MARA:'Crypto-adjacent',RIOT:'Crypto-adjacent',
+  NFLX:'Media & Entertainment',DIS:'Media & Entertainment',WBD:'Media & Entertainment',
+  XOM:'Energy',CVX:'Energy',OXY:'Energy',COP:'Energy',
+  PFE:'Healthcare',JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',MRNA:'Biotech',BNTX:'Biotech',
+  GME:'Consumer & Retail',WMT:'Consumer & Retail',COST:'Consumer & Retail',NKE:'Consumer & Retail',
+  CAT:'Industrials',BA:'Industrials',GE:'Industrials'
+};
+function myProfile(){ try{ return JSON.parse(localStorage.getItem('midas_profile')||'null'); }catch(e){ return null; } }
+function mySectors(){ const p=myProfile(); return (p&&Array.isArray(p.sectors))?p.sectors:[]; }
+function isMine(t){ const s=TICKER_SECTOR[(t||'').toUpperCase()]; return !!(s && mySectors().indexOf(s)>-1); }
+function sortRows(rows){
+  const r=rows.slice();
+  if(WIRE_SORT==='foryou'){
+    r.sort((a,b)=>{ const ma=isMine(a.ticker)?1:0, mb=isMine(b.ticker)?1:0;
+      if(ma!==mb) return mb-ma;                          // my interests float to the top
+      return (b.confidence||0)-(a.confidence||0); });
+  }
+  else if(WIRE_SORT==='confidence') r.sort((a,b)=>(b.confidence||0)-(a.confidence||0));
+  else if(WIRE_SORT==='sources') r.sort((a,b)=>(b.source_count||0)-(a.source_count||0));
+  else r.sort((a,b)=>String(b.last_seen||'').localeCompare(String(a.last_seen||''))); // most recent first
+  return r;
+}
+function renderWire(){
+  const wire=document.getElementById('wire'); if(!wire||!WIRE_ROWS.length) return;
+  const rows=sortRows(WIRE_ROWS);
+  let html = wireStory(rows[0],true) + '<div class="wire-cols">'+rows.slice(1).map(x=>wireStory(x,false)).join('')+'</div>';
+  if(GATE.gated && GATE.locked>0){
+    html += '<div class="gate-card"><b>'+GATE.locked+' more whisper'+(GATE.locked==1?'':'s')+' behind Pro.</b><br>'+
+      'You are on the Free plan, showing the top '+WIRE_ROWS.length+'. <a href="account.html">Upgrade to unlock the full wire &rarr;</a></div>';
+  }
+  wire.innerHTML = html;
+}
+function setSort(key,btn){
+  if(key==='foryou' && !mySectors().length){
+    if(window.midasToast) midasToast('Take the 60-second assessment to tune your feed.');
+    setTimeout(()=>{ location.href='survey.html'; }, 1200);
+    return;
+  }
+  WIRE_SORT=key;
+  document.querySelectorAll('.wire-sort .ws-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  const note=document.getElementById('foryou-note');
+  if(note) note.textContent = (key==='foryou') ? ('tuned to '+mySectors().join(', ')) : '';
+  renderWire();
+}
 async function loadBoard(){
-  const wl = document.getElementById('whisperList'), hl = document.getElementById('haulerList');
+  const dt=document.getElementById('wire-date');
+  if(dt) dt.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const wire=document.getElementById('wire'); if(!wire) return;
   try{
-    const d = await (await fetch('/api/whispers')).json();
-    const rowHtml = (x, reviewed) => '<div class="row" onclick="document.getElementById(\'q\').value=\''+esc(x.ticker)+
-      '\';searchTicker();window.scrollTo({top:0,behavior:\'smooth\'})">'+
-      '<span class="r-tk '+esc(x.direction)+'">'+esc(x.ticker)+'</span>'+
-      '<span class="r-conf" style="color:'+confColor(reviewed?(x.reviewed_confidence??x.confidence):x.confidence)+'">'+
-        (reviewed?(x.reviewed_confidence??x.confidence):x.confidence)+'</span>'+
-      '<span class="chip '+stageClass(x.stage)+'">'+esc(x.stage)+'</span>'+
-      (x.review?'<span class="chip" style="border-color:var(--border2);color:var(--dim)">'+esc(x.review.status)+'</span>':'')+
-      '<span class="r-src">'+x.source_count+' src</span></div>';
-    wl.className=""; hl.className="";
-    wl.innerHTML = (d.whispers&&d.whispers.length) ? d.whispers.map(x=>rowHtml(x,false)).join('')
-      : '<div class="muted">No whispers yet. The scanner builds these as news comes in (needs the worker + API key running).</div>';
-    hl.innerHTML = (d.haulers&&d.haulers.length) ? d.haulers.map(x=>rowHtml(x,true)).join('')
-      : '<div class="muted">No haulers yet. A signal becomes a hauler once 5+ independent sources corroborate it.</div>';
+    const d=await (await fetch('/api/whispers')).json();
+    GATE={gated:d.gated, locked:d.locked||0, tier:d.tier};
+    const seen={}; WIRE_ROWS=[];
+    for(const r of (d.haulers||[]).concat(d.whispers||[])){ if(r&&!seen[r.id]){seen[r.id]=1;WIRE_ROWS.push(r);} }
+    if(!WIRE_ROWS.length){
+      wire.innerHTML='<div class="wire-empty">'+(d.ai_enabled
+        ?'The wire is quiet right now. Stories appear as the scanner hears market news.'
+        :'AI is off, set ANTHROPIC_API_KEY to light up the wire.')+'</div>';
+      return;
+    }
+    renderWire();
   }catch(e){
-    wl.innerHTML = hl.innerHTML = '<div class="muted">Server not reachable. Start it with: python sim_server.py</div>';
+    wire.innerHTML='<div class="wire-empty">Server not reachable. Start it: python sim_server.py</div>';
   }
 }
+// ── Comments (crowd discussion + ~1% confidence nudge) ──
+let ME=null;
+(async()=>{ try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){} })();
+function sentTag(s){
+  const c=s==='bullish'?'var(--green)':s==='bearish'?'var(--red)':'var(--dim)';
+  const a=s==='bullish'?'&#9650;':s==='bearish'?'&#9660;':'&middot;';
+  return '<span style="color:'+c+';font-family:var(--mono);font-size:.6rem;text-transform:uppercase">'+a+' '+esc(s)+'</span>';
+}
+async function openDetail(eventId, ticker){
+  const ov=document.getElementById('detail-overlay');
+  ov.style.display='flex'; document.body.style.overflow='hidden';
+  const main=document.getElementById('detail-main'), side=document.getElementById('detail-side');
+  main.innerHTML='<div class="muted">loading sources…</div>';
+  side.innerHTML='<div class="detail-h2">Discussion</div><div id="detail-cmt"><div class="muted">loading…</div></div>';
+  try{
+    const d=await (await fetch('/api/ticker/'+encodeURIComponent(ticker))).json();
+    renderSources(d, ticker);
+  }catch(e){ main.innerHTML='<div class="muted">Could not load sources.</div>'; }
+  loadComments(eventId, ticker, document.getElementById('detail-cmt'));
+}
+function closeDetail(){
+  document.getElementById('detail-overlay').style.display='none';
+  document.body.style.overflow='';
+}
+function renderSources(d, ticker){
+  const main=document.getElementById('detail-main');
+  const conf=Math.round(d.confidence||0);
+  let total=0; (d.events||[]).forEach(ev=> total+=((ev.articles||[]).length));
+  const tcol=d.direction==='bullish'?'var(--green)':d.direction==='bearish'?'var(--red)':'var(--text)';
+  let h='<div class="detail-tk" style="color:'+tcol+'">'+dirArrow(d.direction)+esc(ticker)+' <a href="company.html?ticker='+encodeURIComponent(ticker)+'" style="font-family:var(--mono);font-size:.58rem;color:var(--teal);text-decoration:none;letter-spacing:.06em;vertical-align:middle">company &rarr;</a></div>';
+  h+='<div style="margin-bottom:18px"><span class="conf-num" style="font-size:2.2rem;color:'+confColor(conf)+'">'+conf+'</span> '+
+    '<span class="chip '+stageClass(d.stage)+'">'+esc(d.stage)+'</span> <span class="chip '+esc(d.direction)+'">'+esc(d.direction)+'</span></div>';
+  h+='<div class="detail-h2">What makes this reliable</div>';
+  h+='<div class="rel-summary">'+total+' source mention'+(total==1?'':'s')+' across '+((d.events||[]).length)+' event'+(((d.events||[]).length)==1?'':'s')+
+     '. Confidence rises only as <b>independent</b> sources corroborate, and decays if they go quiet. Rate each source to tune how much the system trusts it.</div>';
+  h+='<div class="detail-h2" style="margin-top:20px">Sources &middot; where the info is pulled</div>';
+  for(const ev of (d.events||[])){
+    for(const a of (ev.articles||[])){
+      const trust=Math.round((a.source_trust||0.5)*100);
+      const link=a.link?'<a class="art-title" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title||a.link)+'</a>':'<span class="art-title">'+esc(a.title||'(no title)')+'</span>';
+      h+='<div class="rel-src">'+link+
+        '<div class="art-meta"><span class="src">'+esc(a.source)+'</span>'+
+        '<span class="trust">trust '+trust+'%</span>'+
+        '<span class="rate" data-src="'+esc(a.source)+'"><button class="up" onclick="rate(this,1)" title="reliable">&#9650;</button><button class="down" onclick="rate(this,0)" title="unreliable">&#9660;</button></span>'+
+        '</div></div>';
+    }
+  }
+  if(!total) h+='<div class="muted">No source articles recorded for this one yet.</div>';
+  main.innerHTML=h;
+}
+async function openProfile(uid){
+  if(!uid) return;
+  const ov=document.getElementById('profile-overlay'); ov.style.display='flex'; document.body.style.overflow='hidden';
+  const body=document.getElementById('profile-body');
+  body.innerHTML='<div class="muted">scoring their calls…</div>';
+  try{
+    const d=await (await fetch('/api/profile/'+uid)).json();
+    if(d.error){ body.innerHTML='<div class="muted">'+esc(d.error)+'</div>'; return; }
+    const r=d.reputation||{}; const hue=r.hue||'#9a9088';
+    const acc=(r.accuracy!=null)?Math.round(r.accuracy*100)+'%':'—';
+    let h='<div style="font-family:var(--mono);font-size:1.5rem;color:'+hue+';letter-spacing:.06em">'+esc(d.name)+(d.verified?' <span style="font-size:.72rem;color:var(--green)" title="ID-verified">&#10003;</span>':'')+'</div>';
+    h+='<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);text-transform:uppercase;letter-spacing:.12em;margin:2px 0 18px">'+(d.real_name?esc(d.real_name)+' &middot; ':'')+(d.nickname?'goes by &ldquo;'+esc(d.nickname)+'&rdquo; &middot; ':'')+esc(d.tier)+' member'+(d.verified?' &middot; verified':'')+'</div>';
+    h+='<div style="display:flex;gap:26px;margin-bottom:20px">'+
+       '<div><div style="font-size:2rem;font-weight:700;color:'+hue+'">'+Math.round(r.score||50)+'</div><div class="detail-h2">Reputation</div></div>'+
+       '<div><div style="font-size:2rem;font-weight:700">'+acc+'</div><div class="detail-h2">Call accuracy</div></div>'+
+       '<div><div style="font-size:2rem;font-weight:700">'+(r.correct||0)+'/'+(r.total||0)+'</div><div class="detail-h2">Right / scored</div></div></div>';
+    const t=d.takes||{}; const takes=t.takes||[];
+    h+='<div class="detail-h2">Top takes'+(t.total?' &middot; '+t.total+' posted &middot; &#9650;'+(t.total_upvotes||0)+' earned':'')+'</div>';
+    if(takes.length){
+      h+=takes.map(c=>{
+        const sc=c.sentiment==='bullish'?'var(--green)':c.sentiment==='bearish'?'var(--red)':'var(--dim)';
+        const tk=c.ticker?'<span style="font-weight:600;color:var(--text)">$'+esc(c.ticker)+'</span> ':'';
+        return '<div style="padding:9px 0;border-top:1px solid var(--border)">'+
+          '<div style="font-size:.86rem;color:var(--text);line-height:1.45">'+tk+esc(c.text)+'</div>'+
+          '<div style="font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:4px">'+
+          '<span style="color:'+sc+'">'+esc(c.sentiment)+'</span> &middot; &#9650;'+c.upvotes+' &#9660;'+c.downvotes+(c.is_reply?' &middot; reply':'')+'</div></div>';
+      }).join('');
+    } else { h+='<div class="muted">No takes yet.</div>'; }
+    const p=d.portfolio||{};
+    if(p.holdings && p.holdings.length){
+      const pc=p.total_pnl>=0?'var(--green)':'var(--red)';
+      h+='<div class="detail-h2">Portfolio &middot; <span style="color:'+pc+'">'+(p.total_pnl>=0?'+':'')+'$'+p.total_pnl+' ('+(p.total_pnl_pct>=0?'+':'')+p.total_pnl_pct+'%)</span></div>';
+      h+=p.holdings.map(x=>{const c=x.pnl>=0?'var(--green)':'var(--red)';
+        return '<div style="display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-family:var(--mono);font-size:.72rem"><span style="min-width:56px;font-weight:600">'+esc(x.ticker)+'</span><span style="color:var(--dim)">'+x.shares+' sh @ $'+x.entry+'</span><span style="margin-left:auto;color:'+c+'">$'+x.value+' ('+(x.pnl_pct>=0?'+':'')+x.pnl_pct+'%)</span></div>';}).join('');
+    }
+    h+='<div class="detail-h2">Their calls (scored vs real price moves)</div>';
+    const calls=r.calls||[];
+    if(calls.length){
+      h+=calls.slice(0,25).map(c=>{
+        const col=c.correct===true?'var(--green)':c.correct===false?'var(--red)':'var(--dim)';
+        const mark=c.correct===true?'&#10003;':c.correct===false?'&#10007;':'&middot;';
+        const mv=(c.move_pct!=null)?((c.move_pct>0?'+':'')+c.move_pct+'%'):'pending';
+        return '<div style="display:flex;gap:10px;padding:7px 0;border-top:1px solid var(--border);font-family:var(--mono);font-size:.72rem">'+
+          '<span style="color:'+col+';width:14px">'+mark+'</span><span style="min-width:56px;font-weight:600">'+esc(c.ticker)+'</span>'+
+          '<span style="color:'+(c.direction==='bullish'?'var(--green)':'var(--red)')+'">'+esc(c.direction)+'</span>'+
+          '<span style="margin-left:auto;color:var(--mid)">'+mv+'</span></div>';
+      }).join('');
+    } else { h+='<div class="muted">No scored calls yet. Calls get graded as the market moves.</div>'; }
+    body.innerHTML=h;
+  }catch(e){ body.innerHTML='<div class="muted">Could not load profile.</div>'; }
+}
+function closeProfile(){ document.getElementById('profile-overlay').style.display='none'; document.body.style.overflow=''; }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape'){ closeDetail(); closeProfile(); } });
+function toggleComments(btn, eventId, ticker){
+  const key=eventId||ticker;
+  const panel=document.getElementById('cmt-'+key);
+  if(!panel) return;
+  if(panel.style.display==='none'){ panel.style.display='block'; loadComments(eventId, ticker, panel); }
+  else { panel.style.display='none'; }
+}
+async function loadComments(eventId, ticker, panel){
+  panel.innerHTML='<div style="font-family:var(--mono);font-size:.72rem;color:var(--dim);padding:8px 0">loading…</div>';
+  try{
+    const q = eventId?('event_id='+encodeURIComponent(eventId)):('ticker='+encodeURIComponent(ticker));
+    const d = await (await fetch('/api/comments?'+q)).json();
+    const nudge=d.nudge||0;
+    const ntxt=(nudge>0?'+':'')+nudge;
+    const ncol=nudge>0?'var(--green)':nudge<0?'var(--red)':'var(--dim)';
+    let h='<div class="cmt-lean">Crowd lean: <b style="color:'+ncol+'">'+ntxt+' pts</b> &middot; '+(d.count||0)+' comment'+(d.count==1?'':'s')+' <span style="color:var(--dim)">(micro-signal, capped &plusmn;1%)</span></div>';
+    if(d.comments && d.comments.length){
+      h+='<div class="cmt-list">'+d.comments.map(c=>
+        '<div class="cmt"><div class="cmt-h"><span class="cmt-author" style="color:'+((c.rep&&c.rep.hue)||'inherit')+';cursor:pointer" onclick="openProfile('+(c.user_id||0)+')">'+esc(c.author)+'</span> '+sentTag(c.sentiment)+
+        '<button class="cmt-vote" onclick="voteComment('+c.id+',\''+esc(eventId||'')+'\',\''+esc(ticker)+'\')">&#9650; '+(c.upvotes||0)+'</button></div>'+
+        '<div class="cmt-text">'+esc(c.text)+'</div></div>').join('')+'</div>';
+    } else {
+      h+='<div style="font-family:var(--mono);font-size:.72rem;color:var(--dim);padding:4px 0 10px">No comments yet. Start the conversation.</div>';
+    }
+    if(ME){
+      h+='<div class="cmt-form"><textarea id="ta-'+(eventId||ticker)+'" placeholder="Share your read…" maxlength="500"></textarea>'+
+        '<button onclick="postComment(\''+esc(eventId||'')+'\',\''+esc(ticker)+'\',this)">Post</button></div>';
+    } else {
+      h+='<div class="cmt-login"><a href="account.html">Log in</a> to join the conversation.</div>';
+    }
+    panel.innerHTML=h;
+  }catch(e){ panel.innerHTML='<div style="font-family:var(--mono);font-size:.72rem;color:var(--red)">Could not load comments.</div>'; }
+}
+async function postComment(eventId, ticker, btn){
+  const ta=document.getElementById('ta-'+(eventId||ticker));
+  const text=ta?ta.value.trim():'';
+  if(!text) return;
+  btn.disabled=true;
+  try{
+    const r=await (await fetch('/api/comments',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({event_id:eventId,ticker,text})})).json();
+    if(r.error){ midasToast(r.error, 'error'); btn.disabled=false; return; }
+    loadComments(eventId, ticker, document.getElementById('cmt-'+(eventId||ticker)));
+  }catch(e){ midasToast('Error: '+e.message, 'error'); btn.disabled=false; }
+}
+async function voteComment(id, eventId, ticker){
+  try{
+    const r=await (await fetch('/api/comments/vote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment_id:id})})).json();
+    if(r.error){ midasToast(r.error, 'error'); return; }
+    loadComments(eventId, ticker, document.getElementById('cmt-'+(eventId||ticker)));
+  }catch(e){}
+}
+const urlQ=new URLSearchParams(location.search).get('q');
+if(urlQ){ const qi=document.getElementById('q'); if(qi){ qi.value=urlQ; searchTicker(); } }
 loadBoard();
 </script>
+
+<div id="detail-overlay" class="overlay" style="display:none" onclick="if(event.target===this)closeDetail()">
+  <div class="detail">
+    <button class="detail-x" onclick="closeDetail()" aria-label="Close">&times;</button>
+    <div class="detail-cols">
+      <div class="detail-main" id="detail-main"></div>
+      <div class="detail-side" id="detail-side"></div>
+    </div>
+  </div>
+</div>
+
+<div id="profile-overlay" class="overlay" style="display:none" onclick="if(event.target===this)closeProfile()">
+  <div class="detail" style="max-width:560px">
+    <button class="detail-x" onclick="closeProfile()" aria-label="Close">&times;</button>
+    <div id="profile-body" style="padding:30px 28px"></div>
+  </div>
+</div>
 </body>
 </html>

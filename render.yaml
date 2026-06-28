@@ -1,0 +1,27 @@
+# Render deploy config for Project Midas.
+# Use as a Blueprint (New + > Blueprint), or copy the build/start commands into
+# an existing Render web service. The background threads (prewarm + rep re-scoring)
+# start at module level, so gunicorn runs them on import.
+services:
+  - type: web
+    name: project-midas
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn sim_server:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.4"
+      - key: SECRET_KEY          # Flask session secret — Render generates one
+        generateValue: true
+      - key: ALPACA_API_KEY      # set in dashboard (use a ROTATED key)
+        sync: false
+      - key: ALPACA_SECRET_KEY
+        sync: false
+      - key: FINNHUB_API_KEY     # set in dashboard (use a ROTATED key)
+        sync: false
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: FMP_API_KEY         # optional: ownership pie + Congress trades
+        sync: false

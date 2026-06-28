@@ -8,3 +8,10 @@ signal_ledger.json
 .env
 .env.local
 brain/_ledger_demo.json
+
+# user accounts db
+midas_users.db
+*.db
+
+# user-uploaded comics/art (don't commit user content)
+uploads/

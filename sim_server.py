@@ -9,7 +9,7 @@ import os, sys, io, contextlib
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
-    from flask import Flask, jsonify, request, send_from_directory
+    from flask import Flask, jsonify, request, send_from_directory, session
 except ImportError:
     print("\n  Flask not installed. Run:  pip install flask\n")
     sys.exit(1)
@@ -18,6 +18,25 @@ from brain.backtest import Backtest
 
 app  = Flask(__name__)
 BASE = os.path.dirname(os.path.abspath(__file__))
+# Session secret: env value in prod; else a random per-process key (NOT a known
+# string) so sessions can't be forged if SECRET_KEY is unset.
+import secrets as _secrets
+app.secret_key = os.getenv("SECRET_KEY") or _secrets.token_hex(32)
+if not os.getenv("SECRET_KEY"):
+    print("  WARNING: SECRET_KEY not set — using a random key (sessions reset on restart). Set it in prod.")
+# Harden the session cookie. SameSite=Lax blocks CSRF on cross-site POSTs;
+# Secure only on a real HTTPS deploy (Render sets RENDER) so local HTTP still works.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.getenv("RENDER")),
+    MAX_CONTENT_LENGTH=6 * 1024 * 1024,   # 6 MB cap on uploads (comics/art)
+)
+try:
+    from brain import accounts as _accounts
+    _accounts.init_db()
+except Exception as _e:
+    print(f"  accounts db init skipped: {_e}")
 
 
 @app.route("/")
@@ -160,9 +179,40 @@ def _alpaca_closes(ticker, days=370):
 
 
 @app.after_request
-def _add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
+def _security_headers(response):
+    # Same-origin app, so no wildcard CORS. Add basic hardening headers instead.
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
+
+
+_RL = {}
+def _rate_ok(name, limit, per_sec=60):
+    """In-memory per-IP fixed-window rate limit (single-worker scope, fine on Render free)."""
+    try:
+        ip = (request.headers.get("X-Forwarded-For", "") or request.remote_addr or "?").split(",")[0].strip()
+    except Exception:
+        ip = "?"
+    now = _time.time()
+    cnt, start = _RL.get((ip, name), (0, now))
+    if now - start > per_sec:
+        cnt, start = 0, now
+    cnt += 1
+    _RL[(ip, name)] = (cnt, start)
+    return cnt <= limit
+
+
+@app.before_request
+def _rate_guard():
+    # Blanket abuse protection: tight on auth (brute-force/signup spam), looser on
+    # general activity (comments/chat/votes). Stops bots and AI-cost-bombs.
+    if request.method == "POST" and request.path.startswith("/api/"):
+        if request.path in ("/api/register", "/api/login"):
+            if not _rate_ok("auth", 8, 60):
+                return jsonify({"error": "Too many attempts, wait a minute."}), 429
+        elif not _rate_ok("post", 60, 60):
+            return jsonify({"error": "Going too fast, slow down a moment."}), 429
 
 
 @app.route("/intelligence")
@@ -276,11 +326,48 @@ _NEWS_FEEDS = [
     ("Yahoo Finance",    "GLOBAL",      "https://finance.yahoo.com/news/rssindex"),
     ("Investopedia",     "GLOBAL",      "https://www.investopedia.com/feedbuilder/feed/getfeed/?feedName=rss_headline"),
     ("Forbes Investing", "AMERICAS",    "https://www.forbes.com/investing/feed/"),
+    # underground / alt / early-signal
+    ("Zerohedge",        "GLOBAL",      "https://feeds.feedburner.com/zerohedge/feed"),
+    ("Benzinga",         "AMERICAS",    "https://www.benzinga.com/feed"),
+    ("Seeking Alpha",    "GLOBAL",      "https://seekingalpha.com/market_currents.xml"),
+    ("WSB",              "SOCIAL",      "https://www.reddit.com/r/wallstreetbets/.rss"),
+    ("r/stocks",         "SOCIAL",      "https://www.reddit.com/r/stocks/.rss"),
+    ("r/pennystocks",    "SOCIAL",      "https://www.reddit.com/r/pennystocks/.rss"),
+    ("GlobeNewswire",    "AMERICAS",    "https://www.globenewswire.com/RssFeed/orgclass/1/feedTitle/GlobeNewswire"),
+    # commodities / metals / minerals / energy / crypto (for category browsing)
+    ("Mining.com",       "COMMODITIES", "https://www.mining.com/feed/"),
+    ("OilPrice",         "COMMODITIES", "https://oilprice.com/rss/main"),
+    ("Kitco Metals",     "COMMODITIES", "https://www.kitco.com/rss/KitcoNews.xml"),
+    ("CoinDesk",         "CRYPTO",      "https://www.coindesk.com/arc/outboundfeeds/rss/"),
+    ("CoinTelegraph",    "CRYPTO",      "https://cointelegraph.com/rss"),
 ]
 
 _news_data = None
 _news_ts   = 0.0
 _news_lock = _threading.Lock()
+
+# Sort each story into a browsable category. A topical keyword (gold, oil, bitcoin)
+# wins over the source's default, so a CNBC gold story lands under Metals, not Markets.
+_CAT_SOURCE = {
+    "Mining.com": "Metals & Minerals", "Kitco Metals": "Metals & Minerals",
+    "OilPrice": "Energy & Commodities",
+    "CoinDesk": "Crypto", "CoinTelegraph": "Crypto",
+    "WSB": "Underground", "r/stocks": "Underground", "r/pennystocks": "Underground",
+    "Zerohedge": "Underground", "Seeking Alpha": "Underground", "Benzinga": "Underground",
+    "Al Jazeera": "Macro & World", "BBC Business": "Macro & World", "Reuters": "Macro & World",
+}
+_CAT_KW = [
+    ("Crypto", ("bitcoin", "crypto", "ethereum", " btc", " eth ", "blockchain", "stablecoin", "defi", "altcoin", "coinbase")),
+    ("Metals & Minerals", ("gold", "silver", "copper", "lithium", "mining", "mineral", "rare earth", "cobalt", "nickel", "uranium", "platinum", "palladium", "iron ore")),
+    ("Energy & Commodities", ("oil", "crude", "natural gas", "opec", " energy", "barrel", "gasoline", "coal", "wheat", "corn", "commodit", "soybean", "natgas")),
+]
+
+def _categorize(source, title, desc=""):
+    t = (" " + (title or "") + " " + (desc or "")).lower()
+    for cat, kws in _CAT_KW:
+        if any(k in t for k in kws):
+            return cat
+    return _CAT_SOURCE.get(source, "Markets")
 
 def _fetch_rss(name, region, url):
     """Fetch one RSS feed; return list of article dicts."""
@@ -305,12 +392,13 @@ def _fetch_rss(name, region, url):
             if not title:
                 continue
             articles.append({
-                "source":  name,
-                "region":  region,
-                "title":   title,
-                "link":    link,
-                "pubdate": pubdate,
-                "desc":    desc,
+                "source":   name,
+                "region":   region,
+                "category": _categorize(name, title, desc),
+                "title":    title,
+                "link":     link,
+                "pubdate":  pubdate,
+                "desc":     desc,
             })
         return articles
     except Exception as exc:
@@ -505,6 +593,36 @@ _whisper_ts   = 0.0
 _whisper_lock = _threading.Lock()
 
 
+# ── Tier gating: Free sees a limited slice of the wire; Pro/Premium see it all ─
+FREE_WHISPER_LIMIT = 6
+
+
+def _current_tier():
+    u = _current_user()
+    return (u.get("tier") if u else "free") or "free"
+
+
+def _gate_whispers(data):
+    """Apply the free-tier limit based on the logged-in user (or anonymous=free)."""
+    if not data:
+        return data
+    tier = _current_tier()
+    out = dict(data)
+    if tier in ("pro", "premium"):
+        out.update(tier=tier, gated=False, locked=0)
+        return out
+    h = list(data.get("haulers", []) or [])
+    w = list(data.get("whispers", []) or [])
+    total = len(h) + len(w)
+    keep_h = h[:FREE_WHISPER_LIMIT]
+    keep_w = w[:max(0, FREE_WHISPER_LIMIT - len(keep_h))]
+    out["haulers"]  = keep_h
+    out["whispers"] = keep_w
+    out.update(tier="free", gated=True,
+               locked=max(0, total - (len(keep_h) + len(keep_w))))
+    return out
+
+
 @app.route("/api/whispers")
 def api_whispers():
     """Early-signal feed: rising news events not yet mainstream. Cached 10 min
@@ -521,7 +639,32 @@ def api_whispers():
                     _whisper_data = {"updated": _dt.now().isoformat(),
                                      "whispers": [], "top": [], "error": str(e)}
                 _whisper_ts = _time.time()
+    # The Wire is FREE (no gating). Subscriptions gate the TRADING PROGRAMS
+    # (semi-auto / full-auto), not the social/content layer. _gate_whispers kept
+    # for reference but no longer applied.
     return jsonify(_whisper_data)
+
+
+@app.route("/api/suggestions")
+def api_suggestions():
+    """Semi-auto: the top Wire signals as approve-able trade suggestions."""
+    global _whisper_data, _whisper_ts
+    if _whisper_data is None or _time.time() - _whisper_ts > 600:
+        with _whisper_lock:
+            if _whisper_data is None or _time.time() - _whisper_ts > 600:
+                try:
+                    from brain.news_pipeline import run_scan
+                    _whisper_data = run_scan()
+                except Exception as e:
+                    _log.warning(f"suggestions scan failed: {e}")
+                    _whisper_data = {"whispers": [], "haulers": []}
+                _whisper_ts = _time.time()
+    rows = (_whisper_data.get("haulers", []) or []) + (_whisper_data.get("whispers", []) or [])
+    rows = sorted(rows, key=lambda x: x.get("confidence", 0), reverse=True)[:8]
+    sugg = [{"ticker": w.get("ticker"), "direction": w.get("direction"),
+             "confidence": round(w.get("confidence", 0)), "stage": w.get("stage"),
+             "amount": 200} for w in rows if w.get("ticker")]
+    return jsonify({"suggestions": sugg, "tier": _current_tier()})
 
 
 @app.route("/api/ticker/<symbol>")
@@ -535,6 +678,687 @@ def api_ticker(symbol):
         _log.warning(f"Ticker feed failed: {e}")
         return jsonify({"ticker": symbol.upper(), "confidence": 0.0,
                         "direction": "neutral", "events": [], "error": str(e)})
+
+
+# ── SEARCH: "type anything -> news + whispers on it" ─────────────────────────
+_NAME_TO_TICKER = {
+    "apple":"AAPL","microsoft":"MSFT","nvidia":"NVDA","amazon":"AMZN","alphabet":"GOOGL",
+    "google":"GOOGL","meta":"META","facebook":"META","tesla":"TSLA","netflix":"NFLX",
+    "amd":"AMD","intel":"INTC","broadcom":"AVGO","oracle":"ORCL","salesforce":"CRM",
+    "adobe":"ADBE","qualcomm":"QCOM","cisco":"CSCO","ibm":"IBM","palantir":"PLTR",
+    "micron":"MU","super micro":"SMCI","supermicro":"SMCI","arm":"ARM","snowflake":"SNOW",
+    "jpmorgan":"JPM","jp morgan":"JPM","bank of america":"BAC","wells fargo":"WFC",
+    "goldman sachs":"GS","morgan stanley":"MS","visa":"V","mastercard":"MA","paypal":"PYPL",
+    "berkshire":"BRK.B","exxon":"XOM","chevron":"CVX","shell":"SHEL","conocophillips":"COP",
+    "occidental":"OXY","pfizer":"PFE","moderna":"MRNA","johnson & johnson":"JNJ","merck":"MRK",
+    "eli lilly":"LLY","abbvie":"ABBV","unitedhealth":"UNH","cvs":"CVS","walmart":"WMT",
+    "costco":"COST","target":"TGT","home depot":"HD","nike":"NKE","mcdonalds":"MCD",
+    "mcdonald's":"MCD","starbucks":"SBUX","coca-cola":"KO","coca cola":"KO","pepsi":"PEP",
+    "procter & gamble":"PG","disney":"DIS","ford":"F","general motors":"GM","gm":"GM",
+    "rivian":"RIVN","lucid":"LCID","boeing":"BA","caterpillar":"CAT","general electric":"GE",
+    "ge":"GE","3m":"MMM","lockheed":"LMT","coinbase":"COIN","robinhood":"HOOD","block":"SQ",
+    "square":"SQ","uber":"UBER","lyft":"LYFT","airbnb":"ABNB","spotify":"SPOT","snap":"SNAP",
+    "pinterest":"PINS","reddit":"RDDT","draftkings":"DKNG","wendys":"WEN","wendy's":"WEN",
+    "chipotle":"CMG","gamestop":"GME",
+}
+_TICKER_TO_NAME = {}
+for _nm, _tk in _NAME_TO_TICKER.items():
+    _TICKER_TO_NAME.setdefault(_tk, _nm)
+
+
+def _news_cached():
+    """Return the cached news bundle (same 10-min cache as /api/news)."""
+    global _news_data, _news_ts
+    if _news_data is None or _time.time() - _news_ts > 600:
+        with _news_lock:
+            if _news_data is None or _time.time() - _news_ts > 600:
+                _news_data = _build_news()
+                _news_ts = _time.time()
+    return _news_data or {"articles": []}
+
+
+def _resolve_ticker(q):
+    """Best-effort: company name -> ticker, or a bare symbol -> itself."""
+    import re as _re
+    ql = q.strip().lower()
+    if ql in _NAME_TO_TICKER:
+        return _NAME_TO_TICKER[ql]
+    qu = q.strip().upper()
+    if _re.fullmatch(r"[A-Z]{1,5}(\.[A-Z])?", qu):
+        return qu
+    return None
+
+
+def _search_terms(q, ticker):
+    """The set of lowercased strings we match against news/ledger."""
+    terms = set()
+    ql = q.strip().lower()
+    if len(ql) >= 2:
+        terms.add(ql)
+    if ticker:
+        if len(ticker) >= 2:
+            terms.add(ticker.lower())
+        nm = _TICKER_TO_NAME.get(ticker)
+        if nm and len(nm) >= 3:
+            terms.add(nm)
+    return terms
+
+
+def _finnhub_news(ticker, days=14, limit=12):
+    """Recent company-specific news from Finnhub (far richer than the thin RSS)."""
+    key = os.getenv("FINNHUB_API_KEY")
+    if not key or not ticker:
+        return []
+    import requests as _req
+    to  = _dt.now().date().isoformat()
+    frm = (_dt.now() - _timedelta(days=days)).date().isoformat()
+    try:
+        r = _req.get("https://finnhub.io/api/v1/company-news",
+                     params={"symbol": ticker, "from": frm, "to": to, "token": key}, timeout=8)
+        items = r.json() if r.ok else []
+        return [{"title": a.get("headline"), "link": a.get("url"), "source": a.get("source"),
+                 "desc": (a.get("summary") or "")[:180], "region": ""}
+                for a in items[:limit] if a.get("headline")]
+    except Exception:
+        return []
+
+
+def _news_search(terms, limit=24):
+    """Rank cached headlines by term hits (title weighted over description)."""
+    arts = _news_cached().get("articles", [])
+    hits = []
+    for a in arts:
+        t = (a.get("title") or "").lower()
+        d = (a.get("desc") or "").lower()
+        score = 0
+        for term in terms:
+            if term in t:   score += 2
+            elif term in d: score += 1
+        if score:
+            hits.append((score, a))
+    hits.sort(key=lambda x: x[0], reverse=True)
+    return [a for _s, a in hits[:limit]]
+
+
+def _ledger_related(led, terms, exclude=None):
+    """Other tickers whose signal/headlines mention the query (deduped, top by conf)."""
+    best = {}
+    try:
+        for ev in led.state["events"].values():
+            tk = (ev.get("ticker") or "").upper()
+            if not tk or (exclude and tk == exclude.upper()):
+                continue
+            hay = (tk + " " + " ".join(
+                (m.get("title") or "") for m in ev.get("mentions_log", []))).lower()
+            if any(term in hay for term in terms):
+                conf = round(led.confidence(ev), 1)
+                if tk not in best or conf > best[tk]["confidence"]:
+                    best[tk] = {"ticker": tk, "confidence": conf,
+                                "direction": led.direction(ev), "stage": led.stage(ev),
+                                "source_count": len(ev.get("sources", []))}
+    except Exception as exc:
+        _log.debug(f"ledger related search: {exc}")
+    return sorted(best.values(), key=lambda r: r["confidence"], reverse=True)[:8]
+
+
+@app.route("/api/find")
+def api_find():
+    """Search anything (ticker, company name, or topic) -> news + whispers on it."""
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"query": "", "ticker": None, "whispers": None,
+                        "related": [], "news": []})
+    ticker  = _resolve_ticker(q)
+    terms   = _search_terms(q, ticker)
+    whispers = None
+    related  = []
+    try:
+        from brain.signal_ledger import SignalLedger
+        led = SignalLedger()
+        if ticker:
+            tf = led.ticker_feed(ticker)
+            if tf.get("events"):
+                whispers = tf
+        related = _ledger_related(led, terms, exclude=ticker)
+    except Exception as exc:
+        _log.warning(f"find whispers failed: {exc}")
+    news = _news_search(terms) if terms else []
+    if ticker:   # richer per-company news from Finnhub, prepended + deduped
+        seen = {n.get("title") for n in news}
+        news = [a for a in _finnhub_news(ticker)
+                if a.get("title") and a.get("title") not in seen] + news
+    return jsonify({"query": q, "ticker": ticker, "whispers": whispers,
+                    "related": related, "news": news})
+
+
+# ── ACCOUNTS — register / login / session (Phase 2 platform foundation) ──────
+# SQLite-backed. Stores only email + password hash + tier. No money or brokerage
+# keys here — per-user brokerage comes later via OAuth. Stay software, not a bank.
+def _current_user():
+    from brain import accounts
+    return accounts.get_user(session.get("uid"))
+
+
+@app.route("/api/register", methods=["POST"])
+def api_register():
+    from brain import accounts
+    data = request.get_json(silent=True) or {}
+    res = accounts.create_user(data.get("email"), data.get("password"),
+                               data.get("first_name"), data.get("last_name"),
+                               data.get("country"), data.get("state"),
+                               data.get("nickname"))
+    if res.get("error"):
+        return jsonify(res), 400
+    session["uid"] = res["user"]["id"]
+    return jsonify({"user": res["user"]})
+
+
+@app.route("/api/login", methods=["POST"])
+def api_login():
+    from brain import accounts
+    data = request.get_json(silent=True) or {}
+    user = accounts.verify_user(data.get("email"), data.get("password"))
+    if not user:
+        return jsonify({"error": "Wrong email or password."}), 401
+    session["uid"] = user["id"]
+    return jsonify({"user": user})
+
+
+@app.route("/api/logout", methods=["POST"])
+def api_logout():
+    session.pop("uid", None)
+    return jsonify({"ok": True})
+
+
+@app.route("/api/me")
+def api_me():
+    u = _current_user()
+    if u:
+        u = dict(u)
+        u["is_admin"] = _is_admin(u)
+    return jsonify({"user": u})
+
+
+@app.route("/api/set-nickname", methods=["POST"])
+def api_set_nickname():
+    from brain import accounts
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    res = accounts.set_nickname(user["id"], data.get("nickname", ""))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/rooms", methods=["GET", "POST"])
+def api_rooms():
+    from brain import chat
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to create a room."}), 401
+        data = request.get_json(silent=True) or {}
+        res = chat.create_room(user, data.get("name"), data.get("topic"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    return jsonify({"rooms": chat.list_rooms()})
+
+
+@app.route("/api/rooms/<int:room_id>/messages", methods=["GET", "POST"])
+def api_room_messages(room_id):
+    from brain import chat
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to chat."}), 401
+        data = request.get_json(silent=True) or {}
+        res = chat.post_message(user, room_id, data.get("text"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    after = int(request.args.get("after", 0) or 0)
+    return jsonify(chat.list_messages(room_id, after))
+
+
+@app.route("/api/rooms/<int:room_id>/plays", methods=["GET", "POST"])
+def api_room_plays(room_id):
+    from brain import chat
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to add a play."}), 401
+        data = request.get_json(silent=True) or {}
+        res = chat.add_play(user, room_id, data.get("ticker"), data.get("note"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    return jsonify({"plays": chat.list_plays(room_id)})
+
+
+@app.route("/api/rooms/<int:room_id>/plays/<int:play_id>", methods=["DELETE"])
+def api_room_play_del(room_id, play_id):
+    from brain import chat
+    if not _current_user():
+        return jsonify({"error": "Log in."}), 401
+    return jsonify(chat.remove_play(room_id, play_id))
+
+
+# ── BILLING — Stripe subscriptions (graceful if unconfigured) ────────────────
+@app.route("/api/billing/status")
+def api_billing_status():
+    from brain import billing
+    return jsonify(billing.status())
+
+
+@app.route("/api/billing/checkout", methods=["POST"])
+def api_billing_checkout():
+    from brain import billing
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    res  = billing.create_checkout(user, data.get("tier"), request.host_url)
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/billing/webhook", methods=["POST"])
+def api_billing_webhook():
+    from brain import billing, accounts
+    res = billing.handle_webhook(request.get_data(),
+                                 request.headers.get("Stripe-Signature", ""))
+    act = res.get("action")
+    try:
+        if act == "set_tier" and res.get("uid"):
+            accounts.set_tier(int(res["uid"]), res.get("tier", "pro"))
+            if res.get("customer"):
+                accounts.set_stripe_customer(int(res["uid"]), res["customer"])
+        elif act == "set_tier_customer" and res.get("customer"):
+            accounts.set_tier_by_customer(res["customer"], res.get("tier", "pro"))
+        elif act == "downgrade" and res.get("customer"):
+            accounts.set_tier_by_customer(res["customer"], "free")
+    except Exception as e:
+        _log.warning(f"billing webhook apply failed: {e}")
+    return jsonify({"received": True})
+
+
+# ── COMMENTS — crowd discussion under wire stories (micro signal, ~1% nudge) ──
+@app.route("/api/comments", methods=["GET", "POST"])
+def api_comments():
+    from brain import comments
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to comment."}), 401
+        data = request.get_json(silent=True) or {}
+        res = comments.add_comment(user, data.get("event_id"), data.get("ticker"),
+                                   data.get("text"), parent_id=data.get("parent_id"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    eid = request.args.get("event_id")
+    tk  = request.args.get("ticker")
+    if not eid and not tk:
+        return jsonify(comments.recent_all())   # global feed: talk across all stories
+    return jsonify(comments.list_comments(eid, tk))
+
+
+@app.route("/api/comments/vote", methods=["POST"])
+def api_comments_vote():
+    from brain import comments
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in to vote."}), 401
+    data = request.get_json(silent=True) or {}
+    cid = data.get("comment_id")
+    if not cid:
+        return jsonify({"error": "comment_id required"}), 400
+    return jsonify(comments.vote(user["id"], int(cid), data.get("dir", "up")))
+
+
+@app.route("/api/comments/thread/<int:comment_id>")
+def api_comments_thread(comment_id):
+    from brain import comments
+    return jsonify(comments.thread(comment_id))
+
+
+def _send_email(to, subject, body):
+    """Send via SMTP if configured (SMTP_HOST/USER/PASS env); else False (dev mode
+    shows the link in the UI). Keeps Midas runnable with no email service set up."""
+    host = os.getenv("SMTP_HOST")
+    if not host:
+        return False
+    try:
+        import smtplib
+        from email.mime.text import MIMEText
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = os.getenv("SMTP_FROM", os.getenv("SMTP_USER", "no-reply@midas.app"))
+        msg["To"] = to
+        s = smtplib.SMTP(host, int(os.getenv("SMTP_PORT", "587")))
+        s.starttls()
+        if os.getenv("SMTP_USER"):
+            s.login(os.getenv("SMTP_USER"), os.getenv("SMTP_PASS", ""))
+        s.send_message(msg)
+        s.quit()
+        return True
+    except Exception:
+        return False
+
+
+@app.route("/api/verify-email")
+def api_verify_email():
+    from brain import accounts
+    u = accounts.verify_email(request.args.get("token", ""))
+    msg = ("Email verified — you're all set."
+           if u else "This link is invalid or already used.")
+    return ("<html><body style='font-family:system-ui,sans-serif;background:#f5f0e8;color:#1e1a14;"
+            "text-align:center;padding:80px 20px'><h2 style='font-weight:600'>" + msg + "</h2>"
+            "<p><a href='/settings.html' style='color:#1a7080'>← Back to Midas settings</a></p>"
+            "</body></html>")
+
+
+@app.route("/api/resend-verify", methods=["POST"])
+def api_resend_verify():
+    from brain import accounts
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in first."}), 401
+    if user.get("verified"):
+        return jsonify({"ok": True, "already": True})
+    tok = accounts.get_verify_token(user["id"])
+    link = request.host_url.rstrip("/") + "/api/verify-email?token=" + (tok or "")
+    sent = _send_email(user["email"], "Verify your Midas email",
+                       "Confirm your email for Project Midas:\n\n" + link +
+                       "\n\nIf you didn't sign up, ignore this.")
+    return jsonify({"ok": True, "sent": sent, "link": (None if sent else link)})
+
+
+@app.route("/api/profile/<int:user_id>")
+def api_profile(user_id):
+    """A person's public profile: real name + reputation + their actual takes."""
+    from brain import accounts, reputation, comments
+    u = accounts.get_user(user_id)
+    if not u:
+        return jsonify({"error": "No such user."}), 404
+    rep = reputation.compute(user_id)   # scores their calls vs real price moves
+    port = reputation.portfolio(user_id)
+    takes = comments.by_user(user_id, 12)   # their most-upvoted posts
+    return jsonify({"id": u["id"], "name": u["name"], "real_name": u.get("real_name"),
+                    "nickname": u.get("nickname"), "verified": u.get("verified"),
+                    "tier": u["tier"], "joined": u.get("created_at"), "reputation": rep,
+                    "portfolio": port, "takes": takes})
+
+
+@app.route("/api/leaderboard")
+def api_leaderboard():
+    """World / country / state ranking by reputation (scored from calls)."""
+    from brain import reputation
+    return jsonify(reputation.leaderboard(
+        request.args.get("scope", "world"),
+        request.args.get("country", ""), request.args.get("state", "")))
+
+
+@app.route("/api/daynews")
+def api_daynews():
+    """Historical news around one date for the Replay 'what hit the market' view.
+    Pulls Finnhub company-news for a basket and merges. Graceful w/o Finnhub key."""
+    import requests as _req
+    date = (request.args.get("date") or "").strip()[:10]
+    tickers = (request.args.get("tickers") or "SPY,AAPL,MSFT,NVDA").upper().split(",")[:5]
+    key = os.getenv("FINNHUB_API_KEY")
+    if not date:
+        return jsonify({"date": date, "news": []})
+    if not key:
+        return jsonify({"date": date, "news": [], "note": "Finnhub key not set"})
+    try:
+        d0 = _dt.fromisoformat(date)
+    except Exception:
+        return jsonify({"date": date, "news": [], "error": "bad date"})
+    frm = (d0 - _timedelta(days=1)).date().isoformat()
+    to  = (d0 + _timedelta(days=1)).date().isoformat()
+    seen, news = set(), []
+    for tk in tickers:
+        tk = tk.strip()
+        if not tk:
+            continue
+        try:
+            r = _req.get("https://finnhub.io/api/v1/company-news",
+                         params={"symbol": tk, "from": frm, "to": to, "token": key}, timeout=8)
+            for a in (r.json() if r.ok else []):
+                h = a.get("headline", "")
+                if h and h not in seen:
+                    seen.add(h)
+                    news.append({"headline": h, "source": a.get("source"),
+                                 "url": a.get("url"), "summary": (a.get("summary") or "")[:180],
+                                 "ticker": tk})
+        except Exception:
+            continue
+    return jsonify({"date": date, "news": news[:20]})
+
+
+@app.route("/api/fundamentals/<ticker>")
+def api_fundamentals(ticker):
+    """Insider transactions + last earnings surprise (Finnhub). New signal layers."""
+    import requests as _req
+    key = os.getenv("FINNHUB_API_KEY")
+    tk = (ticker or "").upper().strip()
+    out = {"ticker": tk, "insider": None, "earnings": None}
+    if not key or not tk:
+        return jsonify(out)
+    try:
+        frm = (_dt.now() - _timedelta(days=90)).date().isoformat()
+        to  = _dt.now().date().isoformat()
+        r = _req.get("https://finnhub.io/api/v1/stock/insider-transactions",
+                     params={"symbol": tk, "from": frm, "to": to, "token": key}, timeout=8)
+        data = ((r.json() or {}).get("data") if r.ok else []) or []
+        if data:
+            buys  = sum(1 for d in data if (d.get("change") or 0) > 0)
+            sells = sum(1 for d in data if (d.get("change") or 0) < 0)
+            net   = sum((d.get("change") or 0) for d in data)
+            out["insider"] = {"buys": buys, "sells": sells, "net_shares": int(net), "count": len(data)}
+    except Exception:
+        pass
+    try:
+        r = _req.get("https://finnhub.io/api/v1/stock/earnings",
+                     params={"symbol": tk, "token": key}, timeout=8)
+        e = (r.json() if r.ok else []) or []
+        if e:
+            last = e[0]
+            out["earnings"] = {"period": last.get("period"), "actual": last.get("actual"),
+                               "estimate": last.get("estimate"), "surprise": last.get("surprise"),
+                               "surprise_pct": last.get("surprisePercent")}
+    except Exception:
+        pass
+    return jsonify(out)
+
+
+@app.route("/api/history/<ticker>")
+def api_history(ticker):
+    """Price history for the company dossier. range: 1D | 1W | 1M | 1Y | max."""
+    tk = (ticker or "").upper().strip()
+    rng = request.args.get("range", "1M")
+    key, sec = os.getenv("ALPACA_API_KEY"), os.getenv("ALPACA_SECRET_KEY")
+    if not tk or not key:
+        return jsonify({"ticker": tk, "points": []})
+    try:
+        from alpaca.data.historical import StockHistoricalDataClient
+        from alpaca.data.requests import StockBarsRequest
+        from alpaca.data.timeframe import TimeFrame
+        client = StockHistoricalDataClient(key, sec)
+        cfg = {"1D": (_timedelta(days=5), TimeFrame.Hour),
+               "1W": (_timedelta(days=8), TimeFrame.Day),
+               "1M": (_timedelta(days=32), TimeFrame.Day),
+               "1Y": (_timedelta(days=366), TimeFrame.Day),
+               "max": (_timedelta(days=365 * 5), TimeFrame.Day)}.get(rng, (_timedelta(days=32), TimeFrame.Day))
+        start, tf = cfg
+        req = StockBarsRequest(symbol_or_symbols=tk, timeframe=tf, start=_dt.now() - start)
+        bars = client.get_stock_bars(req)
+        data = bars.data.get(tk, []) if hasattr(bars, "data") else []
+        pts = [{"t": b.timestamp.isoformat(), "c": round(float(b.close), 2)} for b in data]
+        if rng == "1D" and pts:
+            last_day = pts[-1]["t"][:10]
+            pts = [p for p in pts if p["t"][:10] == last_day]
+        chg = round((pts[-1]["c"] - pts[0]["c"]) / pts[0]["c"] * 100, 2) if len(pts) > 1 and pts[0]["c"] else 0
+        return jsonify({"ticker": tk, "range": rng, "points": pts, "change_pct": chg,
+                        "first": pts[0]["c"] if pts else None, "last": pts[-1]["c"] if pts else None})
+    except Exception as e:
+        return jsonify({"ticker": tk, "points": [], "error": str(e)})
+
+
+@app.route("/api/ownership/<ticker>")
+def api_ownership(ticker):
+    """Who holds what — institutional holders + shares outstanding (Finnhub)."""
+    import requests as _req
+    key = os.getenv("FINNHUB_API_KEY")
+    tk = (ticker or "").upper().strip()
+    out = {"ticker": tk, "name": None, "shares_outstanding": None,
+           "holders": [], "institutional_pct": None}
+    if not key or not tk:
+        return jsonify(out)
+    so = None
+    try:
+        p = _req.get("https://finnhub.io/api/v1/stock/profile2",
+                     params={"symbol": tk, "token": key}, timeout=8).json() or {}
+        so = p.get("shareOutstanding")
+        out["shares_outstanding"] = so
+        out["name"] = p.get("name")
+    except Exception:
+        pass
+    try:
+        r = _req.get("https://finnhub.io/api/v1/stock/ownership",
+                     params={"symbol": tk, "limit": 15, "token": key}, timeout=8)
+        data = ((r.json() or {}).get("ownership") if r.ok else []) or []
+        out["holders"] = [{"name": h.get("name"), "shares": h.get("share"),
+                           "change": h.get("change")} for h in data[:12]]
+        if so:
+            inst = sum((h.get("share") or 0) for h in data)
+            so_units = so * 1_000_000
+            if so_units:
+                out["institutional_pct"] = round(min(100.0, inst / so_units * 100), 1)
+    except Exception:
+        pass
+    # Finnhub ownership is premium; fall back to Financial Modeling Prep (free tier)
+    if not out["holders"]:
+        fmp = os.getenv("FMP_API_KEY")
+        if fmp:
+            try:
+                r = _req.get(f"https://financialmodelingprep.com/api/v3/institutional-holder/{tk}",
+                             params={"apikey": fmp}, timeout=10)
+                data = (r.json() if r.ok else []) or []
+                out["holders"] = [{"name": h.get("holder"), "shares": h.get("shares"),
+                                   "change": h.get("change")} for h in data[:12] if h.get("holder")]
+                if so and data:
+                    inst = sum((h.get("shares") or 0) for h in data)
+                    so_units = so * 1_000_000
+                    if so_units:
+                        out["institutional_pct"] = round(min(100.0, inst / so_units * 100), 1)
+                out["source"] = "fmp"
+            except Exception:
+                pass
+    return jsonify(out)
+
+
+_funnies_cache = None
+_funnies_ts = 0.0
+_FUNNY_SUBS = [
+    ("r/wallstreetbets", "https://www.reddit.com/r/wallstreetbets/hot/.rss?limit=25"),
+    ("r/financememes",   "https://www.reddit.com/r/financememes/hot/.rss?limit=25"),
+]
+
+def _fetch_funnies():
+    import requests as _req, re as _re2
+    headers = {"User-Agent": "python:project-midas:1.0 (funnies)"}
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    out = []
+    for src, url in _FUNNY_SUBS:
+        try:
+            r = _req.get(url, headers=headers, timeout=8)
+            if not r.ok:
+                continue
+            root = _ET.fromstring(r.content)
+            for e in (root.findall(".//atom:entry", ns) or [])[:15]:
+                te = e.find("atom:title", ns)
+                le = e.find("atom:link", ns)
+                ce = e.find("atom:content", ns)
+                title = (te.text or "").strip() if te is not None else ""
+                link = le.get("href") if le is not None else ""
+                thumb = ""
+                if ce is not None and ce.text:
+                    mm = _re2.search(r'<img[^>]+src="([^"]+)"', ce.text)
+                    if mm:
+                        thumb = mm.group(1).replace("&amp;", "&")
+                if title and link:
+                    out.append({"title": title, "link": link, "source": src, "thumb": thumb})
+        except Exception:
+            continue
+    return out
+
+
+@app.route("/api/funnies")
+def api_funnies():
+    """Live market humor from the wild (cached 30 min, graceful if reddit is grumpy)."""
+    global _funnies_cache, _funnies_ts
+    if _funnies_cache is None or _time.time() - _funnies_ts > 1800:
+        try:
+            _funnies_cache = {"items": _fetch_funnies(), "updated": _dt.now().isoformat()}
+        except Exception:
+            _funnies_cache = {"items": [], "updated": _dt.now().isoformat()}
+        _funnies_ts = _time.time()
+    return jsonify(_funnies_cache)
+
+
+_ALLOWED_IMG = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+
+def _is_admin(user):
+    em = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    return bool(user and em and (user.get("email") or "").lower() == em)
+
+
+@app.route("/api/funnies/submit", methods=["POST"])
+def api_funnies_submit():
+    """Submit a comic/artwork — goes to a pending queue, never auto-published."""
+    from brain import funnies
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in to submit."}), 401
+    f = request.files.get("image")
+    if not f or not f.filename:
+        return jsonify({"error": "Pick an image (your comic or artwork)."}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in _ALLOWED_IMG:
+        return jsonify({"error": "Images only: png, jpg, gif, or webp."}), 400
+    try:
+        os.makedirs(funnies.UPLOAD_DIR, exist_ok=True)
+        name = _secrets.token_hex(16) + ext          # random name, never trust user filenames
+        f.save(os.path.join(funnies.UPLOAD_DIR, name))
+    except Exception:
+        return jsonify({"error": "Upload failed."}), 500
+    return jsonify(funnies.submit(user, request.form.get("caption", ""), name))
+
+
+@app.route("/api/funnies/featured")
+def api_funnies_featured():
+    from brain import funnies
+    return jsonify({"items": funnies.list_featured()})
+
+
+@app.route("/uploads/<path:filename>")
+def serve_upload(filename):
+    from brain import funnies
+    return send_from_directory(funnies.UPLOAD_DIR, filename)
+
+
+@app.route("/api/funnies/pending")
+def api_funnies_pending():
+    from brain import funnies
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    return jsonify({"items": funnies.list_pending()})
+
+
+@app.route("/api/funnies/moderate", methods=["POST"])
+def api_funnies_moderate():
+    from brain import funnies
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    data = request.get_json(silent=True) or {}
+    if not data.get("id"):
+        return jsonify({"error": "id required"}), 400
+    return jsonify(funnies.moderate(int(data["id"]), data.get("action")))
 
 
 @app.route("/api/health")
@@ -567,8 +1391,211 @@ def api_rate():
         return jsonify({"error": str(e)}), 500
 
 
+# ── TRADING (paper mode for safety) ──────────────────────────────────────────
+# Single-account demo using the server's Alpaca keys. paper=True = fake money.
+# DO NOT expose publicly with real keys / no auth -- anyone could place orders.
+from brain.trader import Trader as _Trader
+
+
+def _trader():
+    key = os.getenv("ALPACA_API_KEY")
+    sec = os.getenv("ALPACA_SECRET_KEY")
+    if not (key and sec):
+        return None
+    return _Trader(key, sec, paper=True)
+
+
+@app.route("/api/account")
+def api_account():
+    t = _trader()
+    if t is None:
+        return jsonify({"error": "Alpaca keys not set"})
+    try:
+        s = t.sync_status()
+        return jsonify({"portfolio_value": s["portfolio_value"], "cash": s["cash"],
+                        "buying_power": s["buying_power"], "positions": s["positions"],
+                        "paper": True})
+    except Exception as e:
+        _log.warning(f"Account failed: {e}")
+        return jsonify({"error": str(e)})
+
+
+def _trading_guard():
+    """Trade endpoints run paper-mode on the OPERATOR's keys, so they must never be
+    open to the public (anyone could place trades on the account). Off unless
+    ENABLE_TRADING=1 and the caller is logged in."""
+    if os.getenv("ENABLE_TRADING", "0") != "1":
+        return jsonify({"error": "Trading is disabled on this deployment."}), 403
+    if not _current_user():
+        return jsonify({"error": "Log in to trade."}), 401
+    return None
+
+
+@app.route("/api/buy", methods=["POST"])
+def api_buy():
+    g = _trading_guard()
+    if g:
+        return g
+    d = request.get_json(silent=True) or {}
+    ticker = (d.get("ticker") or "").strip().upper()
+    try:
+        amount = float(d.get("amount") or 0)
+    except (TypeError, ValueError):
+        amount = 0
+    if not ticker or amount < 1:
+        return jsonify({"error": "ticker and amount (>= $1) required"}), 400
+    t = _trader()
+    if t is None:
+        return jsonify({"error": "Alpaca keys not set"}), 500
+    try:
+        return jsonify(t.buy(ticker, amount))
+    except Exception as e:
+        _log.warning(f"Buy failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/api/sell", methods=["POST"])
+def api_sell():
+    g = _trading_guard()
+    if g:
+        return g
+    d = request.get_json(silent=True) or {}
+    ticker = (d.get("ticker") or "").strip().upper()
+    if not ticker:
+        return jsonify({"error": "ticker required"}), 400
+    t = _trader()
+    if t is None:
+        return jsonify({"error": "Alpaca keys not set"}), 500
+    try:
+        return jsonify(t.sell_all(ticker))
+    except Exception as e:
+        _log.warning(f"Sell failed: {e}")
+        return jsonify({"error": str(e)}), 500
+
+
+def _prewarm():
+    """Warm the whisper + news caches at boot so the first visitor doesn't wait."""
+    global _whisper_data, _whisper_ts, _news_data, _news_ts
+    try:
+        from brain.news_pipeline import run_scan
+        _whisper_data = run_scan()
+        _whisper_ts = _time.time()
+        _log.info("prewarm: whisper cache ready")
+    except Exception as e:
+        _log.warning(f"prewarm whispers failed: {e}")
+    try:
+        _news_data = _build_news()
+        _news_ts = _time.time()
+        _log.info("prewarm: news cache ready")
+    except Exception as e:
+        _log.warning(f"prewarm news failed: {e}")
+
+
+def _rep_rescore_loop():
+    """Keep cached reputation rows fresh in the background so name hue colors stay
+    current without anyone opening a profile. Every ~30 min it recomputes up to
+    ~20 already-cached users (oldest first), bounded to respect Alpaca rate limits.
+    Fully guarded so it can never take the server down."""
+    while True:
+        try:
+            from brain import reputation
+            try:
+                uids = reputation.cached_user_ids(stale_only=True, limit=20)
+            except Exception as e:
+                _log.debug(f"rep rescore: id fetch failed: {e}")
+                uids = []
+            done = 0
+            for uid in uids:
+                try:
+                    reputation.compute(uid)
+                    done += 1
+                except Exception as e:
+                    _log.debug(f"rep rescore: user {uid} failed: {e}")
+                _time.sleep(1)   # gentle on Alpaca between users
+            if done:
+                _log.info(f"rep rescore: refreshed {done} cached user(s)")
+        except Exception as e:
+            _log.warning(f"rep rescore loop error: {e}")
+        _time.sleep(1800)   # ~30 minutes between cycles
+
+
+def _move_since(ticker, since_iso):
+    """Percent price move for `ticker` from around `since_iso` to the latest close."""
+    key, sec = os.getenv("ALPACA_API_KEY"), os.getenv("ALPACA_SECRET_KEY")
+    if not (key and sec):
+        return None
+    try:
+        from alpaca.data.historical import StockHistoricalDataClient
+        from alpaca.data.requests import StockBarsRequest
+        from alpaca.data.timeframe import TimeFrame
+        start = _dt.fromisoformat(str(since_iso).replace("Z", "").split("+")[0])
+        client = StockHistoricalDataClient(key, sec)
+        req = StockBarsRequest(symbol_or_symbols=ticker, timeframe=TimeFrame.Day, start=start)
+        data = client.get_stock_bars(req).data.get(ticker, [])
+        if len(data) < 2:
+            return None
+        base, last = float(data[0].close), float(data[-1].close)
+        return round((last - base) / base * 100, 2) if base else None
+    except Exception:
+        return None
+
+
+def _score_outcomes(max_n=25, min_age_hours=24):
+    """Grade aged whispers against the real move so the ledger learns which sources
+    were right (their next whispers then carry more confidence). Returns count scored."""
+    try:
+        from brain.signal_ledger import SignalLedger
+        led = SignalLedger()
+        scored = 0
+        for eid, ticker, first_seen in led.scoreable(min_age_hours=min_age_hours, limit=max_n):
+            mv = _move_since(ticker, first_seen)
+            if mv is None:
+                continue
+            led.record_outcome(eid, mv)
+            scored += 1
+        if scored:
+            _log.info(f"outcome loop: scored {scored} past whisper(s)")
+        return scored
+    except Exception as e:
+        _log.warning(f"outcome loop error: {e}")
+        return 0
+
+
+def _score_outcomes_loop():
+    while True:
+        try:
+            _score_outcomes()
+        except Exception:
+            pass
+        _time.sleep(3600)   # hourly — outcomes don't change fast
+
+
+@app.route("/api/score-outcomes", methods=["POST"])
+def api_score_outcomes():
+    """Manual trigger for the confidence outcome-loop (also runs hourly in the background)."""
+    return jsonify({"scored": _score_outcomes(min_age_hours=float(request.args.get("min_age", 24)))})
+
+
+try:
+    _threading.Thread(target=_prewarm, daemon=True).start()
+except Exception as _e:
+    pass
+
+
+try:
+    _threading.Thread(target=_rep_rescore_loop, daemon=True).start()
+except Exception as _e:
+    pass
+
+
+try:
+    _threading.Thread(target=_score_outcomes_loop, daemon=True).start()
+except Exception as _e:
+    pass
+
+
 if __name__ == "__main__":
     print("\n  MIDAS Simulation Server")
     print("  -----------------------------")
     print("  Open:  http://localhost:5050\n")
-    app.run(host="0.0.0.0", port=5050, debug=False)
+    app.run(host="0.0.0.0", port=int(os.getenv("PORT", "5050")), debug=False)

@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MIDAS — Intelligence Centre</title>
+  <title>MIDAS — Signals</title>
+  <script src="midas-theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
@@ -90,6 +91,12 @@
     .sp-layer.bear{border-top:2px solid var(--red);}
     .sp-layer.neut{border-top:2px solid var(--border2);}
     .sp-layer.pend{border-top:2px solid var(--border);}
+    .sp-news-h{padding:14px 20px 8px;border-top:1px solid var(--border);font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);}
+    .sp-news-row{padding:11px 20px;border-top:1px solid var(--border);}
+    .sp-news-t{font-size:.9rem;color:var(--text);text-decoration:none;}
+    .sp-news-t:hover{color:var(--teal);text-decoration:underline;}
+    .sp-news-m{display:flex;gap:10px;flex-wrap:wrap;margin-top:4px;font-family:var(--mono);font-size:.64rem;color:var(--dim);}
+    .sp-news-d{flex-basis:100%;color:var(--dim);font-family:var(--title);font-size:.8rem;line-height:1.4;margin-top:2px;}
     .sp-lnum{font-size:0.6rem;letter-spacing:0.22em;color:var(--dim);font-family:var(--mono);margin-bottom:6px;}
     .sp-lsig{font-family:var(--title);font-size:0.82rem;font-weight:600;}
     .sp-lsig.bull{color:var(--green);}
@@ -190,15 +197,20 @@
     .no-data{text-align:center;padding:80px;color:var(--dim);font-family:var(--mono);font-size:0.8rem;letter-spacing:0.12em;}
 
     /* ── News Feed ── */
-    .news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-top:24px;}
-    .news-card{background:var(--card);border:1px solid var(--border);padding:18px 20px;transition:box-shadow 0.2s;}
-    .news-card:hover{box-shadow:var(--shadow);}
-    .news-source{font-family:var(--mono);font-size:0.62rem;letter-spacing:0.2em;color:var(--amber);margin-bottom:8px;}
-    .news-title{font-size:0.88rem;font-weight:600;color:var(--text);line-height:1.45;margin-bottom:8px;}
+    .news-grid{column-count:3;column-gap:32px;column-rule:1px solid var(--border);margin-top:22px;}
+    @media(max-width:900px){.news-grid{column-count:2;}}
+    @media(max-width:560px){.news-grid{column-count:1;column-rule:none;}}
+    .news-card{background:none;border:none;break-inside:avoid;padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid var(--border);transition:none;}
+    .news-card:hover{box-shadow:none;}
+    .news-source{font-family:var(--mono);font-size:0.55rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--dim);margin-bottom:5px;}
+    .news-title{font-family:Georgia,'Times New Roman',serif;font-size:1.06rem;font-weight:700;color:var(--text);line-height:1.22;margin-bottom:6px;letter-spacing:.01em;}
     .news-title a{color:inherit;text-decoration:none;}
-    .news-title a:hover{text-decoration:underline;text-underline-offset:2px;}
-    .news-desc{font-size:0.77rem;color:var(--mid);line-height:1.6;margin-bottom:10px;}
-    .news-date{font-family:var(--mono);font-size:0.62rem;color:var(--dim);}
+    .news-title a:hover{color:var(--teal);text-decoration:underline;text-underline-offset:2px;}
+    .news-desc{font-size:0.8rem;color:var(--mid);line-height:1.55;margin-bottom:7px;}
+    .news-date{font-family:var(--mono);font-size:0.58rem;color:var(--dim);}
+    .news-mast{text-align:center;border-top:3px double var(--text);border-bottom:1px solid var(--text);padding:14px 0 11px;margin:22px 0 4px;}
+    .news-mast .mn{font-family:Georgia,'Times New Roman',serif;font-size:clamp(2rem,5vw,2.8rem);font-weight:700;letter-spacing:.03em;line-height:1;}
+    .news-mast .mt{font-family:var(--mono);font-size:.56rem;letter-spacing:.26em;text-transform:uppercase;color:var(--dim);margin-top:7px;}
     .news-filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;}
     .news-filter-btn{padding:5px 14px;background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.14em;color:var(--dim);cursor:pointer;transition:all 0.15s;}
     .news-filter-btn.active,.news-filter-btn:hover{background:var(--amber);color:#fff;border-color:var(--amber);}
@@ -211,22 +223,41 @@
     .footer-by{font-size:0.7rem;color:var(--dim);font-family:var(--mono);margin-top:3px;}
     .footer-note{font-size:0.7rem;color:var(--dim);font-family:var(--mono);text-align:right;line-height:1.7;}
   </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
 </head>
 <body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
 
 <!-- ── NAV ── -->
 <nav>
   <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
   <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="stocks.html">Stocks</a></li>
-    <li><a href="penny.html">Penny</a></li>
-    <li><a href="intelligence.html" class="active">Intelligence</a></li>
-    <li><a href="whispers.html">Whispers</a></li>
-    <li><a href="practice.html">Practice</a></li>
-    <li><a href="dashboard.html">Dashboard</a></li>
-    <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
-  </ul>
+      <li><a href="intelligence.html" class="active">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
 </nav>
 
 <!-- ── HERO ── -->
@@ -235,7 +266,11 @@
     <div class="intel-top-row">
       <div>
         <span class="intel-eyebrow">LIVE SIGNAL INTELLIGENCE · 5-LAYER ANALYSIS · REAL WORLD DATA</span>
-        <div class="intel-h1">MIDAS <span>INTELLIGENCE</span></div>
+        <div class="intel-h1">MIDAS <span>SIGNALS</span></div>
+        <div style="margin-top:8px;font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.06em;">
+          <a href="whispers.html" style="color:#1a7080;text-decoration:none;margin-right:18px;">&rarr; Live news whispers</a>
+          <a href="trade.html" style="color:#2d7a4f;text-decoration:none;">&rarr; Place a trade</a>
+        </div>
         <div class="intel-by">BY SALAHALDIN NIMERI · PROJECT MIDAS</div>
       </div>
       <div class="refresh-row">
@@ -280,6 +315,8 @@
       <div class="sp-grid" id="sp-body"></div>
       <div class="sp-layers" id="sp-layers"></div>
       <div id="sp-congress"></div>
+      <div id="sp-news"></div>
+      <div id="sp-extra"></div>
     </div>
   </div>
 </section>
@@ -458,7 +495,7 @@ function renderPicks(tickers){
     const tier=t.signal.toLowerCase();
     const cw=Math.min(100,Math.round(t.confidence));
     const cong=t.pol_recent&&t.pol_recent.length?`<div class="pick-congress">${t.pol_recent[0]}</div>`:'';
-    html+=`<div class="pick-card ${tier}-card">
+    html+=`<div class="pick-card ${tier}-card" style="cursor:pointer" onclick="doSearch('${t.ticker}')">
       <div class="pick-head">
         <div>
           <div class="pick-ticker">${t.ticker}</div>
@@ -531,7 +568,7 @@ function renderSignals(tickers){
     const l2=t.rsi<30?'bull':t.rsi>70?'bear':'neut';
     const l4=t.pol_score===1?'bull':t.pol_score===-1?'bear':'neut';
     const cw=Math.min(100,Math.round(t.confidence));
-    html+=`<tr>
+    html+=`<tr style="cursor:pointer" onclick="doSearch('${t.ticker}')">
       <td><span class="tk-sym">${t.ticker}</span></td>
       <td style="font-family:var(--mono);font-size:0.8rem">
         $${t.price}<br><small>${chgSpan(t.chg_pct)}</small>
@@ -638,8 +675,8 @@ function switchTab(id,btn){
 }
 
 // ── Search ────────────────────────────────────────────────────────────────────
-async function doSearch(){
-  const ticker=document.getElementById('search-input').value.trim().replace(/[^A-Z0-9.\-]/g,'');
+async function doSearch(forceTicker){
+  const ticker=(forceTicker||document.getElementById('search-input').value).trim().replace(/[^A-Z0-9.\-]/g,'');
   if(!ticker) return;
   const panel=document.getElementById('search-panel');
   panel.style.display='block';
@@ -650,6 +687,8 @@ async function doSearch(){
   document.getElementById('sp-body').innerHTML='<div style="padding:24px;color:var(--dim);font-family:var(--mono);font-size:0.82rem;letter-spacing:0.12em;grid-column:1/-1">RUNNING 5-LAYER ANALYSIS...</div>';
   document.getElementById('sp-layers').innerHTML='';
   document.getElementById('sp-congress').innerHTML='';
+  document.getElementById('sp-news').innerHTML='';
+  document.getElementById('sp-extra').innerHTML='';
   panel.scrollIntoView({behavior:'smooth',block:'nearest'});
   try{
     const res=await fetch(`${SIM}/api/search?ticker=${ticker}`);
@@ -659,14 +698,61 @@ async function doSearch(){
       return;
     }
     renderSearch(d);
+    loadTickerNews(ticker);
+    loadFundamentals(ticker);
   }catch(e){
     document.getElementById('sp-body').innerHTML=`<div style="padding:24px;color:var(--red);font-family:var(--mono);font-size:0.82rem;grid-column:1/-1">Connection error — is sim_server.py running?</div>`;
   }
 }
 
+async function loadTickerNews(ticker){
+  const el=document.getElementById('sp-news'); if(!el) return;
+  const esc=s=>(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  el.innerHTML='<div class="sp-news-h">Latest news</div><div style="padding:12px 20px;color:var(--dim);font-family:var(--mono);font-size:.74rem">loading news…</div>';
+  try{
+    const d=await (await fetch(`${SIM}/api/find?q=${encodeURIComponent(ticker)}`)).json();
+    const news=(d.news||[]).slice();
+    if(d.whispers&&d.whispers.events){ d.whispers.events.forEach(ev=>(ev.articles||[]).forEach(a=>news.push(a))); }
+    if(!news.length){ el.innerHTML=`<div class="sp-news-h">Latest news</div><div style="padding:12px 20px;color:var(--dim);font-family:var(--mono);font-size:.74rem">No recent news mentioning ${esc(ticker)} in the free feeds right now.</div>`; return; }
+    let h='<div class="sp-news-h">Latest news · '+news.length+'</div>';
+    h+=news.slice(0,12).map(a=>{
+      const link=a.link?`<a href="${esc(a.link)}" target="_blank" rel="noopener" class="sp-news-t">${esc(a.title||a.link)}</a>`:`<span class="sp-news-t">${esc(a.title||'')}</span>`;
+      return `<div class="sp-news-row">${link}<div class="sp-news-m"><span>${esc(a.source||'')}</span>${a.region?'<span>'+esc(a.region)+'</span>':''}${a.desc?'<div class="sp-news-d">'+esc(a.desc)+'</div>':''}</div></div>`;
+    }).join('');
+    el.innerHTML=h;
+  }catch(e){ el.innerHTML='<div class="sp-news-h">Latest news</div><div style="padding:12px 20px;color:var(--red);font-family:var(--mono);font-size:.74rem">news unavailable</div>'; }
+}
+
+async function loadFundamentals(ticker){
+  const el=document.getElementById('sp-extra'); if(!el) return;
+  try{
+    const d=await (await fetch(`${SIM}/api/fundamentals/${encodeURIComponent(ticker)}`)).json();
+    const ins=d.insider, ern=d.earnings;
+    if(!ins && !ern){ el.innerHTML=''; return; }
+    let h='';
+    if(ins){
+      const col=ins.net_shares>=0?'var(--green)':'var(--red)';
+      h+='<div class="sp-news-h">Insider activity · last 90 days</div>'+
+        '<div class="sp-row" style="padding:11px 20px"><span class="sp-key">Buys / Sells</span>'+
+        '<span class="sp-val"><span style="color:var(--green)">'+ins.buys+' buys</span> · <span style="color:var(--red)">'+ins.sells+' sells</span></span></div>'+
+        '<div class="sp-row" style="padding:11px 20px"><span class="sp-key">Net shares</span>'+
+        '<span class="sp-val" style="color:'+col+'">'+(ins.net_shares>=0?'+':'')+ins.net_shares.toLocaleString()+'</span></div>';
+    }
+    if(ern){
+      const sp=ern.surprise_pct, col=(sp||0)>=0?'var(--green)':'var(--red)';
+      h+='<div class="sp-news-h">Last earnings'+(ern.period?' · '+ern.period:'')+'</div>'+
+        '<div class="sp-row" style="padding:11px 20px"><span class="sp-key">Actual vs estimate</span>'+
+        '<span class="sp-val">'+(ern.actual!=null?ern.actual:'—')+' vs '+(ern.estimate!=null?ern.estimate:'—')+'</span></div>'+
+        '<div class="sp-row" style="padding:11px 20px"><span class="sp-key">Surprise</span>'+
+        '<span class="sp-val" style="color:'+col+'">'+(sp!=null?((sp>=0?'+':'')+sp+'%'):'—')+'</span></div>';
+    }
+    el.innerHTML=h;
+  }catch(e){ el.innerHTML=''; }
+}
+
 function renderSearch(d){
   document.getElementById('sp-ticker').textContent=d.ticker;
-  document.getElementById('sp-sub').textContent=`$${d.price}  ·  ${d.chg_pct>=0?'+':''}${d.chg_pct}% today  ·  52w $${d.low_52w||'—'} – $${d.high_52w||'—'}`;
+  document.getElementById('sp-sub').innerHTML=`$${d.price}  ·  ${d.chg_pct>=0?'+':''}${d.chg_pct}% today  ·  52w $${d.low_52w||'—'} – $${d.high_52w||'—'}  ·  <a href="company.html?ticker=${d.ticker}" style="color:var(--teal);text-decoration:none">Full company →</a>`;
   const b=document.getElementById('sp-badge');
   b.textContent=d.signal; b.className='sig-badge '+d.signal.toLowerCase();
 
@@ -737,29 +823,60 @@ async function loadNews(){
   }
 }
 
-function renderNews(sourceFilter){
-  _newsActiveSource = sourceFilter;
+// ── Personalization: a "For You" desk keyed off the saved assessment sectors ──
+const SECTOR_KW={
+  'Tech & AI':['ai','artificial intelligence','chip','semiconductor','software','cloud','nvidia','apple','microsoft','google','alphabet','meta','data center','gpu','openai'],
+  'Energy':['oil','crude','natural gas','opec','energy','solar','renewable','barrel','gasoline','pipeline'],
+  'Healthcare':['health','pharma','drug','fda','medical','hospital','therapy'],
+  'Finance & Banks':['bank','fed ','interest rate','finance','lending','jpmorgan','goldman','credit','mortgage','treasury','rate cut','rate hike'],
+  'Autos & EVs':['ev ','electric vehicle','tesla','automaker','vehicle','rivian','lucid'],
+  'Industrials':['industrial','manufacturing','factory','boeing','defense','aerospace'],
+  'Biotech':['biotech','clinical trial','gene','vaccine','fda approval'],
+  'Media & Entertainment':['media','streaming','netflix','disney','box office','entertainment'],
+  'Consumer & Retail':['retail','consumer','walmart','amazon','shopping','sales'],
+  'Crypto-adjacent':['crypto','bitcoin','ethereum','blockchain','coinbase','stablecoin','token']
+};
+function myNewsSectors(){ try{ const p=JSON.parse(localStorage.getItem('midas_profile')||'null'); return (p&&Array.isArray(p.sectors))?p.sectors:[]; }catch(e){ return []; } }
+function matchesMe(a){
+  const secs=myNewsSectors(); if(!secs.length) return false;
+  const t=((a.title||'')+' '+(a.desc||'')).toLowerCase();
+  return secs.some(s=>{ const k=SECTOR_KW[s]; return k && k.some(w=>t.indexOf(w)>-1); });
+}
+function renderNews(catFilter){
+  catFilter = catFilter || _newsActiveSource || 'ALL';
+  _newsActiveSource = catFilter;
   const c = document.getElementById('panel-news').querySelector('.container');
-  const sources = ['ALL', ...new Set(_newsAllArticles.map(a=>a.source))];
-  const filtered = sourceFilter==='ALL'
-    ? _newsAllArticles
-    : _newsAllArticles.filter(a=>a.source===sourceFilter);
+  const ORDER = ['Markets','Energy & Commodities','Metals & Minerals','Crypto','Macro & World','Underground'];
+  const catOf = a => a.category || 'Markets';
+  const present = new Set(_newsAllArticles.map(catOf));
+  const hasProfile = myNewsSectors().length>0;
+  const matchCount = hasProfile ? _newsAllArticles.filter(matchesMe).length : 0;
+  const cats = ['FORYOU', 'ALL', ...ORDER.filter(x=>present.has(x))];
+  const countOf = x => x==='FORYOU' ? matchCount : (x==='ALL' ? _newsAllArticles.length : _newsAllArticles.filter(a=>catOf(a)===x).length);
+  const filtered = catFilter==='FORYOU' ? _newsAllArticles.filter(matchesMe)
+                 : catFilter==='ALL' ? _newsAllArticles
+                 : _newsAllArticles.filter(a=>catOf(a)===catFilter);
 
-  const filterHtml = `<div class="news-filter-bar">
-    ${sources.map(s=>`<button class="news-filter-btn${s===sourceFilter?' active':''}" onclick="renderNews('${s}')">${s}</button>`).join('')}
+  const deskName = catFilter==='FORYOU' ? 'Your Desk' : catFilter==='ALL' ? 'World Desk' : catFilter+' Desk';
+  const tabs = `<div class="news-filter-bar">
+    ${cats.map(x=>{
+      const lbl = x==='FORYOU' ? 'For you' : x==='ALL' ? 'All' : x;
+      const cnt = (x==='FORYOU' && !hasProfile) ? '' : ' · '+countOf(x);
+      return `<button class="news-filter-btn${x===catFilter?' active':''}" onclick="renderNews('${x.replace(/'/g,"\\'")}')">${lbl}${cnt}</button>`;
+    }).join('')}
   </div>`;
 
   const updTs = new Date().toLocaleTimeString();
-  let html = `<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
-    <div>
-      <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.2em;color:var(--dim);margin-bottom:8px;">LIVE NEWS — ${_newsAllArticles.length} ARTICLES FROM ${sources.length-1} SOURCES · REFRESHED ${updTs}</div>
-      ${filterHtml}
-    </div>
+  let html = `<div class="news-mast"><div class="mn">THE MIDAS WIRE</div><div class="mt">${deskName} · ${filtered.length} stories · ${updTs}</div></div>`;
+  html += `<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin:14px 0 16px;">
+    <div>${tabs}</div>
     <button onclick="_newsLoaded=false;loadNews()" style="background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.16em;color:var(--dim);padding:6px 14px;cursor:pointer;white-space:nowrap;">↻ REFRESH</button>
   </div>`;
 
-  if(!filtered.length){
-    html += '<div class="no-data">NO ARTICLES FOUND</div>';
+  if(catFilter==='FORYOU' && !hasProfile){
+    html += '<div class="no-data">Take the 60-second assessment to build your For You desk. <a href="survey.html" style="color:var(--teal)">Start the assessment →</a></div>';
+  } else if(!filtered.length){
+    html += '<div class="no-data">'+(catFilter==='FORYOU'?'No stories match your interests right now. Check back as the wire updates.':'NO STORIES ON THIS DESK')+'</div>';
   } else {
     html += '<div class="news-grid">';
     filtered.forEach(a=>{
@@ -767,7 +884,7 @@ function renderNews(sourceFilter){
         ? `<a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>`
         : a.title;
       html += `<div class="news-card">
-        <div class="news-source">${a.source}</div>
+        <div class="news-source">${a.source}${(catFilter==='ALL'||catFilter==='FORYOU') && a.category ? ' · '+a.category : ''}</div>
         <div class="news-title">${linkEl}</div>
         ${a.desc ? `<div class="news-desc">${a.desc}</div>` : ''}
         <div class="news-date">${a.pubdate||''}</div>
