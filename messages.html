@@ -96,7 +96,6 @@ function timeAgo(iso){ try{ const s=Math.floor((Date.now()-new Date(iso).getTime
 async function boot(){
   try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
   if(!ME){ $('gate').innerHTML='<div class="muted">Log in to send and read messages. <a href="account.html">Account &rarr;</a></div>'; return; }
-  fetch('/api/notifications/read',{method:'POST'}).then(function(){ if(window.midasPollNotif) window.midasPollNotif(); }).catch(function(){});
   $('dm').style.display='grid';
   await loadInbox();
   const u=qsU(); if(u) openThread(parseInt(u,10));
