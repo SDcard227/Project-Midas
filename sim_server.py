@@ -997,6 +997,15 @@ def api_comments():
         data = request.get_json(silent=True) or {}
         res = comments.add_comment(user, data.get("event_id"), data.get("ticker"),
                                    data.get("text"), parent_id=data.get("parent_id"))
+        if res.get("ok") and data.get("parent_id"):
+            try:
+                from brain import notifications
+                pa = comments.author_of(int(data["parent_id"]))
+                if pa and pa.get("user_id") and pa["user_id"] != user["id"]:
+                    notifications.push(pa["user_id"], "reply",
+                                       f"{user['name']} replied to your take", "gossip.html")
+            except Exception:
+                pass
         return jsonify(res), (400 if res.get("error") else 200)
     eid = request.args.get("event_id")
     tk  = request.args.get("ticker")
@@ -1450,6 +1459,8 @@ def api_parlor_resolve():
         return jsonify({"error": "Admin only."}), 403
     data = request.get_json(silent=True) or {}
     res = parlor.resolve_market(int(data.get("market_id", 0)), data.get("outcome"))
+    if not res.get("error"):
+        _notify_bet_settled(res)
     return jsonify(res), (400 if res.get("error") else 200)
 
 
@@ -1782,6 +1793,23 @@ def api_score_outcomes():
     return jsonify({"scored": _score_outcomes(min_age_hours=float(request.args.get("min_age", 24)))})
 
 
+def _notify_bet_settled(res):
+    """Ping each bettor when their Parlor market settles (skip voids/refunds)."""
+    if not res or res.get("voided"):
+        return
+    try:
+        from brain import notifications
+        q = (res.get("question") or "your market")[:64]
+        for b in res.get("bettors", []):
+            d = b.get("delta", 0)
+            verb = "won" if d > 0 else ("lost" if d < 0 else "pushed")
+            sign = "+" if d >= 0 else ""
+            notifications.push(b["user_id"], "parlor",
+                               f"Your bet on “{q}” {verb}: {sign}{d} ₿", "parlor.html")
+    except Exception:
+        pass
+
+
 def _parlor_autoresolve():
     """Settle price-backed Parlor markets whose close time has passed, off the Alpaca
     feed. Graceful: no key / no data -> the market just waits for the house."""
@@ -1801,7 +1829,7 @@ def _parlor_autoresolve():
             outcome = parlor.eval_rule(m["rule"], list(closes),
                                        threshold=m.get("threshold"), closes2=closes2)
             if outcome in ("yes", "no"):
-                parlor.resolve_market(m["id"], outcome)
+                _notify_bet_settled(parlor.resolve_market(m["id"], outcome))
                 done += 1
         except Exception as e:
             _log.warning(f"Parlor auto-resolve {m.get('id')}: {e}")

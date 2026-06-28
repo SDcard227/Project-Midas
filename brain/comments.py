@@ -108,6 +108,14 @@ def add_comment(user, event_id, ticker, text, parent_id=None):
             "parent_id": parent_id, "nudge": crowd_nudge(event_id)}
 
 
+def author_of(comment_id):
+    """The author user_id (+ a short snippet) of a comment, for reply notifications."""
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT user_id, text FROM comments WHERE id=?", (comment_id,)).fetchone()
+    return {"user_id": r["user_id"], "text": (r["text"] or "")[:60]} if r else None
+
+
 def vote(user_id, comment_id, direction="up"):
     """Up OR down vote. One vote per user per comment; voting the same way again
     toggles it off, the other way flips it. Counts are recomputed from the vote
