@@ -40,6 +40,36 @@ except Exception:
     _pg = None
 
 
+# Tables whose primary key is NOT a column named `id`, so `RETURNING id` is invalid.
+_NO_ID_TABLES = {"user_rep", "parlor_wallet", "comment_votes", "follows", "dm_blocks"}
+# For `INSERT OR REPLACE`, the conflict column to upsert on (Postgres ON CONFLICT).
+_UPSERT_CONFLICT = {"user_rep": "user_id"}
+
+
+def _insert_table(s):
+    m = re.match(r"\s*INSERT(?:\s+OR\s+\w+)?\s+INTO\s+(\w+)", s, re.I)
+    return m.group(1).lower() if m else ""
+
+
+def _pg_upsert(s):
+    """'INSERT OR REPLACE/IGNORE INTO t (cols) ...' -> Postgres ON CONFLICT upsert.
+    Returns the rewritten SQL, or None if `s` isn't an OR REPLACE/IGNORE insert."""
+    m = re.match(r"\s*INSERT\s+OR\s+(REPLACE|IGNORE)\s+INTO\s+(\w+)\s*\(([^)]*)\)(.*)",
+                 s, re.I | re.S)
+    if not m:
+        return None
+    kind, table, cols, rest = m.group(1).upper(), m.group(2), m.group(3), m.group(4)
+    base = f"INSERT INTO {table} ({cols}){rest}".rstrip().rstrip(";")
+    conflict = _UPSERT_CONFLICT.get(table.lower())
+    if kind == "IGNORE":
+        return base + (f" ON CONFLICT ({conflict}) DO NOTHING" if conflict else " ON CONFLICT DO NOTHING")
+    if not conflict:
+        return None
+    sets = ", ".join(f"{c.strip()}=EXCLUDED.{c.strip()}"
+                     for c in cols.split(",") if c.strip() != conflict)
+    return base + f" ON CONFLICT ({conflict}) DO UPDATE SET {sets}"
+
+
 def translate(sql):
     """SQLite SQL -> Postgres SQL. Pure function so it can be unit-tested."""
     m = re.match(r"\s*PRAGMA\s+table_info\((\w+)\)\s*;?\s*$", sql, re.I)
@@ -48,8 +78,14 @@ def translate(sql):
                 "WHERE table_name = %s", m.group(1).lower())
     s = sql.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
     s = s.replace("AUTOINCREMENT", "")
+    up = _pg_upsert(s)                 # INSERT OR REPLACE/IGNORE -> ON CONFLICT
+    if up is not None:
+        s = up
     s = s.replace("?", "%s")
-    if s.lstrip()[:6].upper() == "INSERT" and "RETURNING" not in s.upper():
+    # `RETURNING id` only for INSERTs into tables that actually have an `id` column,
+    # and never on an upsert.
+    if (s.lstrip()[:6].upper() == "INSERT" and "RETURNING" not in s.upper()
+            and "ON CONFLICT" not in s.upper() and _insert_table(s) not in _NO_ID_TABLES):
         s = s.rstrip().rstrip(";") + " RETURNING id"
     return (s, None)
 

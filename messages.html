@@ -109,7 +109,7 @@ async function loadInbox(){
       '<div class="convo'+(ACTIVE===cv.other_id?' active':'')+'" onclick="openThread('+cv.other_id+')">'+
         '<div class="cn">'+esc(cv.name)+(cv.unread?'<span class="badge">'+cv.unread+'</span>':'')+'</div>'+
         '<div class="cl">'+esc(cv.last)+'</div></div>').join('') || '<div class="muted">No conversations yet.</div>';
-  }catch(e){}
+  }catch(e){ $('ilist').innerHTML='<div class="muted">Could not load conversations.</div>'; }
 }
 
 async function openThread(other){

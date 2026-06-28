@@ -157,6 +157,12 @@ def create_market(question, ticker="", rule="", closes_at="", category="",
     except (TypeError, ValueError):
         threshold = None
     closes_at = (closes_at or "") or _default_close(rule)   # auto close time for auto-rules
+    if rule in ("above_price", "below_price") and threshold is None:
+        return {"error": "An above/below-price market needs a price threshold."}
+    if rule == "beats" and not (ticker2 or "").strip():
+        return {"error": "A head-to-head race needs a second ticker."}
+    if closes_at and closes_at <= _now():
+        return {"error": "Close time must be in the future."}
     init_db()
     with _conn() as c:
         cur = c.execute(
@@ -188,6 +194,10 @@ def place_bet(user_id, market_id, side, stake):
             return {"error": "No such market."}
         if m["status"] != "open":
             return {"error": "Betting on this market is closed."}
+        opp = "no" if side == "yes" else "yes"
+        if c.execute("SELECT 1 AS x FROM parlor_bets WHERE market_id=? AND user_id=? AND side=?",
+                     (market_id, user_id, opp)).fetchone():
+            return {"error": "You already backed the other side — no hedging both ways."}
         if bal < stake:
             return {"error": "Not enough Bucks for that stake."}
         _adjust(c, user_id, -stake)
@@ -211,6 +221,12 @@ def resolve_market(market_id, outcome):
             return {"error": "Market already resolved."}
         question = m["question"]
         deltas = {}   # user_id -> net Bucks change (for settle notifications)
+        # claim the market atomically so a double-click or the autoresolver racing the
+        # admin can't both pay out (the WHERE status='open' makes only one win the claim)
+        claim = c.execute("UPDATE parlor_markets SET status='resolved', outcome=? WHERE id=? AND status='open'",
+                          (outcome, market_id))
+        if getattr(claim, "rowcount", 1) == 0:
+            return {"error": "Market already resolved."}
         bets = c.execute("SELECT * FROM parlor_bets WHERE market_id=? AND settled=0",
                          (market_id,)).fetchall()
         yes_pool = sum(b["stake"] for b in bets if b["side"] == "yes")
@@ -228,19 +244,23 @@ def resolve_market(market_id, outcome):
                 c.execute("UPDATE parlor_bets SET payout=?, settled=1 WHERE id=?",
                           (b["stake"], b["id"]))
         else:
+            wins_b = [b for b in bets if b["side"] == outcome]
+            n, running = len(wins_b), 0
+            for i, b in enumerate(wins_b):
+                # floor each share; the last winner gets the exact remainder, so the
+                # pool is conserved (no Bucks minted or destroyed by rounding)
+                share = (total - running) if i == n - 1 else \
+                        (int(b["stake"] / win_pool * total) if win_pool else b["stake"])
+                running += share
+                _adjust(c, b["user_id"], share)
+                c.execute("UPDATE parlor_bets SET payout=?, settled=1 WHERE id=?", (share, b["id"]))
+                paid += share
+                deltas[b["user_id"]] = deltas.get(b["user_id"], 0) + (share - b["stake"])
             for b in bets:
-                if b["side"] == outcome:
-                    share = int(round(b["stake"] / win_pool * total)) if win_pool else b["stake"]
-                    _adjust(c, b["user_id"], share)
-                    c.execute("UPDATE parlor_bets SET payout=?, settled=1 WHERE id=?",
-                              (share, b["id"]))
-                    paid += share
-                    deltas[b["user_id"]] = deltas.get(b["user_id"], 0) + (share - b["stake"])
-                else:
+                if b["side"] != outcome:
                     c.execute("UPDATE parlor_bets SET payout=0, settled=1 WHERE id=?", (b["id"],))
                     deltas[b["user_id"]] = deltas.get(b["user_id"], 0) - b["stake"]
-        c.execute("UPDATE parlor_markets SET status='resolved', outcome=? WHERE id=?",
-                  (outcome, market_id))
+        # market was already claimed/marked resolved at the top of the transaction
     return {"market_id": market_id, "outcome": outcome, "total_pool": total,
             "winners": len(winners), "paid": paid, "voided": voided,
             "question": question,

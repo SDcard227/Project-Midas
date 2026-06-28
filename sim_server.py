@@ -43,8 +43,15 @@ except Exception as _e:
 def index():
     return send_from_directory(BASE, "index.html")
 
+_STATIC_OK = {".html", ".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".webp", ".ico",
+              ".svg", ".json", ".txt", ".woff", ".woff2", ".webmanifest", ".map"}
+
+
 @app.route("/<path:filename>")
 def static_files(filename):
+    # Allowlist asset extensions only — never serve .db, .env, .py, .log, etc. from the repo root.
+    if os.path.splitext(filename)[1].lower() not in _STATIC_OK:
+        return ("Not found", 404)
     return send_from_directory(BASE, filename)
 
 
@@ -1594,6 +1601,8 @@ def api_health():
 def api_rate():
     """Crowd review: a user rates a source reliable or not. Feeds the trust model.
     Body: {"source": "r/wallstreetbets", "helpful": true}"""
+    if not _current_user():
+        return jsonify({"error": "Log in to rate sources."}), 401
     data = request.get_json(silent=True) or {}
     source = (data.get("source") or "").strip()
     if not source:
