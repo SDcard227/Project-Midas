@@ -18,6 +18,7 @@
     + 'border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;'
     + 'backdrop-filter:blur(4px);cursor:pointer}'
     + '#midas-fwd:hover{color:#1e1a14;border-color:#1e1a14}'
+    + '#midas-back.nav-off,#midas-fwd.nav-off{opacity:.32;pointer-events:none;cursor:default}'
     + '@media(max-width:760px){#midas-fwd{top:64px;right:10px;font-size:.56rem;padding:4px 8px}}'
     + '.midas-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);z-index:9999;background:#1e1a14;color:#f5f0e8;font-family:"Share Tech Mono",monospace;font-size:.78rem;letter-spacing:.03em;padding:11px 18px;border-radius:4px;box-shadow:0 8px 28px rgba(0,0,0,.25);opacity:0;transition:opacity .25s,transform .25s;max-width:90vw;text-align:center}'
     + '.midas-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}'
@@ -78,6 +79,22 @@
     }
   })();
 
+  // Grey Back/Forward when there's nowhere to go. The Navigation API (canGoBack/
+  // canGoForward) is exact where supported; we fall back to history.length for Back,
+  // and hide Forward when it can't be detected (a dead Forward button is worse than none).
+  window.midasNavState = function () {
+    var back = document.getElementById('midas-back');
+    var fwd  = document.getElementById('midas-fwd');
+    var nv   = window.navigation;
+    var canBack = (nv && typeof nv.canGoBack === 'boolean') ? nv.canGoBack : (history.length > 1);
+    if (back) back.classList.toggle('nav-off', !canBack);
+    if (fwd) {
+      if (nv && typeof nv.canGoForward === 'boolean') { fwd.style.display = ''; fwd.classList.toggle('nav-off', !nv.canGoForward); }
+      else { fwd.style.display = 'none'; }
+    }
+  };
+  window.addEventListener('pageshow', function () { if (window.midasNavState) window.midasNavState(); });
+
   // 4) Forward button (mirrors Back) + a Settings gear in the nav (reachable everywhere).
   document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('midas-fwd')) {
@@ -104,5 +121,6 @@
         nav.insertBefore(li, cta.parentElement);
       else nav.appendChild(li);
     }
+    window.midasNavState();
   });
 })();
