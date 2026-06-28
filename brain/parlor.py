@@ -224,19 +224,46 @@ def user_bets(user_id):
                  "status": r["m_status"], "outcome": r["m_outcome"]} for r in rows]
 
 
-def leaderboard(limit=20):
+def leaderboard(limit=20, sort="rich"):
+    """Rank players. sort='rich' (by Bucks) or 'sharp' (win-rate, min 3 decided bets) —
+    the Sharpest board is the skill signal, not just who started with the most left."""
     init_db()
     with _conn() as c:
-        rows = c.execute("SELECT user_id, credits FROM parlor_wallet ORDER BY credits DESC LIMIT ?",
-                         (limit,)).fetchall()
+        wallets = c.execute("SELECT user_id, credits FROM parlor_wallet").fetchall()
         out = []
-        for w in rows:
+        for w in wallets:
             settled = c.execute("SELECT payout, stake FROM parlor_bets WHERE user_id=? AND settled=1",
                                 (w["user_id"],)).fetchall()
-            wins = sum(1 for b in settled if (b["payout"] or 0) > b["stake"])
-            out.append({"user_id": w["user_id"], "credits": w["credits"],
-                        "bets": len(settled), "wins": wins})
-    return out
+            wins   = sum(1 for b in settled if (b["payout"] or 0) > b["stake"])
+            losses = sum(1 for b in settled if (b["payout"] or 0) < b["stake"])
+            decided = wins + losses
+            out.append({"user_id": w["user_id"], "credits": w["credits"], "bets": len(settled),
+                        "wins": wins, "decided": decided,
+                        "win_rate": round(wins / decided * 100) if decided else None,
+                        "net": w["credits"] - START_CREDITS})
+    if sort == "sharp":
+        out = [r for r in out if r["decided"] >= 3]
+        out.sort(key=lambda x: (x["win_rate"] or 0, x["net"]), reverse=True)
+    else:
+        out.sort(key=lambda x: x["credits"], reverse=True)
+    return out[:limit]
+
+
+def record(user_id):
+    """A user's Parlor track record (settled bets only) — their credibility signal."""
+    init_db()
+    with _conn() as c:
+        rows = c.execute("SELECT stake, payout FROM parlor_bets WHERE user_id=? AND settled=1",
+                         (user_id,)).fetchall()
+        w = c.execute("SELECT credits FROM parlor_wallet WHERE user_id=?", (user_id,)).fetchone()
+    wins   = sum(1 for r in rows if (r["payout"] or 0) > r["stake"])
+    losses = sum(1 for r in rows if (r["payout"] or 0) < r["stake"])
+    voids  = sum(1 for r in rows if (r["payout"] or 0) == r["stake"])
+    decided = wins + losses
+    credits = w["credits"] if w else START_CREDITS
+    return {"bets": len(rows), "wins": wins, "losses": losses, "voids": voids,
+            "win_rate": round(wins / decided * 100) if decided else None,
+            "net": credits - START_CREDITS, "credits": credits}
 
 
 # ── auto-resolution (price-backed rules) ─────────────────────────────────────

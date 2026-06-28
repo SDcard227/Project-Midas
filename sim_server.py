@@ -1394,7 +1394,8 @@ def api_parlor_me():
     u = _current_user()
     if not u:
         return jsonify({"error": "Log in to play."}), 401
-    return jsonify({"balance": parlor.get_balance(u["id"]), "bets": parlor.user_bets(u["id"])})
+    return jsonify({"balance": parlor.get_balance(u["id"]), "bets": parlor.user_bets(u["id"]),
+                    "record": parlor.record(u["id"])})
 
 
 @app.route("/api/parlor/bet", methods=["POST"])
@@ -1411,7 +1412,7 @@ def api_parlor_bet():
 @app.route("/api/parlor/leaderboard")
 def api_parlor_leaderboard():
     from brain import parlor, accounts
-    rows = parlor.leaderboard()
+    rows = parlor.leaderboard(sort=request.args.get("sort", "rich"))
     for r in rows:
         u = accounts.get_user(r["user_id"])
         r["name"] = u["name"] if u else "Anon"

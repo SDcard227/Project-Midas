@@ -106,29 +106,23 @@
       a.onclick = function (e) { e.preventDefault(); history.forward(); };
       document.body.appendChild(a);
     }
-    var nav = document.querySelector('nav .nav-links');
-    if (nav && !nav.querySelector('a[href="parlor.html"]')) {   // the new flagship — reachable everywhere
-      var pli = document.createElement('li');
-      var pa = document.createElement('a');
-      pa.href = 'parlor.html'; pa.textContent = 'The Parlor';
-      pli.appendChild(pa);
-      var pcta = nav.querySelector('.nav-cta');
-      if (pcta && pcta.parentElement && pcta.parentElement.tagName === 'LI') nav.insertBefore(pli, pcta.parentElement);
-      else nav.appendChild(pli);
-    }
-    if (nav && !nav.querySelector('.midas-gear')) {
-      var li = document.createElement('li');
-      var g = document.createElement('a');
-      g.href = 'settings.html';
-      g.className = 'midas-gear';
-      g.title = 'Settings';
-      g.innerHTML = '&#9881;';
-      g.style.fontSize = '1.1rem';
-      li.appendChild(g);
-      var cta = nav.querySelector('.nav-cta');
-      if (cta && cta.parentElement && cta.parentElement.tagName === 'LI')
-        nav.insertBefore(li, cta.parentElement);
-      else nav.appendChild(li);
+    // Canonical nav — render the SAME bar on every page (active link auto-detected by
+    // URL) so the per-page hardcoded navs can never drift apart again.
+    var links = document.querySelector('nav .nav-links');
+    if (links) {
+      var path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
+      var NAV = [
+        ['intelligence.html', 'Signals'], ['whispers.html', 'The Wire'],
+        ['gossip.html', 'The Floor'], ['parlor.html', 'The Parlor'],
+        ['pit.html', 'The Pit'], ['funnies.html', 'The Funnies'],
+        ['practice.html', 'Replay']
+      ];
+      var html = NAV.map(function (n) {
+        return '<li><a href="' + n[0] + '"' + (n[0] === path ? ' class="active"' : '') + '>' + n[1] + '</a></li>';
+      }).join('');
+      html += '<li><a href="account.html" class="nav-cta' + (path === 'account.html' ? ' active' : '') + '">Account</a></li>';
+      html += '<li><a href="settings.html" class="midas-gear" title="Settings" style="font-size:1.1rem">&#9881;</a></li>';
+      links.innerHTML = html;
     }
     window.midasNavState();
   });
