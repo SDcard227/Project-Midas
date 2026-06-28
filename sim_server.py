@@ -869,6 +869,27 @@ def api_room_messages(room_id):
     return jsonify(chat.list_messages(room_id, after))
 
 
+@app.route("/api/rooms/<int:room_id>/plays", methods=["GET", "POST"])
+def api_room_plays(room_id):
+    from brain import chat
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to add a play."}), 401
+        data = request.get_json(silent=True) or {}
+        res = chat.add_play(user, room_id, data.get("ticker"), data.get("note"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    return jsonify({"plays": chat.list_plays(room_id)})
+
+
+@app.route("/api/rooms/<int:room_id>/plays/<int:play_id>", methods=["DELETE"])
+def api_room_play_del(room_id, play_id):
+    from brain import chat
+    if not _current_user():
+        return jsonify({"error": "Log in."}), 401
+    return jsonify(chat.remove_play(room_id, play_id))
+
+
 # ── BILLING — Stripe subscriptions (graceful if unconfigured) ────────────────
 @app.route("/api/billing/status")
 def api_billing_status():
@@ -1323,6 +1344,63 @@ def _rep_rescore_loop():
         _time.sleep(1800)   # ~30 minutes between cycles
 
 
+def _move_since(ticker, since_iso):
+    """Percent price move for `ticker` from around `since_iso` to the latest close."""
+    key, sec = os.getenv("ALPACA_API_KEY"), os.getenv("ALPACA_SECRET_KEY")
+    if not (key and sec):
+        return None
+    try:
+        from alpaca.data.historical import StockHistoricalDataClient
+        from alpaca.data.requests import StockBarsRequest
+        from alpaca.data.timeframe import TimeFrame
+        start = _dt.fromisoformat(str(since_iso).replace("Z", "").split("+")[0])
+        client = StockHistoricalDataClient(key, sec)
+        req = StockBarsRequest(symbol_or_symbols=ticker, timeframe=TimeFrame.Day, start=start)
+        data = client.get_stock_bars(req).data.get(ticker, [])
+        if len(data) < 2:
+            return None
+        base, last = float(data[0].close), float(data[-1].close)
+        return round((last - base) / base * 100, 2) if base else None
+    except Exception:
+        return None
+
+
+def _score_outcomes(max_n=25, min_age_hours=24):
+    """Grade aged whispers against the real move so the ledger learns which sources
+    were right (their next whispers then carry more confidence). Returns count scored."""
+    try:
+        from brain.signal_ledger import SignalLedger
+        led = SignalLedger()
+        scored = 0
+        for eid, ticker, first_seen in led.scoreable(min_age_hours=min_age_hours, limit=max_n):
+            mv = _move_since(ticker, first_seen)
+            if mv is None:
+                continue
+            led.record_outcome(eid, mv)
+            scored += 1
+        if scored:
+            _log.info(f"outcome loop: scored {scored} past whisper(s)")
+        return scored
+    except Exception as e:
+        _log.warning(f"outcome loop error: {e}")
+        return 0
+
+
+def _score_outcomes_loop():
+    while True:
+        try:
+            _score_outcomes()
+        except Exception:
+            pass
+        _time.sleep(3600)   # hourly — outcomes don't change fast
+
+
+@app.route("/api/score-outcomes", methods=["POST"])
+def api_score_outcomes():
+    """Manual trigger for the confidence outcome-loop (also runs hourly in the background)."""
+    return jsonify({"scored": _score_outcomes(min_age_hours=float(request.args.get("min_age", 24)))})
+
+
 try:
     _threading.Thread(target=_prewarm, daemon=True).start()
 except Exception as _e:
@@ -1331,6 +1409,12 @@ except Exception as _e:
 
 try:
     _threading.Thread(target=_rep_rescore_loop, daemon=True).start()
+except Exception as _e:
+    pass
+
+
+try:
+    _threading.Thread(target=_score_outcomes_loop, daemon=True).start()
 except Exception as _e:
     pass
 

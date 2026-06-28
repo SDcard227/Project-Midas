@@ -37,6 +37,15 @@ def init_db():
             text       TEXT NOT NULL,
             created_at TEXT NOT NULL
         )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS room_plays (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            room_id    INTEGER NOT NULL,
+            ticker     TEXT NOT NULL,
+            note       TEXT,
+            added_by   TEXT,
+            user_id    INTEGER,
+            created_at TEXT NOT NULL
+        )""")
         if not c.execute("SELECT COUNT(*) AS n FROM rooms").fetchone()["n"]:
             for nm, tp in [("Market Open", "Pre-bell game plan + overnight news"),
                            ("Earnings Season", "Reactions + setups around prints"),
@@ -100,3 +109,37 @@ def list_messages(room_id, after=0, limit=120):
             "user_id": r["user_id"], "rep": reps.get(r["user_id"]),
             "created_at": r["created_at"]} for r in rows]
     return {"messages": out, "last_id": (out[-1]["id"] if out else after)}
+
+
+# ── Group plays: a shared watchlist per room (watching together, not pooling money) ──
+def list_plays(room_id):
+    init_db()
+    with _conn() as c:
+        rows = c.execute("SELECT * FROM room_plays WHERE room_id=? ORDER BY id DESC",
+                         (room_id,)).fetchall()
+    return [{"id": r["id"], "ticker": r["ticker"], "note": r["note"],
+             "added_by": r["added_by"], "created_at": r["created_at"]} for r in rows]
+
+
+def add_play(user, room_id, ticker, note=""):
+    ticker = (ticker or "").upper().strip().replace("$", "")[:8]
+    if not ticker or not ticker.isalnum():
+        return {"error": "Enter a ticker, e.g. NVDA."}
+    init_db()
+    with _conn() as c:
+        ex = c.execute("SELECT id FROM room_plays WHERE room_id=? AND ticker=?",
+                       (room_id, ticker)).fetchone()
+        if ex:
+            return {"ok": True, "id": ex["id"], "already": True}
+        cur = c.execute(
+            "INSERT INTO room_plays (room_id,ticker,note,added_by,user_id,created_at) VALUES (?,?,?,?,?,?)",
+            (room_id, ticker, (note or "").strip()[:120], user.get("name") or "user",
+             user["id"], datetime.now(timezone.utc).isoformat()))
+    return {"ok": True, "id": cur.lastrowid}
+
+
+def remove_play(room_id, play_id):
+    init_db()
+    with _conn() as c:
+        c.execute("DELETE FROM room_plays WHERE id=? AND room_id=?", (play_id, room_id))
+    return {"ok": True}

@@ -66,6 +66,15 @@
     .muted{font-family:var(--mono);font-size:.78rem;color:var(--dim);text-align:center;padding:24px}
     .login-row{border-top:1px solid var(--border);padding:14px 16px;font-family:var(--mono);font-size:.76rem;color:var(--mid);text-align:center}
     .login-row a{color:var(--teal)}
+    .plays{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+    .plays:empty{display:none}
+    .pl-label{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-right:2px}
+    .play-chip{font-family:var(--mono);font-size:.66rem;background:var(--card);border:1px solid var(--border2);padding:3px 8px;border-radius:2px;display:inline-flex;align-items:center;gap:5px}
+    .play-chip a{color:var(--teal);text-decoration:none;font-weight:600}
+    .play-chip .x{color:var(--dim);cursor:pointer}
+    .play-chip .x:hover{color:var(--red)}
+    .play-add{font-family:var(--mono);font-size:.62rem;background:transparent;border:1px dashed var(--border2);color:var(--mid);padding:3px 8px;cursor:pointer;border-radius:2px}
+    .play-add:hover{border-color:var(--text);color:var(--text)}
   </style>
 </head>
 <body>
@@ -102,6 +111,7 @@
 
       <div class="chat">
         <div class="chat-h" id="chat-h"><span class="cn">Pick a room</span></div>
+        <div class="plays" id="plays"></div>
         <div class="msgs" id="msgs"><div class="muted">Choose a room on the left to jump in.</div></div>
         <div id="composer-wrap"></div>
       </div>
@@ -148,7 +158,7 @@ async function openRoom(id){
   $('chat-h').innerHTML='<span class="cn">'+esc(ACTIVE.name)+'</span>'+(ACTIVE.topic?' <span class="ct">· '+esc(ACTIVE.topic)+'</span>':'');
   $('msgs').innerHTML='<div class="muted">loading…</div>';
   document.querySelectorAll('.room').forEach(el=>el.classList.remove('active'));
-  loadRooms(); renderComposer();
+  loadRooms(); renderComposer(); loadPlays();
   await poll(true);
   if(POLL) clearInterval(POLL);
   POLL=setInterval(()=>poll(false), 4000);
@@ -175,6 +185,29 @@ async function poll(initial){
   }catch(e){}
 }
 function openProfileSafe(uid){ if(uid) location.href='leaderboard.html'; }
+async function loadPlays(){
+  if(!ACTIVE){ $('plays').innerHTML=''; return; }
+  try{
+    const d=await (await fetch('/api/rooms/'+ACTIVE.id+'/plays')).json();
+    const plays=d.plays||[];
+    let h=plays.length?'<span class="pl-label">Room watchlist</span>':'';
+    h+=plays.map(p=>'<span class="play-chip"><a href="company.html?ticker='+esc(p.ticker)+'">$'+esc(p.ticker)+'</a>'+
+      (ME?'<span class="x" onclick="removePlay('+p.id+')">&times;</span>':'')+'</span>').join('');
+    if(ME) h+='<button class="play-add" onclick="addPlay()">+ ticker</button>';
+    $('plays').innerHTML=h;
+  }catch(e){}
+}
+async function addPlay(){
+  const t=prompt('Add a ticker to the room watchlist (e.g. NVDA):'); if(!t) return;
+  try{
+    const r=await (await fetch('/api/rooms/'+ACTIVE.id+'/plays',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker:t})})).json();
+    if(r.error){ if(window.midasToast) midasToast(r.error,'error'); return; }
+    loadPlays();
+  }catch(e){}
+}
+async function removePlay(id){
+  try{ await fetch('/api/rooms/'+ACTIVE.id+'/plays/'+id,{method:'DELETE'}); loadPlays(); }catch(e){}
+}
 async function send(){
   const inp=$('msg-in'); const text=(inp.value||'').trim(); if(!text) return;
   const btn=$('msg-send'); btn.disabled=true;
