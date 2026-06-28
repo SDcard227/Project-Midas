@@ -41,6 +41,15 @@ def is_blocked(blocker_id, blocked_id):
     return bool(r)
 
 
+def _has_history(a, b):
+    """True if a and b already have a DM between them (an open conversation)."""
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT 1 AS x FROM dm_messages WHERE (from_id=? AND to_id=?)"
+                      " OR (from_id=? AND to_id=?) LIMIT 1", (a, b, b, a)).fetchone()
+    return bool(r)
+
+
 def send(from_id, to_id, body):
     """Send a DM. Returns {'ok':True,'to_id':..} or {'error':..}. Blocked by the
     recipient -> refused. The caller pushes the recipient's notification."""
@@ -58,6 +67,12 @@ def send(from_id, to_id, body):
     init_db()
     if is_blocked(to_id, from_id):
         return {"error": "You can't message this user."}
+    # mutuals-only privacy: only mutual follows can open a NEW conversation
+    from brain import accounts, social
+    recip = accounts.get_user(to_id)
+    if (recip and recip.get("dm_privacy") == "mutuals"
+            and not social.is_mutual(from_id, to_id) and not _has_history(from_id, to_id)):
+        return {"error": "They only take DMs from mutuals , you both have to follow each other."}
     with _conn() as c:
         c.execute("INSERT INTO dm_messages (from_id, to_id, body, created_at) VALUES (?,?,?,?)",
                   (from_id, to_id, body[:2000], _now()))

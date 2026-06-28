@@ -1083,17 +1083,23 @@ def api_profile(user_id):
     u = accounts.get_user(user_id)
     if not u:
         return jsonify({"error": "No such user."}), 404
-    from brain import parlor
+    from brain import parlor, social
     rep = reputation.compute(user_id)   # scores their calls vs real price moves
     port = reputation.portfolio(user_id)
     takes = comments.by_user(user_id, 12)   # their most-upvoted posts
     me = _current_user()
+    is_me = bool(me and me["id"] == user_id)
+    sc = social.counts(user_id)
     return jsonify({"id": u["id"], "name": u["name"], "real_name": u.get("real_name"),
                     "nickname": u.get("nickname"), "verified": u.get("verified"),
                     "bio": u.get("bio", ""), "country": u.get("country", ""),
                     "state": u.get("state", ""), "tier": u["tier"], "joined": u.get("created_at"),
                     "reputation": rep, "portfolio": port, "takes": takes,
-                    "parlor": parlor.record(user_id), "is_me": bool(me and me["id"] == user_id)})
+                    "parlor": parlor.record(user_id), "is_me": is_me,
+                    "followers": sc["followers"], "following": sc["following"],
+                    "i_follow": bool(me and not is_me and social.is_following(me["id"], user_id)),
+                    "mutual": bool(me and not is_me and social.is_mutual(me["id"], user_id)),
+                    "dm_privacy": (u.get("dm_privacy") or "open") if is_me else None})
 
 
 @app.route("/api/leaderboard")
@@ -1515,6 +1521,31 @@ def api_dm_block():
         return jsonify({"error": "Log in first."}), 401
     data = request.get_json(silent=True) or {}
     return jsonify(messages.block(u["id"], data.get("user_id")))
+
+
+# ── FOLLOWS + DM PRIVACY ─────────────────────────────────────────────────────
+@app.route("/api/follow", methods=["POST"])
+def api_follow():
+    from brain import social
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    if (data.get("action") or "follow").lower() == "unfollow":
+        res = social.unfollow(u["id"], data.get("user_id"))
+    else:
+        res = social.follow(u["id"], data.get("user_id"))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/dm-privacy", methods=["POST"])
+def api_dm_privacy():
+    from brain import accounts
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    return jsonify(accounts.set_dm_privacy(u["id"], data.get("value")))
 
 
 # ── NOTIFICATIONS ────────────────────────────────────────────────────────────
