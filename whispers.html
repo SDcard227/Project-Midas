@@ -214,9 +214,11 @@
     </div>
     <div class="wire-sort">
       <span class="ws-label">Sort by:</span>
+      <button class="ws-btn" id="ws-foryou" onclick="setSort('foryou',this)">For you</button>
       <button class="ws-btn active" onclick="setSort('recent',this)">Most recent</button>
       <button class="ws-btn" onclick="setSort('confidence',this)">Confidence</button>
       <button class="ws-btn" onclick="setSort('sources',this)">Most sources</button>
+      <span id="foryou-note" style="font-family:var(--mono);font-size:.58rem;color:var(--dim);"></span>
     </div>
     <div id="wire"><div class="wire-empty">loading the wire…</div></div>
   </div>
@@ -342,9 +344,30 @@ function wireStory(x, lead){
 }
 
 let WIRE_ROWS=[]; let WIRE_SORT='recent'; let GATE={};
+// ── Personalization: tune the wire to the saved assessment profile ──
+const TICKER_SECTOR={
+  AAPL:'Tech & AI',MSFT:'Tech & AI',NVDA:'Tech & AI',GOOGL:'Tech & AI',GOOG:'Tech & AI',
+  AMZN:'Tech & AI',META:'Tech & AI',AMD:'Tech & AI',PLTR:'Tech & AI',CRM:'Tech & AI',AVGO:'Tech & AI',
+  TSLA:'Autos & EVs',RIVN:'Autos & EVs',F:'Autos & EVs',GM:'Autos & EVs',LCID:'Autos & EVs',
+  SOFI:'Finance & Banks',JPM:'Finance & Banks',BAC:'Finance & Banks',V:'Finance & Banks',MA:'Finance & Banks',GS:'Finance & Banks',
+  COIN:'Crypto-adjacent',MSTR:'Crypto-adjacent',MARA:'Crypto-adjacent',RIOT:'Crypto-adjacent',
+  NFLX:'Media & Entertainment',DIS:'Media & Entertainment',WBD:'Media & Entertainment',
+  XOM:'Energy',CVX:'Energy',OXY:'Energy',COP:'Energy',
+  PFE:'Healthcare',JNJ:'Healthcare',UNH:'Healthcare',LLY:'Healthcare',MRNA:'Biotech',BNTX:'Biotech',
+  GME:'Consumer & Retail',WMT:'Consumer & Retail',COST:'Consumer & Retail',NKE:'Consumer & Retail',
+  CAT:'Industrials',BA:'Industrials',GE:'Industrials'
+};
+function myProfile(){ try{ return JSON.parse(localStorage.getItem('midas_profile')||'null'); }catch(e){ return null; } }
+function mySectors(){ const p=myProfile(); return (p&&Array.isArray(p.sectors))?p.sectors:[]; }
+function isMine(t){ const s=TICKER_SECTOR[(t||'').toUpperCase()]; return !!(s && mySectors().indexOf(s)>-1); }
 function sortRows(rows){
   const r=rows.slice();
-  if(WIRE_SORT==='confidence') r.sort((a,b)=>(b.confidence||0)-(a.confidence||0));
+  if(WIRE_SORT==='foryou'){
+    r.sort((a,b)=>{ const ma=isMine(a.ticker)?1:0, mb=isMine(b.ticker)?1:0;
+      if(ma!==mb) return mb-ma;                          // my interests float to the top
+      return (b.confidence||0)-(a.confidence||0); });
+  }
+  else if(WIRE_SORT==='confidence') r.sort((a,b)=>(b.confidence||0)-(a.confidence||0));
   else if(WIRE_SORT==='sources') r.sort((a,b)=>(b.source_count||0)-(a.source_count||0));
   else r.sort((a,b)=>String(b.last_seen||'').localeCompare(String(a.last_seen||''))); // most recent first
   return r;
@@ -360,9 +383,16 @@ function renderWire(){
   wire.innerHTML = html;
 }
 function setSort(key,btn){
+  if(key==='foryou' && !mySectors().length){
+    if(window.midasToast) midasToast('Take the 60-second assessment to tune your feed.');
+    setTimeout(()=>{ location.href='survey.html'; }, 1200);
+    return;
+  }
   WIRE_SORT=key;
   document.querySelectorAll('.wire-sort .ws-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  const note=document.getElementById('foryou-note');
+  if(note) note.textContent = (key==='foryou') ? ('tuned to '+mySectors().join(', ')) : '';
   renderWire();
 }
 async function loadBoard(){
