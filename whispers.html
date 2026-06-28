@@ -98,6 +98,33 @@
     .ws-btn:hover{border-color:var(--text);}
     .ws-btn.active{background:var(--text);color:var(--bg);border-color:var(--text);}
     #wire{margin-top:18px;}
+    .fun-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:15px;margin-bottom:8px}
+    .fun-card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column}
+    .fun-card:hover{box-shadow:0 6px 20px rgba(30,26,20,.12)}
+    .fun-card img{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--surface);display:block}
+    .fun-card .ft{padding:10px 12px;font-size:.82rem;line-height:1.4}
+    .fun-card .fs{padding:0 12px 10px;font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;color:var(--teal)}
+    .fun-h{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin:22px 0 12px}
+    .fun-h h2{font-size:1rem;font-weight:600}
+    .fun-h .fd{font-family:var(--mono);font-size:.56rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+    .fun-btn{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border2);color:var(--mid);padding:6px 13px;cursor:pointer;border-radius:3px}
+    .fun-btn:hover{border-color:var(--text);color:var(--text)}
+    .quips{column-count:3;column-gap:15px}
+    @media(max-width:820px){.quips{column-count:2}}@media(max-width:540px){.quips{column-count:1}}
+    .quip{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:15px 17px;margin-bottom:15px;break-inside:avoid;font-size:.94rem;line-height:1.5}
+    .quip .qt{display:block;font-family:var(--mono);font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-top:8px}
+    .smodal{position:fixed;inset:0;z-index:400;background:rgba(30,26,20,.5);display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:80px 16px}
+    .sbox{background:var(--card);border:1px solid var(--border2);box-shadow:0 20px 60px rgba(30,26,20,.3);max-width:460px;width:100%;padding:24px;position:relative}
+    .sbox h3{font-weight:600;margin-bottom:4px}
+    .sclose{position:absolute;top:12px;right:14px;background:none;border:none;font-size:1.1rem;color:var(--dim);cursor:pointer}
+    .sbox input[type=text],.sbox input[type=file]{width:100%;font-family:var(--title);font-size:.88rem;border:1px solid var(--border2);background:var(--bg);padding:10px 12px;outline:none;color:var(--text);margin-bottom:10px}
+    .post-btn{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:10px 22px;cursor:pointer;border-radius:3px}
+    .fun-admin{background:var(--surface);border:1px solid var(--amber);padding:14px 16px;margin-top:24px}
+    .pend{display:flex;gap:12px;align-items:center;padding:9px 0;border-top:1px solid var(--border)}
+    .pend img{width:70px;height:70px;object-fit:cover;background:var(--card);border:1px solid var(--border)}
+    .pend .pmeta{flex:1;font-size:.82rem}
+    .pa{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;text-transform:uppercase;border:none;padding:5px 11px;cursor:pointer;border-radius:2px;margin-left:5px;color:#fff}
+    .pa.ok{background:var(--green)}.pa.no{background:var(--red)}
     .wire-cols{column-count:3;column-gap:34px;column-rule:1px solid var(--border);margin-top:20px;}
     @media(max-width:880px){.wire-cols{column-count:2;}}
     @media(max-width:560px){.wire-cols{column-count:1;column-rule:none;}}
@@ -218,9 +245,21 @@
       <button class="ws-btn active" onclick="setSort('recent',this)">Most recent</button>
       <button class="ws-btn" onclick="setSort('confidence',this)">Confidence</button>
       <button class="ws-btn" onclick="setSort('sources',this)">Most sources</button>
+      <button class="ws-btn" id="ws-funnies" onclick="setSort('funnies',this)">The Funnies</button>
       <span id="foryou-note" style="font-family:var(--mono);font-size:.58rem;color:var(--dim);"></span>
     </div>
     <div id="wire"><div class="wire-empty">loading the wire…</div></div>
+    <div id="fun-modal" class="smodal" style="display:none" onclick="if(event.target===this)funCloseSubmit()">
+      <div class="sbox">
+        <button class="sclose" onclick="funCloseSubmit()">&#10005;</button>
+        <h3>Submit a comic or artwork</h3>
+        <p style="font-size:.8rem;color:var(--mid);margin-bottom:14px">It joins the Daily Funnies once a human approves it. PNG, JPG, GIF, or WEBP, up to 6MB.</p>
+        <input type="file" id="fun-file" accept="image/png,image/jpeg,image/gif,image/webp">
+        <input type="text" id="fun-caption" maxlength="140" placeholder="Caption (optional)">
+        <button class="post-btn" onclick="funDoSubmit()">Submit for review</button>
+        <div id="fun-msg" style="font-family:var(--mono);font-size:.7rem;color:var(--dim);margin-top:10px;min-height:14px"></div>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -393,8 +432,93 @@ function setSort(key,btn){
   if(btn) btn.classList.add('active');
   const note=document.getElementById('foryou-note');
   if(note) note.textContent = (key==='foryou') ? ('tuned to '+mySectors().join(', ')) : '';
+  if(key==='funnies'){ renderFunnies(); return; }
   renderWire();
 }
+
+// ── The Funnies, folded into the Wire ──
+const FUN_QUIPS=[
+  ["My portfolio is like my houseplants. I check it constantly and somehow it still dies.","cope"],
+  ["Technical analysis: drawing lines until one of them is finally right.","ta"],
+  ["Diversification is just admitting you have no idea which one moons.","wisdom"],
+  ["Buy high, sell low. Wait, let me check my notes.","strategy"],
+  ["The market can stay irrational longer than you can stay solvent. Ask me how I know.","wisdom"],
+  ["Dollar cost averaging: being consistently wrong, but on a schedule.","strategy"],
+  ["HODL: Holding On, Lovingly Delusional.","crypto"],
+  ["My stop loss strategy is closing the app and going for a walk.","risk"],
+  ["Green days I'm a genius. Red days the market is rigged.","cope"],
+  ["I don't have a financial advisor. I have a group chat and bad impulse control.","truth"],
+  ["I bought the dip. Then it kept dipping. I am now the dip.","cope"],
+  ["My cost basis is a state of mind.","truth"],
+  ["I'm not down 40 percent, I'm pre-up 67 percent.","math"],
+  ["The four most expensive words: this time it's different.","wisdom"],
+  ["I have a diversified portfolio: regret across multiple sectors.","truth"],
+  ["My entry was perfect. My exit was a hostage situation.","cope"],
+  ["The trend is your friend until it ghosts you.","wisdom"],
+  ["I set price alerts so I can panic with precision.","risk"],
+  ["A long-term investment is a short-term trade that went wrong.","truth"],
+  ["Bear market: when your portfolio plays dead and means it.","cope"]
+];
+function renderFunnies(){
+  const wire=document.getElementById('wire'); if(!wire) return;
+  wire.innerHTML =
+    '<div class="fun-h"><div><h2>Daily Funnies</h2><span class="fd">comics + art from the community</span></div>'+
+      (ME?'<button class="fun-btn" onclick="funOpenSubmit()">Submit yours</button>':'')+'</div>'+
+    '<div class="fun-gal" id="fun-community"><div class="wire-empty">loading the gallery…</div></div>'+
+    '<div class="fun-h"><div><h2>Trading wisdom</h2><span class="fd">handpicked</span></div><button class="fun-btn" onclick="funShuffle()">Shuffle</button></div>'+
+    '<div class="quips" id="fun-quips"></div>'+
+    '<div class="fun-h"><div><h2>From the wild</h2><span class="fd">straight off the subreddits</span></div></div>'+
+    '<div class="fun-gal" id="fun-memes"><div class="wire-empty">loading the internet…</div></div>'+
+    '<div id="fun-admin"></div>';
+  funShuffle(); funLoadFeatured(); funLoadMemes();
+  if(ME && ME.is_admin) funLoadAdmin();
+}
+function funShuffle(){
+  const a=FUN_QUIPS.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  const q=document.getElementById('fun-quips'); if(q) q.innerHTML=a.slice(0,12).map(x=>'<div class="quip">'+esc(x[0])+'<span class="qt">'+esc(x[1])+'</span></div>').join('');
+}
+async function funLoadFeatured(){
+  try{
+    const items=((await (await fetch('/api/funnies/featured')).json()).items)||[];
+    const el=document.getElementById('fun-community'); if(!el) return;
+    el.innerHTML=items.length?items.map(m=>
+      '<div class="fun-card"><img src="/uploads/'+esc(m.filename)+'" loading="lazy" onerror="this.style.display=\'none\'"><div class="ft">'+(m.caption?esc(m.caption):'<span style="color:var(--dim)">untitled</span>')+'</div><div class="fs">by '+esc(m.author)+'</div></div>').join('')
+      :'<div class="wire-empty">No community art yet. Submit a comic and be first.</div>';
+  }catch(e){}
+}
+async function funLoadMemes(){
+  try{
+    const items=(((await (await fetch('/api/funnies')).json()).items)||[]).filter(x=>x.title && !/\b(thread|discussion|daily|weekly|moves? tomorrow|what are your)\b/i.test(x.title));
+    const el=document.getElementById('fun-memes'); if(!el) return;
+    el.innerHTML=items.length?items.map(m=>
+      '<a class="fun-card" href="'+esc(m.link)+'" target="_blank" rel="noopener">'+(m.thumb?'<img src="'+esc(m.thumb)+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<div class="ft">'+esc(m.title)+'</div><div class="fs">'+esc(m.source)+'</div></a>').join('')
+      :'<div class="wire-empty">The internet is quiet. The wisdom above never sleeps.</div>';
+  }catch(e){}
+}
+function funOpenSubmit(){ if(!ME){ location.href='account.html'; return; } document.getElementById('fun-modal').style.display='flex'; }
+function funCloseSubmit(){ document.getElementById('fun-modal').style.display='none'; }
+async function funDoSubmit(){
+  const file=document.getElementById('fun-file').files[0], m=document.getElementById('fun-msg');
+  if(!file){ m.style.color='var(--red)'; m.textContent='Pick an image first.'; return; }
+  const fd=new FormData(); fd.append('image',file); fd.append('caption',document.getElementById('fun-caption').value||'');
+  try{
+    const r=await (await fetch('/api/funnies/submit',{method:'POST',body:fd})).json();
+    if(r.error){ m.style.color='var(--red)'; m.textContent=r.error; return; }
+    m.style.color='var(--green)'; m.textContent=r.message||'Submitted!';
+    document.getElementById('fun-file').value=''; document.getElementById('fun-caption').value=''; setTimeout(funCloseSubmit,1900);
+  }catch(e){ m.style.color='var(--red)'; m.textContent='Submit failed.'; }
+}
+async function funLoadAdmin(){
+  try{
+    const d=await (await fetch('/api/funnies/pending')).json(); if(d.error) return;
+    const items=d.items||[], p=document.getElementById('fun-admin'); if(!p) return;
+    p.className='fun-admin';
+    p.innerHTML='<h2 style="font-size:.95rem;font-weight:600;margin-bottom:5px">Moderation queue ('+items.length+')</h2>'+
+      (items.length?items.map(s=>'<div class="pend"><img src="/uploads/'+esc(s.filename)+'"><div class="pmeta">'+esc(s.caption||'untitled')+'<div style="font-family:var(--mono);font-size:.58rem;color:var(--dim)">by '+esc(s.author)+'</div></div><button class="pa ok" onclick="funModerate('+s.id+',\'approve\')">Approve</button><button class="pa no" onclick="funModerate('+s.id+',\'reject\')">Reject</button></div>').join(''):'<div class="wire-empty" style="padding:6px 0">Queue empty.</div>');
+  }catch(e){}
+}
+async function funModerate(id,action){ try{ await fetch('/api/funnies/moderate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,action})}); funLoadAdmin(); funLoadFeatured(); }catch(e){} }
 async function loadBoard(){
   const dt=document.getElementById('wire-date');
   if(dt) dt.textContent=new Date().toLocaleDateString(undefined,{weekday:'long',year:'numeric',month:'long',day:'numeric'});
@@ -411,6 +535,7 @@ async function loadBoard(){
       return;
     }
     renderWire();
+    if(/[?&]view=funnies/.test(location.search)){ var fb=document.getElementById('ws-funnies'); if(fb) setSort('funnies', fb); }
   }catch(e){
     wire.innerHTML='<div class="wire-empty">Server not reachable. Start it: python sim_server.py</div>';
   }
