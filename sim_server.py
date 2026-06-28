@@ -1246,6 +1246,55 @@ def api_ownership(ticker):
     return jsonify(out)
 
 
+_funnies_cache = None
+_funnies_ts = 0.0
+_FUNNY_SUBS = [
+    ("r/wallstreetbets", "https://www.reddit.com/r/wallstreetbets/hot/.rss?limit=25"),
+    ("r/financememes",   "https://www.reddit.com/r/financememes/hot/.rss?limit=25"),
+]
+
+def _fetch_funnies():
+    import requests as _req, re as _re2
+    headers = {"User-Agent": "python:project-midas:1.0 (funnies)"}
+    ns = {"atom": "http://www.w3.org/2005/Atom"}
+    out = []
+    for src, url in _FUNNY_SUBS:
+        try:
+            r = _req.get(url, headers=headers, timeout=8)
+            if not r.ok:
+                continue
+            root = _ET.fromstring(r.content)
+            for e in (root.findall(".//atom:entry", ns) or [])[:15]:
+                te = e.find("atom:title", ns)
+                le = e.find("atom:link", ns)
+                ce = e.find("atom:content", ns)
+                title = (te.text or "").strip() if te is not None else ""
+                link = le.get("href") if le is not None else ""
+                thumb = ""
+                if ce is not None and ce.text:
+                    mm = _re2.search(r'<img[^>]+src="([^"]+)"', ce.text)
+                    if mm:
+                        thumb = mm.group(1).replace("&amp;", "&")
+                if title and link:
+                    out.append({"title": title, "link": link, "source": src, "thumb": thumb})
+        except Exception:
+            continue
+    return out
+
+
+@app.route("/api/funnies")
+def api_funnies():
+    """Live market humor from the wild (cached 30 min, graceful if reddit is grumpy)."""
+    global _funnies_cache, _funnies_ts
+    if _funnies_cache is None or _time.time() - _funnies_ts > 1800:
+        try:
+            _funnies_cache = {"items": _fetch_funnies(), "updated": _dt.now().isoformat()}
+        except Exception:
+            _funnies_cache = {"items": [], "updated": _dt.now().isoformat()}
+        _funnies_ts = _time.time()
+    return jsonify(_funnies_cache)
+
+
 @app.route("/api/health")
 def api_health():
     """Which API keys the server can see (presence only, never values).

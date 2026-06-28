@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — The Funnies</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{--bg:#f5f0e8;--surface:#ede8dd;--card:#fff;--border:#ddd8ce;--border2:#c4bdb0;--text:#1e1a14;--mid:#5c5045;--dim:#9a9088;--green:#2d7a4f;--teal:#1a7080;--amber:#9a7018;--red:#8a3030;--mono:'Share Tech Mono',monospace;--title:'Outfit',sans-serif;--shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);}
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;justify-content:space-between;padding:0 48px;height:60px;background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--text);cursor:pointer;padding:0 6px}
+    .wrap{max-width:1000px;margin:0 auto;padding:92px 28px 70px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:12px}
+    h1{font-size:clamp(2rem,5vw,3rem);font-weight:600;margin-bottom:4px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;margin-bottom:6px}
+    .legal{font-family:var(--mono);font-size:.62rem;color:var(--dim);margin-bottom:20px}
+    .sec-h{display:flex;align-items:center;justify-content:space-between;margin:26px 0 12px;flex-wrap:wrap;gap:10px}
+    .sec-h h2{font-size:1.05rem;font-weight:600}
+    .sec-h .desk{font-family:var(--mono);font-size:.58rem;letter-spacing:.18em;text-transform:uppercase;color:var(--dim)}
+    .shuffle{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;background:transparent;border:1px solid var(--border2);color:var(--mid);padding:6px 13px;cursor:pointer;border-radius:3px}
+    .shuffle:hover{border-color:var(--text);color:var(--text)}
+    .quips{column-count:3;column-gap:16px}
+    @media(max-width:820px){.quips{column-count:2}}
+    @media(max-width:540px){.quips{column-count:1}}
+    .quip{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px;break-inside:avoid;font-size:.95rem;line-height:1.5}
+    .quip .tag{display:block;font-family:var(--mono);font-size:.54rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin-top:9px}
+    .memes{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+    .meme{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);overflow:hidden;text-decoration:none;color:inherit;display:flex;flex-direction:column}
+    .meme:hover{box-shadow:0 6px 20px rgba(30,26,20,.12)}
+    .meme img{width:100%;aspect-ratio:1/1;object-fit:cover;background:var(--surface);display:block}
+    .meme .mtitle{padding:11px 13px;font-size:.82rem;line-height:1.4}
+    .meme .msrc{padding:0 13px 11px;font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;color:var(--teal)}
+    .muted{font-family:var(--mono);font-size:.78rem;color:var(--dim);padding:18px 0}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)" style="position:fixed;top:72px;left:16px;z-index:150;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:3px;text-decoration:none">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="pit.html">The Pit</a></li>
+      <li><a href="funnies.html" class="active">Funnies</a></li>
+      <li><a href="account.html" class="nav-cta">Account</a></li>
+    </ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <span class="badge">Off the clock</span>
+    <h1>THE <span>FUNNIES</span></h1>
+    <p class="sub">Because if you can't laugh at the market, it'll laugh at you anyway.</p>
+    <p class="legal">Humor, not advice. Obviously. Do not build a thesis on a meme.</p>
+
+    <div class="sec-h">
+      <div><h2>Trading wisdom</h2><span class="desk">handpicked, refreshed on shuffle</span></div>
+      <button class="shuffle" onclick="renderQuips()">Shuffle</button>
+    </div>
+    <div class="quips" id="quips"></div>
+
+    <div class="sec-h"><div><h2>From the wild</h2><span class="desk">live, straight off the subreddits</span></div></div>
+    <div class="memes" id="memes"><div class="muted">loading the internet's finest…</div></div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const QUIPS=[
+  ["My portfolio is like my houseplants. I check it constantly and somehow it still dies.","cope"],
+  ["Technical analysis: drawing lines until one of them is finally right.","ta"],
+  ["Diversification is just admitting you have no idea which one moons.","wisdom"],
+  ["Buy high, sell low. Wait, let me check my notes.","strategy"],
+  ["The market can stay irrational longer than you can stay solvent. Ask me how I know.","wisdom"],
+  ["Dollar cost averaging: being consistently wrong, but on a schedule.","strategy"],
+  ["HODL: Holding On, Lovingly Delusional.","crypto"],
+  ["My stop loss strategy is closing the app and going for a walk.","risk"],
+  ["Green days I'm a genius. Red days the market is rigged.","cope"],
+  ["I don't have a financial advisor. I have a group chat and bad impulse control.","truth"],
+  ["Past performance is no guarantee of future results, but it's all I brought.","wisdom"],
+  ["I bought the dip. Then it kept dipping. I am now the dip.","cope"],
+  ["Risk management is for people who don't believe hard enough.","risk"],
+  ["My cost basis is a state of mind.","truth"],
+  ["Every chart looks bullish if you zoom out far enough. Or squint.","ta"],
+  ["I'm not down 40 percent, I'm pre-up 67 percent.","math"],
+  ["The four most expensive words: this time it's different.","wisdom"],
+  ["Fundamentals are what you cite after the technicals fail.","ta"],
+  ["I have a diversified portfolio: regret across multiple sectors.","truth"],
+  ["My entry was perfect. My exit was a hostage situation.","cope"],
+  ["The trend is your friend until it ghosts you.","wisdom"],
+  ["Insider trading? I can barely get outsider information.","truth"],
+  ["I read the whole prospectus. Both pictures were great.","truth"],
+  ["Compound interest is the eighth wonder. My patience is not.","wisdom"],
+  ["A long-term investment is a short-term trade that went wrong.","truth"],
+  ["I set price alerts so I can panic with precision.","risk"],
+  ["Bear market: when your portfolio plays dead and means it.","cope"],
+  ["Never average down. Unless you're feeling brave. Or in denial.","strategy"]
+];
+function renderQuips(){
+  const a=QUIPS.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  $('quips').innerHTML=a.map(q=>'<div class="quip">'+esc(q[0])+'<span class="tag">'+esc(q[1])+'</span></div>').join('');
+}
+async function loadMemes(){
+  try{
+    const d=await (await fetch('/api/funnies')).json();
+    const items=(d.items||[]).filter(x=>x.title && !/\b(thread|discussion|daily|weekly|moves? tomorrow|what are your)\b/i.test(x.title));
+    if(!items.length){ $('memes').innerHTML='<div class="muted">The internet is quiet (or rate-limiting us). The wisdom above never sleeps, though.</div>'; return; }
+    $('memes').innerHTML=items.map(m=>
+      '<a class="meme" href="'+esc(m.link)+'" target="_blank" rel="noopener">'+
+      (m.thumb?'<img src="'+esc(m.thumb)+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+
+      '<div class="mtitle">'+esc(m.title)+'</div><div class="msrc">'+esc(m.source)+'</div></a>'
+    ).join('');
+  }catch(e){ $('memes').innerHTML='<div class="muted">Could not reach the feed. Enjoy the wisdom above.</div>'; }
+}
+renderQuips(); loadMemes();
+</script>
+</body>
+</html>
