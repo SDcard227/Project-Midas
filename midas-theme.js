@@ -125,7 +125,7 @@
       var NAV = [
         ['intelligence.html', 'Signals'], ['whispers.html', 'The Wire'],
         ['gossip.html', 'The Floor'], ['parlor.html', 'The Parlor'],
-        ['pit.html', 'The Pit'], ['funnies.html', 'The Funnies'],
+        ['pit.html', 'The Pit'],
         ['practice.html', 'Replay'], ['profile.html', 'Profile']
       ];
       var html = NAV.map(function (n) {
