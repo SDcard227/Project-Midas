@@ -30,6 +30,7 @@ app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE="Lax",
     SESSION_COOKIE_SECURE=bool(os.getenv("RENDER")),
+    MAX_CONTENT_LENGTH=6 * 1024 * 1024,   # 6 MB cap on uploads (comics/art)
 )
 try:
     from brain import accounts as _accounts
@@ -871,7 +872,11 @@ def api_logout():
 
 @app.route("/api/me")
 def api_me():
-    return jsonify({"user": _current_user()})
+    u = _current_user()
+    if u:
+        u = dict(u)
+        u["is_admin"] = _is_admin(u)
+    return jsonify({"user": u})
 
 
 @app.route("/api/set-nickname", methods=["POST"])
@@ -1293,6 +1298,67 @@ def api_funnies():
             _funnies_cache = {"items": [], "updated": _dt.now().isoformat()}
         _funnies_ts = _time.time()
     return jsonify(_funnies_cache)
+
+
+_ALLOWED_IMG = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+
+
+def _is_admin(user):
+    em = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    return bool(user and em and (user.get("email") or "").lower() == em)
+
+
+@app.route("/api/funnies/submit", methods=["POST"])
+def api_funnies_submit():
+    """Submit a comic/artwork — goes to a pending queue, never auto-published."""
+    from brain import funnies
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in to submit."}), 401
+    f = request.files.get("image")
+    if not f or not f.filename:
+        return jsonify({"error": "Pick an image (your comic or artwork)."}), 400
+    ext = os.path.splitext(f.filename)[1].lower()
+    if ext not in _ALLOWED_IMG:
+        return jsonify({"error": "Images only: png, jpg, gif, or webp."}), 400
+    try:
+        os.makedirs(funnies.UPLOAD_DIR, exist_ok=True)
+        name = _secrets.token_hex(16) + ext          # random name, never trust user filenames
+        f.save(os.path.join(funnies.UPLOAD_DIR, name))
+    except Exception:
+        return jsonify({"error": "Upload failed."}), 500
+    return jsonify(funnies.submit(user, request.form.get("caption", ""), name))
+
+
+@app.route("/api/funnies/featured")
+def api_funnies_featured():
+    from brain import funnies
+    return jsonify({"items": funnies.list_featured()})
+
+
+@app.route("/uploads/<path:filename>")
+def serve_upload(filename):
+    from brain import funnies
+    return send_from_directory(funnies.UPLOAD_DIR, filename)
+
+
+@app.route("/api/funnies/pending")
+def api_funnies_pending():
+    from brain import funnies
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    return jsonify({"items": funnies.list_pending()})
+
+
+@app.route("/api/funnies/moderate", methods=["POST"])
+def api_funnies_moderate():
+    from brain import funnies
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    data = request.get_json(silent=True) or {}
+    if not data.get("id"):
+        return jsonify({"error": "id required"}), 400
+    return jsonify(funnies.moderate(int(data["id"]), data.get("action")))
 
 
 @app.route("/api/health")
