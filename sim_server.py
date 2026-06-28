@@ -842,6 +842,33 @@ def api_set_nickname():
     return jsonify(res), (400 if res.get("error") else 200)
 
 
+@app.route("/api/rooms", methods=["GET", "POST"])
+def api_rooms():
+    from brain import chat
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to create a room."}), 401
+        data = request.get_json(silent=True) or {}
+        res = chat.create_room(user, data.get("name"), data.get("topic"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    return jsonify({"rooms": chat.list_rooms()})
+
+
+@app.route("/api/rooms/<int:room_id>/messages", methods=["GET", "POST"])
+def api_room_messages(room_id):
+    from brain import chat
+    if request.method == "POST":
+        user = _current_user()
+        if not user:
+            return jsonify({"error": "Log in to chat."}), 401
+        data = request.get_json(silent=True) or {}
+        res = chat.post_message(user, room_id, data.get("text"))
+        return jsonify(res), (400 if res.get("error") else 200)
+    after = int(request.args.get("after", 0) or 0)
+    return jsonify(chat.list_messages(room_id, after))
+
+
 # ── BILLING — Stripe subscriptions (graceful if unconfigured) ────────────────
 @app.route("/api/billing/status")
 def api_billing_status():
