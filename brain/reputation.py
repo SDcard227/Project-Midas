@@ -24,9 +24,8 @@ _SHRINK_AT = 5           # calls needed before the score uses its full red↔gre
 
 
 def _conn():
-    c = sqlite3.connect(_DB)
-    c.row_factory = sqlite3.Row
-    return c
+    from brain import db
+    return db.get_conn()
 
 
 def init_db():

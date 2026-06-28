@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from brain import db
+
 _DB = os.getenv("DB_PATH") or os.path.join(
     os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "midas_users.db")
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
@@ -23,9 +25,7 @@ _VALID_TIERS = {"free", "pro", "premium"}
 
 
 def _conn():
-    c = sqlite3.connect(_DB)
-    c.row_factory = sqlite3.Row
-    return c
+    return db.get_conn()
 
 
 def init_db():
@@ -96,7 +96,7 @@ def create_user(email, password, first_name="", last_name="", country="", state=
                  secrets.token_urlsafe(24), datetime.now(timezone.utc).isoformat()))
             uid = cur.lastrowid
         return {"user": get_user(uid)}
-    except sqlite3.IntegrityError:
+    except db.IntegrityError:
         return {"error": "That email is already registered."}
 
 

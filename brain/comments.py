@@ -28,9 +28,8 @@ _BEAR = {"sell", "bear", "bearish", "down", "short", "puts", "dump", "crash",
 
 
 def _conn():
-    c = sqlite3.connect(_DB)
-    c.row_factory = sqlite3.Row
-    return c
+    from brain import db
+    return db.get_conn()
 
 
 def init_db():

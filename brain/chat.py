@@ -15,9 +15,8 @@ _DB = os.getenv("DB_PATH") or os.path.join(
 
 
 def _conn():
-    c = sqlite3.connect(_DB)
-    c.row_factory = sqlite3.Row
-    return c
+    from brain import db
+    return db.get_conn()
 
 
 def init_db():
