@@ -19,6 +19,8 @@
     + 'backdrop-filter:blur(4px);cursor:pointer}'
     + '#midas-fwd:hover{color:#1e1a14;border-color:#1e1a14}'
     + '#midas-back.nav-off,#midas-fwd.nav-off{opacity:.32;pointer-events:none;cursor:default}'
+    + '#midas-msg-n{position:absolute;top:-7px;right:-12px;background:#8a3030;color:#fff;font-family:"Share Tech Mono",monospace;font-size:.52rem;line-height:1.5;border-radius:8px;padding:0 4px;min-width:14px;text-align:center;display:none}'
+    + '#midas-msg-n.on{display:inline-block}'
     + '@media(max-width:760px){#midas-fwd{top:64px;right:10px;font-size:.56rem;padding:4px 8px}}'
     + '.midas-toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(12px);z-index:9999;background:#1e1a14;color:#f5f0e8;font-family:"Share Tech Mono",monospace;font-size:.78rem;letter-spacing:.03em;padding:11px 18px;border-radius:4px;box-shadow:0 8px 28px rgba(0,0,0,.25);opacity:0;transition:opacity .25s,transform .25s;max-width:90vw;text-align:center}'
     + '.midas-toast.show{opacity:1;transform:translateX(-50%) translateY(0)}'
@@ -95,6 +97,15 @@
   };
   window.addEventListener('pageshow', function () { if (window.midasNavState) window.midasNavState(); });
 
+  // Unread DM/notification count -> a red badge on the Messages tab. Polled.
+  window.midasPollNotif = function () {
+    fetch('/api/notifications').then(function (r) { return r.json(); }).then(function (d) {
+      var n = document.getElementById('midas-msg-n'); if (!n) return;
+      if (d && d.unread > 0) { n.textContent = d.unread > 9 ? '9+' : d.unread; n.classList.add('on'); }
+      else { n.classList.remove('on'); }
+    }).catch(function () {});
+  };
+
   // 4) Forward button (mirrors Back) + a Settings gear in the nav (reachable everywhere).
   document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('midas-fwd')) {
@@ -115,14 +126,17 @@
         ['intelligence.html', 'Signals'], ['whispers.html', 'The Wire'],
         ['gossip.html', 'The Floor'], ['parlor.html', 'The Parlor'],
         ['pit.html', 'The Pit'], ['funnies.html', 'The Funnies'],
-        ['practice.html', 'Replay']
+        ['practice.html', 'Replay'], ['profile.html', 'Profile']
       ];
       var html = NAV.map(function (n) {
         return '<li><a href="' + n[0] + '"' + (n[0] === path ? ' class="active"' : '') + '>' + n[1] + '</a></li>';
       }).join('');
+      html += '<li><a href="messages.html"' + (path === 'messages.html' ? ' class="active"' : '') + ' style="position:relative">Messages<span id="midas-msg-n"></span></a></li>';
       html += '<li><a href="account.html" class="nav-cta' + (path === 'account.html' ? ' active' : '') + '">Account</a></li>';
       html += '<li><a href="settings.html" class="midas-gear" title="Settings" style="font-size:1.1rem">&#9881;</a></li>';
       links.innerHTML = html;
+      window.midasPollNotif();
+      setInterval(window.midasPollNotif, 45000);
     }
     window.midasNavState();
   });

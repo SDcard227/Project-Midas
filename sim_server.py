@@ -1083,13 +1083,17 @@ def api_profile(user_id):
     u = accounts.get_user(user_id)
     if not u:
         return jsonify({"error": "No such user."}), 404
+    from brain import parlor
     rep = reputation.compute(user_id)   # scores their calls vs real price moves
     port = reputation.portfolio(user_id)
     takes = comments.by_user(user_id, 12)   # their most-upvoted posts
+    me = _current_user()
     return jsonify({"id": u["id"], "name": u["name"], "real_name": u.get("real_name"),
                     "nickname": u.get("nickname"), "verified": u.get("verified"),
-                    "tier": u["tier"], "joined": u.get("created_at"), "reputation": rep,
-                    "portfolio": port, "takes": takes})
+                    "bio": u.get("bio", ""), "country": u.get("country", ""),
+                    "state": u.get("state", ""), "tier": u["tier"], "joined": u.get("created_at"),
+                    "reputation": rep, "portfolio": port, "takes": takes,
+                    "parlor": parlor.record(user_id), "is_me": bool(me and me["id"] == user_id)})
 
 
 @app.route("/api/leaderboard")
@@ -1441,6 +1445,95 @@ def api_parlor_resolve():
     data = request.get_json(silent=True) or {}
     res = parlor.resolve_market(int(data.get("market_id", 0)), data.get("outcome"))
     return jsonify(res), (400 if res.get("error") else 200)
+
+
+# ── PROFILE — bio + all your Midas info in one place ─────────────────────────
+@app.route("/profile")
+def profile_page():
+    return send_from_directory(BASE, "profile.html")
+
+
+@app.route("/api/profile/bio", methods=["POST"])
+def api_profile_bio():
+    from brain import accounts
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    return jsonify(accounts.set_bio(u["id"], data.get("bio", "")))
+
+
+# ── DMs ──────────────────────────────────────────────────────────────────────
+@app.route("/messages")
+def messages_page():
+    return send_from_directory(BASE, "messages.html")
+
+
+@app.route("/api/dm/inbox")
+def api_dm_inbox():
+    from brain import messages, accounts
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to see messages."}), 401
+    convos = messages.inbox(u["id"])
+    for cv in convos:
+        ou = accounts.get_user(cv["other_id"])
+        cv["name"] = ou["name"] if ou else "Unknown"
+    return jsonify({"conversations": convos})
+
+
+@app.route("/api/dm/thread/<int:other_id>")
+def api_dm_thread(other_id):
+    from brain import messages, accounts
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to see messages."}), 401
+    ou = accounts.get_user(other_id)
+    return jsonify({"other": {"id": other_id, "name": ou["name"] if ou else "Unknown"},
+                    "messages": messages.thread(u["id"], other_id)})
+
+
+@app.route("/api/dm/send", methods=["POST"])
+def api_dm_send():
+    from brain import messages, notifications
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to send messages."}), 401
+    data = request.get_json(silent=True) or {}
+    res = messages.send(u["id"], data.get("to_id"), data.get("body"))
+    if res.get("ok"):
+        notifications.push(res["to_id"], "dm", f"{u['name']} sent you a message",
+                           f"messages.html?u={u['id']}")
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/dm/block", methods=["POST"])
+def api_dm_block():
+    from brain import messages
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    return jsonify(messages.block(u["id"], data.get("user_id")))
+
+
+# ── NOTIFICATIONS ────────────────────────────────────────────────────────────
+@app.route("/api/notifications")
+def api_notifications():
+    from brain import notifications
+    u = _current_user()
+    if not u:
+        return jsonify({"unread": 0, "items": []})
+    return jsonify(notifications.listing(u["id"]))
+
+
+@app.route("/api/notifications/read", methods=["POST"])
+def api_notifications_read():
+    from brain import notifications
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    return jsonify(notifications.mark_read(u["id"]))
 
 
 @app.route("/api/health")
