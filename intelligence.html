@@ -494,7 +494,7 @@ function renderPicks(tickers){
   shown.forEach(t=>{
     const tier=t.signal.toLowerCase();
     const cw=Math.min(100,Math.round(t.confidence));
-    const cong=t.pol_recent&&t.pol_recent.length?`<div class="pick-congress">${t.pol_recent[0]}</div>`:'';
+    const cong=t.pol_recent&&t.pol_recent.length?`<div class="pick-congress">${esc(t.pol_recent[0])}</div>`:'';
     html+=`<div class="pick-card ${tier}-card" style="cursor:pointer" onclick="doSearch('${t.ticker}')">
       <div class="pick-head">
         <div>
@@ -530,7 +530,7 @@ function renderPicks(tickers){
             &nbsp;·&nbsp; ${best.rsi>70?'Overbought — caution':best.rsi<30?'Oversold — opportunity':'Neutral range'}</div>
           <div>Congressional: <span style="color:var(--green)">${best.pol_buys} purchases</span> /
             <span style="color:var(--red)">${best.pol_sells} sales</span> in last 90 days</div>
-          ${best.pol_recent&&best.pol_recent.length?`<div style="color:var(--teal);font-size:0.78rem">${best.pol_recent[0]}</div>`:''}
+          ${best.pol_recent&&best.pol_recent.length?`<div style="color:var(--teal);font-size:0.78rem">${esc(best.pol_recent[0])}</div>`:''}
         </div>
       </div>
       <div style="text-align:right">
@@ -789,7 +789,7 @@ function renderSearch(d){
     document.getElementById('sp-congress').innerHTML=`
       <div style="padding:14px 24px;border-top:1px solid var(--border);background:var(--surface)">
         <div style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.22em;color:var(--dim);margin-bottom:8px">CONGRESSIONAL TRADES (90 DAYS)</div>
-        ${d.pol_recent.map(r=>`<div style="font-family:var(--mono);font-size:0.75rem;color:var(--mid);padding:3px 0">${r}</div>`).join('')}
+        ${d.pol_recent.map(r=>`<div style="font-family:var(--mono);font-size:0.75rem;color:var(--mid);padding:3px 0">${esc(r)}</div>`).join('')}
       </div>`;
   }
 }
@@ -881,12 +881,12 @@ function renderNews(catFilter){
     html += '<div class="news-grid">';
     filtered.forEach(a=>{
       const linkEl = a.link
-        ? `<a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>`
+        ? `<a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a>`
         : a.title;
       html += `<div class="news-card">
-        <div class="news-source">${a.source}${(catFilter==='ALL'||catFilter==='FORYOU') && a.category ? ' · '+a.category : ''}</div>
+        <div class="news-source">${esc(a.source)}${(catFilter==='ALL'||catFilter==='FORYOU') && a.category ? ' · '+esc(a.category) : ''}</div>
         <div class="news-title">${linkEl}</div>
-        ${a.desc ? `<div class="news-desc">${a.desc}</div>` : ''}
+        ${a.desc ? `<div class="news-desc">${esc(a.desc)}</div>` : ''}
         <div class="news-date">${a.pubdate||''}</div>
       </div>`;
     });

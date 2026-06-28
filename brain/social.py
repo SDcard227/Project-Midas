@@ -20,7 +20,8 @@ def init_db():
         c.execute("""CREATE TABLE IF NOT EXISTS follows (
             follower_id INTEGER NOT NULL,
             followee_id INTEGER NOT NULL,
-            created_at  TEXT
+            created_at  TEXT,
+            UNIQUE(follower_id, followee_id)
         )""")
 
 
@@ -45,9 +46,12 @@ def follow(a, b):
         return {"error": "You can't follow yourself."}
     init_db()
     if not is_following(a, b):
-        with _conn() as c:
-            c.execute("INSERT INTO follows (follower_id, followee_id, created_at) VALUES (?,?,?)",
-                      (a, b, _now()))
+        try:
+            with _conn() as c:
+                c.execute("INSERT INTO follows (follower_id, followee_id, created_at) VALUES (?,?,?)",
+                          (a, b, _now()))
+        except db.IntegrityError:
+            pass   # raced another follow; the row already exists, which is the goal
     return {"ok": True, "following": True, "mutual": is_mutual(a, b)}
 
 

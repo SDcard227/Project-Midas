@@ -74,6 +74,8 @@ def pending_count():
 
 
 def moderate(sub_id, action):
+    if action not in ("approve", "reject"):
+        return {"error": "action must be 'approve' or 'reject'"}
     status = "approved" if action == "approve" else "rejected"
     init_db()
     with _conn() as c:
