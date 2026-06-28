@@ -204,11 +204,13 @@ def resolve_market(market_id, outcome):
         return {"error": "Outcome must be yes or no."}
     init_db()
     with _conn() as c:
-        m = c.execute("SELECT status FROM parlor_markets WHERE id=?", (market_id,)).fetchone()
+        m = c.execute("SELECT status, question FROM parlor_markets WHERE id=?", (market_id,)).fetchone()
         if not m:
             return {"error": "No such market."}
         if m["status"] == "resolved":
             return {"error": "Market already resolved."}
+        question = m["question"]
+        deltas = {}   # user_id -> net Bucks change (for settle notifications)
         bets = c.execute("SELECT * FROM parlor_bets WHERE market_id=? AND settled=0",
                          (market_id,)).fetchall()
         yes_pool = sum(b["stake"] for b in bets if b["side"] == "yes")
@@ -233,12 +235,16 @@ def resolve_market(market_id, outcome):
                     c.execute("UPDATE parlor_bets SET payout=?, settled=1 WHERE id=?",
                               (share, b["id"]))
                     paid += share
+                    deltas[b["user_id"]] = deltas.get(b["user_id"], 0) + (share - b["stake"])
                 else:
                     c.execute("UPDATE parlor_bets SET payout=0, settled=1 WHERE id=?", (b["id"],))
+                    deltas[b["user_id"]] = deltas.get(b["user_id"], 0) - b["stake"]
         c.execute("UPDATE parlor_markets SET status='resolved', outcome=? WHERE id=?",
                   (outcome, market_id))
     return {"market_id": market_id, "outcome": outcome, "total_pool": total,
-            "winners": len(winners), "paid": paid, "voided": voided}
+            "winners": len(winners), "paid": paid, "voided": voided,
+            "question": question,
+            "bettors": [{"user_id": uid, "delta": d} for uid, d in deltas.items()]}
 
 
 # ── views ────────────────────────────────────────────────────────────────────

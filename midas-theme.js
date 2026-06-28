@@ -117,26 +117,38 @@
       a.onclick = function (e) { e.preventDefault(); history.forward(); };
       document.body.appendChild(a);
     }
-    // Canonical nav — render the SAME bar on every page (active link auto-detected by
-    // URL) so the per-page hardcoded navs can never drift apart again.
+    // Canonical nav — rendered identically on every page (active link auto-detected by
+    // URL). Public sections always show; the personal tabs (Profile, Messages, Settings)
+    // only appear once you're logged in.
     var links = document.querySelector('nav .nav-links');
     if (links) {
       var path = (location.pathname.split('/').pop() || 'index.html').toLowerCase();
-      var NAV = [
+      var PUBLIC = [
         ['intelligence.html', 'Signals'], ['whispers.html', 'The Wire'],
         ['gossip.html', 'The Floor'], ['parlor.html', 'The Parlor'],
-        ['pit.html', 'The Pit'],
-        ['practice.html', 'Replay'], ['profile.html', 'Profile']
+        ['pit.html', 'The Pit'], ['practice.html', 'Replay']
       ];
-      var html = NAV.map(function (n) {
+      var _item = function (n) {
         return '<li><a href="' + n[0] + '"' + (n[0] === path ? ' class="active"' : '') + '>' + n[1] + '</a></li>';
-      }).join('');
-      html += '<li><a href="messages.html"' + (path === 'messages.html' ? ' class="active"' : '') + ' style="position:relative">Messages<span id="midas-msg-n"></span></a></li>';
-      html += '<li><a href="account.html" class="nav-cta' + (path === 'account.html' ? ' active' : '') + '">Account</a></li>';
-      html += '<li><a href="settings.html" class="midas-gear" title="Settings" style="font-size:1.1rem">&#9881;</a></li>';
-      links.innerHTML = html;
-      window.midasPollNotif();
-      setInterval(window.midasPollNotif, 45000);
+      };
+      var _polling = false;
+      var _buildNav = function (user) {
+        var html = PUBLIC.map(_item).join('');
+        if (user) {
+          html += _item(['profile.html', 'Profile']);
+          html += '<li><a href="messages.html"' + (path === 'messages.html' ? ' class="active"' : '') + ' style="position:relative">Messages<span id="midas-msg-n"></span></a></li>';
+          html += '<li><a href="account.html" class="nav-cta' + (path === 'account.html' ? ' active' : '') + '">Account</a></li>';
+          html += '<li><a href="settings.html" class="midas-gear" title="Settings" style="font-size:1.1rem">&#9881;</a></li>';
+        } else {
+          html += '<li><a href="account.html" class="nav-cta' + (path === 'account.html' ? ' active' : '') + '">Get Access</a></li>';
+        }
+        links.innerHTML = html;
+        window.midasNavState();
+        if (user && !_polling) { _polling = true; window.midasPollNotif(); setInterval(window.midasPollNotif, 45000); }
+      };
+      _buildNav(null);   // public bar first — logged-out users never see personal tabs
+      fetch('/api/me').then(function (r) { return r.json(); })
+        .then(function (d) { if (d && d.user) _buildNav(d.user); }).catch(function () {});
     }
     window.midasNavState();
   });
