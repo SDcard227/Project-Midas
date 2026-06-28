@@ -14,8 +14,8 @@ from datetime import datetime, timezone
 
 from werkzeug.security import generate_password_hash, check_password_hash
 
-_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   "midas_users.db")
+_DB = os.getenv("DB_PATH") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "midas_users.db")
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _NAME_RE  = re.compile(r"^[A-Za-z][A-Za-z'\-. ]{0,39}$")   # real names only, no handles
 _NICK_RE  = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._'\-]{0,23}$")  # optional display nickname

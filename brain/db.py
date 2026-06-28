@@ -30,8 +30,8 @@ MIGRATION CHECKLIST (do this against a real Postgres instance):
 import os
 import sqlite3
 
-_SQLITE_PATH = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                            "midas_users.db")
+_SQLITE_PATH = os.getenv("DB_PATH") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "midas_users.db")
 
 
 def is_postgres() -> bool:

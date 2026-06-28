@@ -39,8 +39,8 @@ from datetime import datetime, timezone
 
 log = logging.getLogger("Midas.Ledger")
 
-_STORE = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                      "signal_ledger.json")
+_STORE = os.getenv("LEDGER_PATH") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "signal_ledger.json")
 
 # Confidence saturates with corroboration: each independent, reliable source adds
 # diminishing lift. k sets how fast. ~3-4 good sources should feel "forming".

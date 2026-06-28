@@ -10,8 +10,8 @@ import os
 import sqlite3
 from datetime import datetime, timezone
 
-_DB = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
-                   "midas_users.db")
+_DB = os.getenv("DB_PATH") or os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "midas_users.db")
 
 
 def _conn():
