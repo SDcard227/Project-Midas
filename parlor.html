@@ -52,6 +52,10 @@
       background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;cursor:pointer}
     .tab:hover{color:var(--mid)}
     .tab.active{color:var(--text);border-bottom-color:var(--amber)}
+    .cat-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+    .cat-chip{font-family:var(--mono);font-size:.62rem;letter-spacing:.08em;text-transform:uppercase;background:var(--card);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:14px;cursor:pointer}
+    .cat-chip:hover{border-color:var(--text);color:var(--text)}
+    .cat-chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
 
     .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
     .mk{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 17px;display:flex;flex-direction:column}
@@ -124,12 +128,22 @@
     <div class="admin-box" id="adminBox">
       <h3>⚙ Pit Boss — admin</h3>
       <div>
-        <input id="aq" placeholder="Market question" size="42" maxlength="200">
-        <input id="acat" placeholder="Category" size="12" maxlength="40">
+        <input id="aq" placeholder="Market question" size="38" maxlength="200">
+        <input id="acat" placeholder="Category (Sports, Politics…)" size="18" maxlength="40">
         <input id="atick" placeholder="Ticker" size="6" maxlength="6">
+        <select id="arule">
+          <option value="manual">Manual (house settles)</option>
+          <option value="close_green">Close green today</option>
+          <option value="week_up_3">Up &gt;3% this week</option>
+          <option value="above_price">Close above price</option>
+          <option value="below_price">Close below price</option>
+          <option value="beats">Beats a 2nd ticker</option>
+        </select>
+        <input id="athr" placeholder="Price" size="6" type="number" step="any">
+        <input id="atick2" placeholder="vs Ticker" size="7" maxlength="6">
         <button onclick="adminCreate()">Open market</button>
       </div>
-      <div class="note" style="border:none;padding:6px 0 0">Resolve buttons appear on each open market below.</div>
+      <div class="note" style="border:none;padding:6px 0 0">Price-rule markets auto-settle off the feed; manual ones you settle with the buttons on each market.</div>
     </div>
 
     <div class="tabs">
@@ -154,7 +168,7 @@
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let ME=null, MARKETS=[];
+let ME=null, MARKETS=[], CARDCAT='All';
 
 function tab(t){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
@@ -179,7 +193,7 @@ function toteCard(m){
       <button onclick="adminResolve(${m.id},'yes')">Resolve YES</button>
       <button onclick="adminResolve(${m.id},'no')">Resolve NO</button></div>` : '';
   return `<div class="mk">
-    <div class="mk-top"><span class="mk-cat">${esc(m.category)}</span><span class="mk-tick">${m.ticker?('$'+esc(m.ticker)):''}</span></div>
+    <div class="mk-top"><span class="mk-cat">${esc(m.category)}</span><span class="mk-tick">${m.ticker?('$'+esc(m.ticker)+(m.ticker2?(' vs $'+esc(m.ticker2)):'')):''}</span></div>
     <div class="mk-q">${esc(m.question)}</div>
     <div class="tote"><div class="y" style="width:${yes}%"></div><div class="n" style="width:${no}%"></div></div>
     <div class="tote-l"><span class="yy">${yes}% YES</span><span class="nn">${no}% NO</span></div>
@@ -193,15 +207,22 @@ function toteCard(m){
   </div>`;
 }
 
+function cardCat(c){ CARDCAT=c; renderCard(); }
+function renderCard(){
+  const cats=['All',...Array.from(new Set(MARKETS.map(m=>m.category)))];
+  const chips='<div class="cat-row">'+cats.map(c=>'<button class="cat-chip'+(c===CARDCAT?' active':'')+'" data-cat="'+esc(c)+'" onclick="cardCat(this.dataset.cat)">'+esc(c)+'</button>').join('')+'</div>';
+  const shown=CARDCAT==='All'?MARKETS:MARKETS.filter(m=>m.category===CARDCAT);
+  $('card').innerHTML=chips+(shown.length
+    ? '<div class="grid">'+shown.map(toteCard).join('')+'</div>'
+    : '<div class="muted">No open markets in '+esc(CARDCAT)+' right now.</div>');
+}
 async function loadMarkets(){
   try{
     const r=await (await fetch('/api/parlor/markets?status=open')).json();
     MARKETS=r.markets||[];
-    if('balance' in r) setBal(r.balance);
-    else setBal(null);
-    $('card').innerHTML = MARKETS.length
-      ? '<div class="grid">'+MARKETS.map(toteCard).join('')+'</div>'
-      : '<div class="muted">No open markets right now. Check back after the bell.</div>';
+    if('balance' in r) setBal(r.balance); else setBal(null);
+    if(CARDCAT!=='All' && !MARKETS.some(m=>m.category===CARDCAT)) CARDCAT='All';
+    renderCard();
   }catch(e){ $('card').innerHTML='<div class="muted">Could not load the card.</div>'; }
 }
 
@@ -297,10 +318,12 @@ async function loadBoard(){
 // ── admin ──
 async function adminCreate(){
   const q=$('aq').value.trim(); if(q.length<8){ midasToast('Question too short.','error'); return; }
+  const body={question:q,category:$('acat').value,ticker:$('atick').value,
+              rule:$('arule').value,threshold:$('athr').value,ticker2:$('atick2').value};
   const r=await (await fetch('/api/parlor/market',{method:'POST',headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({question:q,category:$('acat').value,ticker:$('atick').value})})).json();
+    body:JSON.stringify(body)})).json();
   if(r.error){ midasToast(r.error,'error'); return; }
-  $('aq').value=''; midasToast('Market opened.'); loadMarkets();
+  $('aq').value=''; $('athr').value=''; $('atick2').value=''; midasToast('Market opened.'); loadMarkets();
 }
 async function adminResolve(mid,outcome){
   const r=await (await fetch('/api/parlor/resolve',{method:'POST',headers:{'Content-Type':'application/json'},
