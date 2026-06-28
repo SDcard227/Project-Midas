@@ -70,6 +70,24 @@ def create_checkout(user, tier, base_url):
         return {"error": str(e)}
 
 
+def create_portal_session(user, base_url):
+    """Stripe billing portal so a subscriber can manage or cancel their plan.
+    Returns {'url':..} or {'error':..}."""
+    if not is_configured():
+        return {"error": "Billing is not configured yet."}
+    from brain import accounts
+    cust = accounts.get_stripe_customer(user["id"])
+    if not cust:
+        return {"error": "No active subscription to manage."}
+    try:
+        stripe = _client()
+        sess = stripe.billing_portal.Session.create(
+            customer=cust, return_url=base_url.rstrip("/") + "/account.html")
+        return {"url": sess.url}
+    except Exception as e:
+        return {"error": str(e)}
+
+
 def _tier_for_price(price_id):
     for t, p in _prices().items():
         if p and p == price_id:

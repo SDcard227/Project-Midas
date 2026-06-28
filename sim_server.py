@@ -956,6 +956,16 @@ def api_billing_checkout():
     return jsonify(res), (400 if res.get("error") else 200)
 
 
+@app.route("/api/billing/portal", methods=["POST"])
+def api_billing_portal():
+    from brain import billing
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in first."}), 401
+    res = billing.create_portal_session(user, request.host_url)
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
 @app.route("/api/billing/webhook", methods=["POST"])
 def api_billing_webhook():
     from brain import billing, accounts
