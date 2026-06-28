@@ -11,13 +11,14 @@ This is the practice mode + proof-of-concept; the identical UX later rides Kalsh
 regulated API for real-money event trading. No gambling license is needed here because
 play-credits are NOT cashable, which makes this a skill contest, not a wager.
 """
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 from brain import db
 
 START_CREDITS = 1000          # everyone's opening play-money balance
 MIN_STAKE     = 10
 MAX_STAKE     = 1000
+_AUTO_RULES   = ("close_green", "week_up_3")   # rules the price feed can settle on its own
 
 
 def _conn():
@@ -238,6 +239,42 @@ def leaderboard(limit=20):
     return out
 
 
+# ── auto-resolution (price-backed rules) ─────────────────────────────────────
+
+def eval_rule(rule, closes):
+    """Evaluate an auto-rule against recent daily closes (oldest..newest). Pure +
+    testable; the caller supplies the price series. -> 'yes' / 'no' / None."""
+    try:
+        closes = [float(x) for x in closes]
+    except (TypeError, ValueError):
+        return None
+    if len(closes) < 2:
+        return None
+    rule = (rule or "").lower()
+    if rule == "close_green":
+        return "yes" if closes[-1] > closes[-2] else "no"
+    if rule == "week_up_3":
+        if len(closes) < 6:
+            return None
+        chg = (closes[-1] / closes[-6] - 1) * 100 if closes[-6] else 0
+        return "yes" if chg > 3 else "no"
+    return None
+
+
+def markets_due():
+    """Open, ticker-backed, auto-rule markets whose close time has passed. The server
+    settles these off the price feed. -> [{id, ticker, rule}]."""
+    init_db()
+    now = _now()
+    with _conn() as c:
+        rows = c.execute(
+            "SELECT id, ticker, rule, closes_at FROM parlor_markets WHERE status='open'").fetchall()
+    return [{"id": m["id"], "ticker": m["ticker"], "rule": m["rule"]}
+            for m in rows
+            if m["rule"] in _AUTO_RULES and (m["ticker"] or "")
+            and (m["closes_at"] or "") and m["closes_at"] <= now]
+
+
 # ── seed ─────────────────────────────────────────────────────────────────────
 
 _DEFAULT_MARKETS = [
@@ -261,5 +298,11 @@ def seed_if_empty():
         n = c.execute("SELECT COUNT(*) AS n FROM parlor_markets").fetchone()["n"]
     if n:
         return
+    now = datetime.now(timezone.utc)
+    eod = now.replace(hour=21, minute=30, second=0, microsecond=0)   # ~after the US close
+    if eod <= now:
+        eod = eod + timedelta(days=1)
+    week = (now + timedelta(days=7)).isoformat()
     for mk in _DEFAULT_MARKETS:
-        create_market(**mk)
+        ca = eod.isoformat() if mk["rule"] == "close_green" else (week if mk["rule"] == "week_up_3" else "")
+        create_market(closes_at=ca, **mk)
