@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PROJECT MIDAS — Regular Stocks</title>
+  <script src="midas-theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root{
@@ -107,30 +108,53 @@
     .footer-copy{font-size:0.7rem;color:var(--dim);}
     @media(max-width:900px){nav{padding:0 20px;}.nav-links{display:none;}.mode-grid{grid-template-columns:1fr;}.setup-steps{grid-template-columns:1fr;}}
   </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
 </head>
 <body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
 
 <nav>
   <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
   <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="stocks.html" class="active">Stocks</a></li>
-    <li><a href="penny.html">Penny</a></li>
-    <li><a href="intelligence.html">Intelligence</a></li>
-    <li><a href="whispers.html">Whispers</a></li>
-    <li><a href="practice.html">Practice</a></li>
-    <li><a href="dashboard.html">Dashboard</a></li>
-    <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
-  </ul>
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
 </nav>
 
 <!-- Hero -->
 <section id="hero">
   <div class="hero-badge"><span class="blink">█</span> SWING TRADING ENGINE &nbsp;·&nbsp; ACTIVE</div>
   <h1>REGULAR STOCKS</h1>
-  <p style="font-family:var(--title);font-size:1rem;color:var(--cyan);letter-spacing:0.2em;text-shadow:0 0 14px var(--cyan);">EMA TREND · RSI MOMENTUM · MULTI-DAY HOLDS</p>
+  <p style="font-family:var(--title);font-size:1rem;color:var(--cyan);letter-spacing:0.2em;">EMA TREND · RSI MOMENTUM · MULTI-DAY HOLDS</p>
   <p class="hero-sub">Midas rides EMA crossovers on blue-chip stocks and ETFs. Enter at the start of a trend, hold for days or weeks, and exit before the reversal — automatically.</p>
-  <a class="btn-back" href="index.html">← BACK TO HOME</a>
+  <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap;">
+    <a class="btn-back" href="index.html">← BACK</a>
+    <a class="btn-back" href="practice.html" style="border-color:var(--amber);color:var(--amber);">PRACTICE IT →</a>
+    <a class="btn-back" href="trade.html" style="border-color:var(--green);color:var(--green);">TRADE NOW →</a>
+  </div>
 </section>
 
 <!-- Live signal mock -->
@@ -173,11 +197,11 @@
         <div class="mode-desc">Default. Rides the EMA trend and exits on a bearish crossunder or RSI overbought. Balanced risk/reward. Best for most situations.</div>
       </div>
       <div class="mode-card glow-box fade-in" style="border-left-color:var(--cyan);">
-        <div class="mode-name" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan);">PLATEAU</div>
+        <div class="mode-name" style="color:var(--cyan);">PLATEAU</div>
         <div class="mode-desc">Exits early when price goes sideways before a drop. More conservative — gives up some upside to avoid getting caught in a slow bleed.</div>
       </div>
       <div class="mode-card glow-box fade-in" style="border-left-color:var(--gold);">
-        <div class="mode-name" style="color:var(--gold);text-shadow:0 0 8px var(--gold);">SURGE</div>
+        <div class="mode-name" style="color:var(--gold);">SURGE</div>
         <div class="mode-desc">Holds the longest. Only exits when the peak is actively breaking down. High conviction — captures the full move but carries more drawdown risk.</div>
       </div>
     </div>
@@ -262,7 +286,7 @@
         <div class="mode-desc">Strictest filter. Only buys on a confirmed EMA bullish crossover while RSI is below 60 and sentiment is clean. EMA 12/26 periods. Fewest trades — every one is high conviction.</div>
       </div>
       <div class="mode-card glow-box fade-in" style="border-left-color:var(--cyan);">
-        <div class="mode-name" style="color:var(--cyan);text-shadow:0 0 8px var(--cyan);">ACTIVE</div>
+        <div class="mode-name" style="color:var(--cyan);">ACTIVE</div>
         <div class="mode-desc">Everything NORMAL does, plus: buys RSI dips below 40 while the overall trend is up. EMA 5/13 periods. Catches mid-trend pullbacks that NORMAL would sit out. Recommended default.</div>
       </div>
       <div class="mode-card glow-box fade-in">
@@ -318,7 +342,7 @@
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:32px;" class="fade-in">
       <div class="glow-box" style="padding:28px;">
-        <div style="font-size:0.68rem;color:var(--cyan);letter-spacing:0.15em;margin-bottom:16px;text-shadow:0 0 6px var(--cyan);">TRANSACTION COSTS</div>
+        <div style="font-size:0.68rem;color:var(--cyan);letter-spacing:0.15em;margin-bottom:16px;">TRANSACTION COSTS</div>
         <div class="tr-row"><span class="tr-key">commission</span><span class="tr-g">$0.00 per side</span></div>
         <div class="tr-row"><span class="tr-key">spread_pct</span><span class="tr-g">0.03% per side</span></div>
         <div class="tr-row"><span class="tr-key">round-trip cost</span><span class="tr-key">0.06% of trade value</span></div>
@@ -326,7 +350,7 @@
         <p style="font-size:0.78rem;color:var(--text);line-height:1.7;opacity:0.75;margin-top:8px;">Commission = $0 because Alpaca is commission-free. Spread of 0.03% (3 bps) is a conservative estimate for liquid large-caps like AAPL, MSFT, NVDA, and SPY.</p>
       </div>
       <div class="glow-box" style="padding:28px;">
-        <div style="font-size:0.68rem;color:var(--gold);letter-spacing:0.15em;margin-bottom:16px;text-shadow:0 0 6px var(--gold);">TAX MODEL</div>
+        <div style="font-size:0.68rem;color:var(--gold);letter-spacing:0.15em;margin-bottom:16px;">TAX MODEL</div>
         <div class="tr-row"><span class="tr-key">method</span><span class="tr-gold">short-term capital gains</span></div>
         <div class="tr-row"><span class="tr-key">rate</span><span class="tr-gold">22% (configurable)</span></div>
         <div class="tr-row"><span class="tr-key">applied</span><span class="tr-key">at sell, trade-by-trade</span></div>
@@ -343,9 +367,6 @@
     <div class="footer-inner">
       <div class="footer-logo">PROJECT MIDAS</div>
       <ul class="footer-links">
-        <li><a href="index.html">Home</a></li>
-        <li><a href="stocks.html">Stocks</a></li>
-        <li><a href="penny.html">Penny</a></li>
         <li><a href="index.html#simulator">Simulator</a></li>
         <li><a href="index.html#signup">Get Access</a></li>
       </ul>

@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Trade</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:26px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .wrap{max-width:880px;margin:0 auto;padding:104px 32px 80px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:14px}
+    h1{font-size:clamp(2.2rem,5vw,3.2rem);font-weight:600;margin-bottom:4px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;max-width:560px;margin-bottom:8px}
+    .warn{font-family:var(--mono);font-size:.66rem;color:var(--red);letter-spacing:.04em;margin-bottom:26px}
+
+    .card{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);margin-top:22px}
+    .card-h{display:flex;align-items:center;justify-content:space-between;padding:10px 18px;border-bottom:1px solid var(--border);
+      font-family:var(--mono);font-size:.68rem;letter-spacing:.16em;color:var(--dim);text-transform:uppercase}
+    .acct{display:flex;gap:0;flex-wrap:wrap}
+    .acct .a{flex:1;min-width:130px;padding:18px 20px;border-right:1px solid var(--border)}
+    .acct .a:last-child{border-right:none}
+    .acct .v{font-family:var(--title);font-size:1.5rem;font-weight:600}
+    .acct .l{font-family:var(--mono);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+
+    .buyform{display:flex;gap:10px;align-items:flex-end;padding:18px 20px;flex-wrap:wrap}
+    .fld{display:flex;flex-direction:column;gap:4px}
+    .fld label{font-family:var(--mono);font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim)}
+    .fld input{font-family:var(--mono);background:var(--bg);border:1px solid var(--border2);padding:11px 13px;font-size:.9rem;outline:none;color:var(--text)}
+    .btn{font-family:var(--mono);font-size:.8rem;letter-spacing:.1em;padding:11px 24px;border:none;cursor:pointer;text-transform:uppercase}
+    .btn-buy{background:var(--green);color:#fff}.btn-buy:hover{opacity:.88}
+    .btn-sell{background:transparent;border:1px solid var(--red);color:var(--red);padding:5px 14px;font-size:.7rem;cursor:pointer;font-family:var(--mono);letter-spacing:.08em}
+    .btn-sell:hover{background:rgba(138,48,48,.08)}
+    .btn:disabled,.btn-sell:disabled{opacity:.5;cursor:default}
+
+    .pos{display:flex;align-items:center;justify-content:space-between;padding:13px 20px;border-top:1px solid var(--border)}
+    .pos .tk{font-family:var(--mono);font-size:.95rem;letter-spacing:.08em;min-width:70px}
+    .pos .mv{font-family:var(--title);font-weight:600;margin-left:auto;margin-right:16px}
+    .muted{padding:18px 20px;color:var(--dim);font-size:.85rem}
+    #status{font-family:var(--mono);font-size:.74rem;padding:12px 20px;border-top:1px solid var(--border);min-height:20px}
+    .ok{color:var(--green)} .err{color:var(--red)}
+    .modes{display:flex;gap:8px;margin:18px 0 6px}
+    .mode-tab{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase;background:transparent;border:1px solid var(--border2);color:var(--mid);padding:8px 16px;cursor:pointer;border-radius:2px}
+    .mode-tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .mode-desc{font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-bottom:6px;min-height:16px}
+    .sugg{display:flex;align-items:center;gap:12px;padding:12px 20px;border-top:1px solid var(--border);flex-wrap:wrap}
+    .sugg .tk{font-family:var(--mono);font-size:.95rem;min-width:60px;font-weight:600}
+    .sugg .meta{font-family:var(--mono);font-size:.64rem;color:var(--dim)}
+    .sugg .act{margin-left:auto;display:flex;gap:8px}
+    .upsell{padding:22px 20px;text-align:center;font-family:var(--mono);font-size:.8rem;color:var(--mid);line-height:1.8}
+    .upsell a{color:var(--green);text-decoration:none;font-weight:600}
+    @media(max-width:760px){nav{padding:0 18px}.nav-links{display:none}}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html" class="active">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <span class="badge" id="modeBadge">Paper · fake money</span>
+    <h1>TR<span>ADE</span></h1>
+    <p class="sub">Place real market orders on your connected Alpaca account. See a whisper, act on it, one click.</p>
+    <p style="margin-bottom:8px;"><a href="whispers.html" style="font-family:var(--mono);font-size:.74rem;letter-spacing:.06em;color:var(--teal);text-decoration:none;">&larr; Find what's moving in Whispers</a></p>
+    <p class="warn">Demo: single account (paper). Real-money + multi-user trading needs login + your own brokerage connection first.</p>
+
+    <div class="modes" id="modes">
+      <button class="mode-tab active" data-mode="manual" onclick="setMode('manual')">Manual</button>
+      <button class="mode-tab" data-mode="semi" onclick="setMode('semi')">Semi-auto</button>
+      <button class="mode-tab" data-mode="auto" onclick="setMode('auto')">Full-auto</button>
+    </div>
+    <div class="mode-desc" id="modeDesc"></div>
+
+    <div class="card">
+      <div class="card-h"><span>Account</span><button class="btn-sell" style="border-color:var(--border2);color:var(--mid)" onclick="loadAccount()">↻ Refresh</button></div>
+      <div class="acct" id="acct"><div class="muted">loading account…</div></div>
+    </div>
+
+    <div class="card" id="manualCard">
+      <div class="card-h"><span>Place an order</span></div>
+      <div class="buyform">
+        <div class="fld"><label>Ticker</label><input id="bt" placeholder="NVDA" maxlength="6" style="width:110px;text-transform:uppercase" /></div>
+        <div class="fld"><label>Amount ($)</label><input id="ba" type="number" value="200" min="1" step="50" style="width:120px" /></div>
+        <button class="btn btn-buy" id="buyBtn" onclick="buy()">Buy</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <div class="card" id="semiCard" style="display:none">
+      <div class="card-h"><span>Suggested trades &middot; approve to execute</span><button class="btn-sell" style="border-color:var(--border2);color:var(--mid)" onclick="loadSuggestions()">&#8635;</button></div>
+      <div id="suggestions"><div class="muted">loading suggestions…</div></div>
+      <div id="semiStatus"></div>
+    </div>
+
+    <div class="card" id="autoCard" style="display:none">
+      <div class="card-h"><span>Full-auto</span></div>
+      <div id="autoBody" style="padding:18px 20px"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-h"><span>Open positions</span></div>
+      <div id="positions"><div class="muted">loading…</div></div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const fmt=n=>'$'+Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+function setStatus(msg,cls){ $('status').innerHTML='<span class="'+(cls||'')+'">'+msg+'</span>'; }
+
+async function loadAccount(){
+  $('acct').innerHTML='<div class="muted">loading account…</div>';
+  try{
+    const d=await (await fetch('/api/account')).json();
+    if(d.error){ $('acct').innerHTML='<div class="muted">'+d.error+' — set Alpaca keys in .env</div>'; $('positions').innerHTML=''; return; }
+    $('modeBadge').textContent = d.paper ? 'Paper · fake money' : 'LIVE · real money';
+    $('acct').innerHTML =
+      '<div class="a"><div class="v">'+fmt(d.portfolio_value)+'</div><div class="l">Portfolio</div></div>'+
+      '<div class="a"><div class="v">'+fmt(d.cash)+'</div><div class="l">Cash</div></div>'+
+      '<div class="a"><div class="v">'+fmt(d.buying_power)+'</div><div class="l">Buying power</div></div>';
+    const pos=d.positions||{};
+    const keys=Object.keys(pos);
+    $('positions').innerHTML = keys.length ? keys.map(t=>
+      '<div class="pos"><span class="tk">'+t+'</span><span class="mv">'+fmt(pos[t])+'</span>'+
+      '<button class="btn-sell" onclick="sell(\''+t+'\')">Sell all</button></div>').join('')
+      : '<div class="muted">No open positions. Place an order above.</div>';
+  }catch(e){
+    $('acct').innerHTML='<div class="muted">Server not reachable. Start it: python sim_server.py</div>';
+  }
+}
+
+async function buy(){
+  const ticker=($('bt').value||'').trim().toUpperCase();
+  const amount=parseFloat($('ba').value||'0');
+  if(!ticker){ setStatus('Enter a ticker.','err'); return; }
+  if(!(amount>=1)){ setStatus('Amount must be at least $1.','err'); return; }
+  $('buyBtn').disabled=true; setStatus('Placing buy order for '+ticker+'…');
+  try{
+    const r=await (await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker,amount})})).json();
+    if(r.error) setStatus('Error: '+r.error,'err');
+    else { setStatus('✓ BUY '+ticker+' $'+amount.toFixed(2)+' — status: '+r.status,'ok'); setTimeout(loadAccount,1200); }
+  }catch(e){ setStatus('Failed: '+e.message,'err'); }
+  finally{ $('buyBtn').disabled=false; }
+}
+
+async function sell(ticker){
+  if(!confirm('Sell your entire '+ticker+' position?')) return;
+  setStatus('Selling '+ticker+'…');
+  try{
+    const r=await (await fetch('/api/sell',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ticker})})).json();
+    if(r.error) setStatus('Error: '+r.error,'err');
+    else setStatus('✓ SELL '+ticker+' — proceeds ~'+fmt(r.proceeds||0)+', status: '+r.status,'ok');
+    setTimeout(loadAccount,1200);
+  }catch(e){ setStatus('Failed: '+e.message,'err'); }
+}
+
+// Prefill ticker from ?ticker=NVDA (so a whisper can link straight to a buy)
+const qt=new URLSearchParams(location.search).get('ticker');
+if(qt) $('bt').value=qt.toUpperCase();
+loadAccount();
+
+// ── Trade modes: manual / semi-auto / full-auto ──
+let MET=null, MODE='manual';
+const MODE_DESC={
+  manual:'You place every trade. Midas just informs.',
+  semi:'Midas suggests trades from the Wire. You approve each one. (Pro)',
+  auto:'Midas runs the trades for you, hands-off. (Premium + your brokerage)'
+};
+function paid(){ return MET && (MET.tier==='pro'||MET.tier==='premium'); }
+function setMode(m){
+  MODE=m;
+  document.querySelectorAll('.mode-tab').forEach(b=>b.classList.toggle('active', b.dataset.mode===m));
+  $('modeDesc').textContent = MODE_DESC[m]||'';
+  $('manualCard').style.display = m==='manual'?'block':'none';
+  $('semiCard').style.display = m==='semi'?'block':'none';
+  $('autoCard').style.display = m==='auto'?'block':'none';
+  try{ localStorage.setItem('midas_mode', m); }catch(e){}
+  if(m==='semi') renderSemi();
+  if(m==='auto') renderAuto();
+}
+function upsell(what){ return '<div class="upsell">'+what+' is a paid feature.<br><a href="account.html">Upgrade your plan &rarr;</a></div>'; }
+function renderSemi(){
+  if(!MET){ $('suggestions').innerHTML='<div class="upsell"><a href="account.html">Log in</a> to use semi-auto.</div>'; return; }
+  if(!paid()){ $('suggestions').innerHTML=upsell('Semi-auto'); return; }
+  loadSuggestions();
+}
+async function loadSuggestions(){
+  if(!paid()) return;
+  $('suggestions').innerHTML='<div class="muted">pulling the top signals…</div>';
+  try{
+    const d=await (await fetch('/api/suggestions')).json();
+    const S=d.suggestions||[];
+    if(!S.length){ $('suggestions').innerHTML='<div class="muted">No strong signals right now.</div>'; return; }
+    $('suggestions').innerHTML=S.map(s=>{
+      const col=s.direction==='bullish'?'var(--green)':s.direction==='bearish'?'var(--red)':'var(--dim)';
+      return '<div class="sugg"><span class="tk" style="color:'+col+'">'+s.ticker+'</span>'+
+        '<span class="meta">'+s.direction+' &middot; conf '+s.confidence+' &middot; '+s.stage+'</span>'+
+        '<span class="act"><button class="btn btn-buy" style="padding:6px 14px;font-size:.7rem" onclick="approve(\''+s.ticker+'\','+s.amount+')">Approve $'+s.amount+'</button>'+
+        '<button class="btn-sell" onclick="this.closest(\'.sugg\').remove()">Skip</button></span></div>';
+    }).join('');
+  }catch(e){ $('suggestions').innerHTML='<div class="muted">Could not load suggestions.</div>'; }
+}
+async function approve(ticker, amount){
+  $('semiStatus').innerHTML='<span style="font-family:var(--mono);font-size:.74rem;padding:10px 20px;display:block">Approving '+ticker+'…</span>';
+  try{
+    const r=await (await fetch('/api/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,amount})})).json();
+    if(r.error) $('semiStatus').innerHTML='<span class="err" style="padding:10px 20px;display:block;font-family:var(--mono);font-size:.74rem">'+r.error+'</span>';
+    else { $('semiStatus').innerHTML='<span class="ok" style="padding:10px 20px;display:block;font-family:var(--mono);font-size:.74rem">&#10003; Bought '+ticker+' $'+amount+'</span>'; setTimeout(loadAccount,1200); }
+  }catch(e){ $('semiStatus').innerHTML='<span class="err" style="padding:10px 20px;display:block">Failed: '+e.message+'</span>'; }
+}
+function renderAuto(){
+  if(!paid()){ $('autoBody').innerHTML=upsell('Full-auto'); return; }
+  $('autoBody').innerHTML='<div style="font-family:var(--mono);font-size:.8rem;color:var(--mid);line-height:1.7">Full-auto lets Midas place trades on its own from the Wire signals.<br>It needs your <b>brokerage connected</b> (Alpaca) + an always-on runner, that connect step is next.<br><br><span style="color:var(--dim)">Status: ready to wire once your account is linked.</span></div>';
+}
+(async()=>{
+  try{ MET=(await (await fetch('/api/me')).json()).user; }catch(e){}
+  setMode(localStorage.getItem('midas_mode')||'manual');
+})();
+</script>
+</body>
+</html>

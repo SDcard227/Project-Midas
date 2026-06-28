@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MIDAS — Practice</title>
+  <title>MIDAS — Replay</title>
+  <script src="midas-theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     :root{
@@ -66,39 +67,96 @@
     .lg{display:inline-flex;align-items:center;gap:5px}
     .sw{width:11px;height:11px;border-radius:2px;display:inline-block}
     .grid{display:flex;flex-wrap:wrap;gap:3px}
-    .cell{width:13px;height:13px;border-radius:2px;background:var(--border);transition:opacity .2s;cursor:default;position:relative}
+    .cell{width:13px;height:13px;border-radius:2px;background:var(--border);transition:opacity .2s;cursor:pointer;position:relative}
+    .cell:hover{outline:2px solid var(--teal);outline-offset:1px}
     .cell.on{}
     .cell.cur{outline:2px solid var(--text);outline-offset:1px}
     .cell.trade::after{content:"";position:absolute;inset:4px;border-radius:50%;background:#fff;opacity:.9}
     .cell.floor{outline:2px solid var(--amber);outline-offset:1px}
+    /* day detail */
+    .day-ov{position:fixed;inset:0;background:rgba(30,26,20,.5);z-index:500;display:flex;align-items:flex-start;justify-content:center;padding:50px 20px;overflow-y:auto}
+    .day-card{background:var(--bg);border:1px solid var(--border2);box-shadow:0 20px 60px rgba(0,0,0,.3);max-width:560px;width:100%;position:relative;border-radius:4px;padding:26px 26px 30px}
+    .day-x{position:absolute;top:6px;right:14px;background:none;border:none;font-size:1.6rem;line-height:1;cursor:pointer;color:var(--mid)}
+    .day-h2{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);margin:18px 0 8px}
+    .day-stat{display:flex;gap:26px;flex-wrap:wrap}
+    .dn-row{padding:9px 0;border-top:1px solid var(--border)}
+    .dn-t{font-size:.88rem;color:var(--text);text-decoration:none}
+    .dn-t:hover{color:var(--teal);text-decoration:underline}
+    .dn-m{font-family:var(--mono);font-size:.62rem;color:var(--dim);margin-top:3px}
     .muted{padding:22px;color:var(--dim);font-size:.85rem}
+    /* save / saved sessions */
+    .save-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:14px}
+    .save-row .ctl{flex:1;min-width:180px}
+    .save-row input{width:100%}
+    .save-btn{font-family:var(--mono);background:var(--surface);border:1px solid var(--border2);
+      color:var(--mid);font-size:.72rem;letter-spacing:.1em;padding:9px 18px;cursor:pointer;text-transform:uppercase}
+    .save-btn:hover{color:var(--text);border-color:var(--text)}
+    .sess-list{display:flex;flex-direction:column}
+    .sess{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 18px;
+      border-top:1px solid var(--border);cursor:pointer}
+    .sess:hover{background:var(--surface)}
+    .sess-main{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .sess-label{font-size:.9rem;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .sess-meta{font-family:var(--mono);font-size:.6rem;letter-spacing:.06em;color:var(--dim);text-transform:uppercase}
+    .sess-x{background:none;border:1px solid var(--border2);color:var(--dim);font-size:.9rem;line-height:1;
+      width:24px;height:24px;border-radius:2px;cursor:pointer;flex:none}
+    .sess-x:hover{color:var(--red);border-color:var(--red)}
     @media(max-width:760px){nav{padding:0 18px}.nav-links{display:none}}
+  </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
   </style>
 </head>
 <body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
   <nav>
     <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
     <ul class="nav-links">
-      <li><a href="index.html">Home</a></li>
-      <li><a href="stocks.html">Stocks</a></li>
-      <li><a href="penny.html">Penny</a></li>
-      <li><a href="intelligence.html">Intelligence</a></li>
-      <li><a href="whispers.html">Whispers</a></li>
-      <li><a href="practice.html" class="active">Practice</a></li>
-      <li><a href="dashboard.html">Dashboard</a></li>
-      <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html" class="active">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
     </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
   </nav>
 
   <div class="wrap">
     <span class="banner">Mock money &middot; practice only</span>
-    <h1>PRAC<span>TICE</span></h1>
+    <h1>RE<span>PLAY</span></h1>
     <p class="sub">Replay a real past year with Midas at the wheel. Watch the market's
       ups and downs, the system's confidence each day, and how much you'd have made.</p>
 
     <div class="controls">
       <div class="ctl"><label>Year</label>
         <select id="year"><option>2021</option><option>2022</option><option selected>2023</option><option>2024</option></select></div>
+      <div class="ctl"><label>Month</label>
+        <select id="month" onchange="applyView()">
+          <option value="0" selected>All year</option>
+          <option value="1">January</option><option value="2">February</option>
+          <option value="3">March</option><option value="4">April</option>
+          <option value="5">May</option><option value="6">June</option>
+          <option value="7">July</option><option value="8">August</option>
+          <option value="9">September</option><option value="10">October</option>
+          <option value="11">November</option><option value="12">December</option>
+        </select></div>
       <div class="ctl"><label>Mode</label>
         <select id="mode"><option>CLIMB</option><option>PLATEAU</option><option>SURGE</option></select></div>
       <div class="ctl"><label>Frequency</label>
@@ -109,7 +167,18 @@
         <input id="bal" type="number" value="1000" min="100" step="100" style="width:90px" /></div>
       <button class="run" id="runBtn" onclick="runSim()">Run</button>
     </div>
-    <div class="note">Daily / swing engine on AAPL · MSFT · NVDA · SPY, after costs + 22% tax. Day-trading mode (5-min bars) is a separate engine — coming next.</div>
+    <div class="note">Daily / swing engine on AAPL · MSFT · NVDA · SPY, after costs + 22% tax. Day-trading mode (5-min bars) is a separate engine, coming next.</div>
+
+    <div class="save-row">
+      <div class="ctl"><label>Label this session</label>
+        <input id="sessLabel" type="text" placeholder="e.g. NVDA run, March 2023" maxlength="60" /></div>
+      <button class="save-btn" id="saveBtn" onclick="saveSession()">Save this session</button>
+    </div>
+
+    <div class="card" id="savedCard" style="display:none">
+      <div class="card-h"><span>Saved sessions</span></div>
+      <div class="sess-list" id="savedSessions"></div>
+    </div>
 
     <div id="result"></div>
   </div>
@@ -117,7 +186,20 @@
 <script>
 const $ = id => document.getElementById(id);
 const fmt = n => '$' + Number(n).toLocaleString(undefined,{maximumFractionDigits:0});
+const esc = s => (''+(s==null?'':s)).replace(/[&<>"]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const MONTHS = ['','January','February','March','April','May','June','July','August','September','October','November','December'];
 let timer = null, lastData = null;
+
+// Month filter: 0 = whole year. The sim always runs a full year (the engine takes
+// a year, not a month), then the grid/scrub/equity reflect only the chosen month.
+function selectedMonth(){ return parseInt($('month') ? $('month').value : '0', 10) || 0; }
+function viewTimeline(){
+  const tl = (lastData && lastData.timeline) ? lastData.timeline : [];
+  const m = selectedMonth();
+  if(!m) return tl;
+  const mm = String(m).padStart(2,'0');
+  return tl.filter(t => (''+(t.date||'')).slice(5,7) === mm);
+}
 
 async function runSim(){
   if(timer){ clearInterval(timer); timer=null; }
@@ -148,7 +230,12 @@ async function runSim(){
 
 function render(d){
   const cls = d.total_return >= 0 ? 'up' : 'down';
-  const sign = d.total_return >= 0 ? '+' : '';
+  const view = viewTimeline();
+  const m = selectedMonth();
+  const span = m ? (MONTHS[m] + ' ' + $('year').value) : ('the ' + $('year').value + ' year');
+  const scopeWord = m ? 'the month' : 'the year';
+  const dayCount = view.length;
+  const empty = !dayCount;
   $('result').innerHTML = `
     <div class="card">
       <div class="result-head">
@@ -164,8 +251,11 @@ function render(d){
       </div>
       <canvas id="equity"></canvas>
     </div>
+    <div style="text-align:center;margin-top:18px;font-family:var(--mono);font-size:.78rem;color:var(--mid);letter-spacing:.04em;">
+      That was practice money. <a href="trade.html" style="color:var(--green);font-weight:600;text-decoration:none;">Trade it for real &rarr;</a>
+    </div>
     <div class="card">
-      <div class="card-h"><span>The year, day by day &middot; up/down &amp; confidence</span>
+      <div class="card-h"><span>${esc(span)} &middot; day by day &middot; up/down &amp; confidence</span>
         <button onclick="replay()">&#9654; Replay</button></div>
       <div class="grid-wrap">
         <div class="grid-legend">
@@ -175,12 +265,23 @@ function render(d){
           <span class="lg"><span class="sw" style="background:var(--green);position:relative"><span style="position:absolute;inset:3px;border-radius:50%;background:#fff"></span></span>trade</span>
           <span class="lg"><span class="sw" style="background:var(--bg);outline:2px solid var(--amber)"></span>floor hit</span>
         </div>
-        <div class="grid" id="grid"></div>
+        ${empty
+          ? '<div class="muted" style="padding:6px 0">No trading days in '+esc(MONTHS[m]||'')+' for this run. Pick another month or All year.</div>'
+          : '<div class="grid" id="grid"></div>'}
       </div>
     </div>`;
-  buildGrid(d.timeline);
-  drawEquity(d.timeline, d.timeline.length);
+  if(empty) return;
+  buildGrid(view);
+  drawEquity(view, dayCount);
   replay();
+}
+
+// Re-render the grid/scrub/equity for the chosen month from the already-run sim
+// (no re-fetch). Falls back to a full run if nothing has been simulated yet.
+function applyView(){
+  if(timer){ clearInterval(timer); timer=null; }
+  if(lastData && lastData.timeline && lastData.timeline.length){ render(lastData); }
+  else { runSim(); }
 }
 
 function cellColor(t){
@@ -191,8 +292,9 @@ function cellOpacity(t){
   return (0.30 + 0.70 * Math.max(0,Math.min(100,c))/100).toFixed(2);
 }
 
-let cells = [];
+let cells = [], TL = [];
 function buildGrid(tl){
+  TL = tl;
   const g = $('grid'); g.innerHTML = ''; cells = [];
   tl.forEach((t,i)=>{
     const el = document.createElement('div');
@@ -200,10 +302,39 @@ function buildGrid(tl){
     el.style.background = cellColor(t);
     el.style.opacity = 0;   // revealed during replay
     el.dataset.op = cellOpacity(t);
-    el.title = `${t.date} | market ${t.pct>=0?'+':''}${t.pct}% | conf ${t.confidence==null?'—':t.confidence} | ${t.action}`;
+    el.title = `${t.date} | market ${t.pct>=0?'+':''}${t.pct}% | conf ${t.confidence==null?'—':t.confidence} | ${t.action} — click for the news`;
+    el.onclick = ()=>openDay(i);
     g.appendChild(el); cells.push(el);
   });
 }
+
+async function openDay(i){
+  const t = TL[i]; if(!t) return;
+  $('day-overlay').style.display='flex'; document.body.style.overflow='hidden';
+  const dir = t.direction==='up'?'var(--green)':t.direction==='down'?'var(--red)':'var(--dim)';
+  const act = (t.action && t.action!=='HOLD') ? t.action : 'no trade';
+  $('day-body').innerHTML =
+    '<div style="font-family:var(--mono);font-size:1.3rem;letter-spacing:.06em">'+esc(t.date)+'</div>'+
+    '<div class="day-stat" style="margin-top:14px">'+
+      '<div><div style="font-size:1.6rem;font-weight:700;color:'+dir+'">'+(t.pct>=0?'+':'')+t.pct+'%</div><div class="day-h2" style="margin:0">Market move</div></div>'+
+      '<div><div style="font-size:1.6rem;font-weight:700">'+(t.confidence==null?'—':t.confidence)+'</div><div class="day-h2" style="margin:0">Confidence</div></div>'+
+      '<div><div style="font-size:1.6rem;font-weight:700;color:var(--amber)">'+esc(act)+'</div><div class="day-h2" style="margin:0">Midas did</div></div>'+
+    '</div>'+
+    '<div class="day-h2">What hit the market that day</div>'+
+    '<div id="day-news"><div class="muted" style="padding:8px 0">pulling the headlines…</div></div>';
+  try{
+    const d = await (await fetch('/api/daynews?date='+encodeURIComponent(t.date)+'&tickers=SPY,AAPL,MSFT,NVDA')).json();
+    const el = $('day-news');
+    if(d.note){ el.innerHTML='<div class="muted" style="padding:8px 0">'+esc(d.note)+' (set FINNHUB_API_KEY for historical headlines).</div>'; return; }
+    if(!d.news || !d.news.length){ el.innerHTML='<div class="muted" style="padding:8px 0">No headlines indexed for that day.</div>'; return; }
+    el.innerHTML = d.news.map(a=>{
+      const link = a.url ? '<a class="dn-t" href="'+esc(a.url)+'" target="_blank" rel="noopener">'+esc(a.headline||'')+'</a>' : '<span class="dn-t">'+esc(a.headline||'')+'</span>';
+      return '<div class="dn-row">'+link+'<div class="dn-m">'+esc(a.ticker||'')+' &middot; '+esc(a.source||'')+'</div></div>';
+    }).join('');
+  }catch(e){ $('day-news').innerHTML='<div class="muted" style="padding:8px 0">news unavailable</div>'; }
+}
+function closeDay(){ $('day-overlay').style.display='none'; document.body.style.overflow=''; }
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeDay(); });
 
 function drawEquity(tl, upto){
   const cv = $('equity'); if(!cv) return;
@@ -229,7 +360,8 @@ function drawEquity(tl, upto){
 function replay(){
   if(!lastData) return;
   if(timer){ clearInterval(timer); timer=null; }
-  const tl = lastData.timeline, N = tl.length;
+  const tl = viewTimeline(), N = tl.length;
+  if(!N || !cells.length) return;
   const startVal = tl[0].value;
   cells.forEach(c=>{ c.style.opacity=0; c.classList.remove('cur'); });
   let step = 0;
@@ -247,7 +379,81 @@ function replay(){
   }, per);
 }
 
+// ── Saved replay sessions (localStorage) ─────────────────────────────────────
+const SESS_KEY = 'midas_replay_sessions';
+function loadSessions(){
+  try{ const a = JSON.parse(localStorage.getItem(SESS_KEY) || '[]'); return Array.isArray(a) ? a : []; }
+  catch(e){ return []; }
+}
+function storeSessions(arr){
+  try{ localStorage.setItem(SESS_KEY, JSON.stringify(arr)); }catch(e){}
+}
+function currentContext(){
+  return {
+    year:  $('year').value,
+    month: selectedMonth(),
+    mode:  $('mode').value,
+    freq:  $('freq').value,
+    floor: $('floor').value,
+    bal:   $('bal').value || '1000',
+  };
+}
+function saveSession(){
+  const ctx = currentContext();
+  const typed = ($('sessLabel').value || '').trim();
+  const span  = ctx.month ? (MONTHS[ctx.month] + ' ' + ctx.year) : ('Full year ' + ctx.year);
+  const label = typed || (span + ' · ' + ctx.mode);
+  const arr = loadSessions();
+  arr.unshift({ id: Date.now(), label: label, ctx: ctx, span: span });
+  storeSessions(arr.slice(0, 30));   // cap the list
+  $('sessLabel').value = '';
+  renderSessions();
+}
+function deleteSession(id, ev){
+  if(ev) ev.stopPropagation();
+  storeSessions(loadSessions().filter(s => s.id !== id));
+  renderSessions();
+}
+function restoreSession(id){
+  const s = loadSessions().find(x => x.id === id);
+  if(!s) return;
+  const c = s.ctx || {};
+  if(c.year  != null) $('year').value  = c.year;
+  if($('month')) $('month').value = String(c.month || 0);
+  if(c.mode  != null) $('mode').value  = c.mode;
+  if(c.freq  != null) $('freq').value  = c.freq;
+  if(c.floor != null) $('floor').value = c.floor;
+  if(c.bal   != null) $('bal').value   = c.bal;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  runSim();   // re-run with restored controls; month view applied on render
+}
+function renderSessions(){
+  const arr = loadSessions();
+  const card = $('savedCard'), list = $('savedSessions');
+  if(!card || !list) return;
+  if(!arr.length){ card.style.display = 'none'; list.innerHTML = ''; return; }
+  card.style.display = '';
+  list.innerHTML = arr.map(s => {
+    const c = s.ctx || {};
+    const meta = (s.span || '') + ' · ' + (c.mode||'') + ' · ' + (c.freq||'') + ' · start ' + fmt(c.bal||0);
+    return '<div class="sess" onclick="restoreSession('+s.id+')">'+
+             '<div class="sess-main">'+
+               '<div class="sess-label">'+esc(s.label)+'</div>'+
+               '<div class="sess-meta">'+esc(meta)+'</div>'+
+             '</div>'+
+             '<button class="sess-x" title="Delete" onclick="deleteSession('+s.id+',event)">&times;</button>'+
+           '</div>';
+  }).join('');
+}
+
+renderSessions();
 runSim();
 </script>
+<div id="day-overlay" class="day-ov" style="display:none" onclick="if(event.target===this)closeDay()">
+  <div class="day-card">
+    <button class="day-x" onclick="closeDay()" aria-label="Close">&times;</button>
+    <div id="day-body"></div>
+  </div>
+</div>
 </body>
 </html>

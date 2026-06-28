@@ -8,3 +8,7 @@ signal_ledger.json
 .env
 .env.local
 brain/_ledger_demo.json
+
+# user accounts db
+midas_users.db
+*.db

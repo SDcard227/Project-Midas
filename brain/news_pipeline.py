@@ -55,6 +55,21 @@ RSS_FEEDS = [
     ("MarketWatch",   "https://feeds.marketwatch.com/marketwatch/topstories"),
     ("Yahoo Finance", "https://finance.yahoo.com/news/rssindex"),
     ("BBC Business",  "https://feeds.bbci.co.uk/news/business/rss.xml"),
+    # ── underground / alt / early-signal (whispers live in the fringe) ──
+    ("Zerohedge",     "https://feeds.feedburner.com/zerohedge/feed"),
+    ("Benzinga",      "https://www.benzinga.com/feed"),
+    ("Seeking Alpha", "https://seekingalpha.com/market_currents.xml"),
+    ("Hacker News",   "https://hnrss.org/newest?points=100"),
+    ("WSB",           "https://www.reddit.com/r/wallstreetbets/.rss"),
+    ("r/stocks",      "https://www.reddit.com/r/stocks/.rss"),
+    ("r/pennystocks", "https://www.reddit.com/r/pennystocks/.rss"),
+    ("r/SPACs",       "https://www.reddit.com/r/SPACs/.rss"),
+    ("GlobeNewswire", "https://www.globenewswire.com/RssFeed/orgclass/1/feedTitle/GlobeNewswire"),
+    ("PRNewswire",    "https://www.prnewswire.com/rss/news-releases-list.rss"),
+    # ── commodities / minerals / natural resources ──
+    ("Mining.com",    "https://www.mining.com/feed/"),
+    ("OilPrice",      "https://oilprice.com/rss/main"),
+    ("Kitco Metals",  "https://www.kitco.com/rss/KitcoNews.xml"),
 ]
 
 # ── Source 2: SEC EDGAR latest filings (the primary-source edge) ─────────────

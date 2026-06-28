@@ -4,6 +4,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
   <title>MIDAS — Command Centre</title>
+  <script src="midas-theme.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <style>
   :root{
@@ -30,7 +31,7 @@
   .nav-cta{color:var(--green)!important;border:1px solid var(--green)!important;padding:6px 20px;border-radius:2px;font-weight:500!important;}
 
   /* ── Page ── */
-  .page{padding-top:60px;}
+  .page{padding-top:92px;}
 
   /* ── Monitor header ── */
   .mon-hdr{padding:20px 32px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;}
@@ -211,21 +212,40 @@
     .l-table th,.l-table td{padding:6px 8px;}
   }
   </style>
+  <style id="mobile-nav">
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
+    @media(max-width:760px){
+      .nav-burger{display:block;}
+      nav .nav-links{display:none;position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:rgba(245,240,232,0.98);border-bottom:1px solid #c4bdb0;padding:6px 0;box-shadow:0 10px 24px rgba(30,26,20,.10);}
+      nav .nav-links.open{display:flex;}
+      nav .nav-links li{padding:0;}
+      nav .nav-links a{display:block;padding:13px 24px;font-size:0.95rem;}
+      .monitor-grid{grid-template-columns:1fr !important;}
+    }
+  </style>
+  <style id="back-btn">
+    #midas-back{position:fixed;top:72px;left:16px;z-index:150;font-family:'Share Tech Mono',monospace;font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid #c4bdb0;color:#5c5045;padding:5px 11px;border-radius:3px;text-decoration:none;backdrop-filter:blur(4px)}
+    #midas-back:hover{color:#1e1a14;border-color:#1e1a14}
+    @media(max-width:760px){#midas-back{top:64px;left:10px;font-size:.56rem;padding:4px 8px}}
+  </style>
 </head>
 <body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+
 
 <nav>
   <a class="nav-logo" href="index.html"><span>MIDAS</span> COMMAND</a>
   <ul class="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="stocks.html">Stocks</a></li>
-    <li><a href="penny.html">Penny</a></li>
-    <li><a href="intelligence.html">Intelligence</a></li>
-    <li><a href="whispers.html">Whispers</a></li>
-    <li><a href="practice.html">Practice</a></li>
-    <li><a href="dashboard.html" class="active">Dashboard</a></li>
-    <li><a href="index.html#signup" class="nav-cta">Get Access</a></li>
-  </ul>
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="practice.html">Replay</a></li>
+      <li><a href="trade.html">Trade</a></li>
+      <li><a href="dashboard.html" class="active">Command</a></li>
+      <li><a href="account.html" class="nav-cta">Get Access</a></li>
+    </ul>
+      <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
 </nav>
 
 <div class="page">
@@ -234,12 +254,30 @@
   <div class="mon-hdr">
     <div>
       <div class="mon-title">COMMAND CENTRE</div>
+      <div style="margin-top:6px;margin-bottom:4px;font-family:'Share Tech Mono',monospace;font-size:0.72rem;letter-spacing:0.06em;">
+        <a href="whispers.html" style="color:#1a7080;text-decoration:none;margin-right:18px;">&rarr; Whisper feed</a>
+        <a href="trade.html" style="color:#2d7a4f;text-decoration:none;">&rarr; Place a trade</a>
+      </div>
       <div class="mon-sub">4-WAY LIVE MONITOR &nbsp;·&nbsp; 5-LAYER INTELLIGENCE &nbsp;·&nbsp; WORLD MARKETS</div>
     </div>
     <div class="mon-controls">
       <span id="mon-clock" style="font-family:var(--mono);font-size:0.68rem;color:var(--dim);letter-spacing:0.1em;margin-right:8px;"></span>
       <button class="ctrl-btn" onclick="refreshAll()">↻ REFRESH ALL</button>
       <button class="ctrl-btn" id="btn-layout" onclick="toggleLayout()">2×2 GRID</button>
+    </div>
+  </div>
+
+  <!-- ── EARLY WHISPERS (from /api/whispers) ── -->
+  <div class="pane" id="pane-whispers" style="margin-bottom:16px;">
+    <div class="pane-hdr">
+      <div>
+        <div class="pane-label">AI NEWS-EDGE</div>
+        <div class="pane-title">EARLY WHISPERS</div>
+      </div>
+      <a href="whispers.html" style="font-family:var(--mono);font-size:0.62rem;letter-spacing:0.08em;color:var(--teal);text-decoration:none;text-transform:uppercase;">Full feed &rarr;</a>
+    </div>
+    <div class="pane-body" id="pb-whispers">
+      <div class="dash-loading"><span>LOADING WHISPERS...</span></div>
     </div>
   </div>
 
@@ -415,7 +453,6 @@
       </div>
       <div id="l3-content">
         <div class="api-pending">
-          <div class="api-pending-icon">⚡</div>
           <div class="api-pending-title">Finnhub API Key Not Connected</div>
           <div class="api-pending-desc">Layer 3 requires a Finnhub API key to provide per-ticker sentiment scores.<br>Get a free key at finnhub.io and add it to <code style="font-family:var(--mono);background:var(--surface);padding:2px 6px;">brain/signal_engine.py</code>.<br><br>Below are the latest news articles being monitored across sources:</div>
         </div>
@@ -743,7 +780,7 @@ function openLiveStream(channelId, label){
     ? window.MP_STREAMS.findIndex(s=>s.channelId===channelId)
     : -1;
   if(idx>=0) window.mpOpen(idx);
-  else window.openYtPlayerOverlay(`https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1`);
+  else window.openYtPlayerOverlay(`https://www.youtube.com/embed/live_stream?channel=${channelId}&autoplay=1&mute=1`);
 }
 
 // Alias used by old onclick="openMiniPlayer(i)" in rendered HTML
@@ -846,7 +883,6 @@ function renderL4(){
   });
   if(!allTrades.length){
     el.innerHTML=`<div class="api-pending">
-      <div class="api-pending-icon">🏛</div>
       <div class="api-pending-title">Congressional Data Unavailable</div>
       <div class="api-pending-desc">House Stock Watcher and Senate Stock Watcher data sources are returning 403/404.<br>The feeds may be temporarily unavailable. Layer 4 defaults to neutral when no data is present.</div>
     </div>`;
@@ -929,12 +965,35 @@ function toggleLayout(){
   }
 }
 
+// ── Early Whispers (from /api/whispers) ──────────────────────────────────────
+async function fetchWhispers(){
+  const el=document.getElementById('pb-whispers'); if(!el) return;
+  try{
+    const d=await (await fetch(`${SIM}/api/whispers`)).json();
+    const rows=(d.haulers||[]).concat(d.whispers||[]).slice(0,12);
+    if(!rows.length){
+      el.innerHTML='<div class="dash-loading"><span>'+(d.ai_enabled?'No whispers yet — scanner is listening':'AI off — set ANTHROPIC_API_KEY')+'</span></div>';
+      return;
+    }
+    el.innerHTML=rows.map(w=>{
+      const col=w.direction==='bullish'?'var(--green)':w.direction==='bearish'?'var(--red)':'var(--dim)';
+      const arr=w.direction==='bullish'?'&#9650;':w.direction==='bearish'?'&#9660;':'&middot;';
+      return '<div style="display:flex;align-items:center;gap:10px;padding:8px 14px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:0.72rem;">'+
+        '<span style="color:'+col+';min-width:60px;font-weight:600;">'+arr+' '+w.ticker+'</span>'+
+        '<span style="color:var(--dim);text-transform:uppercase;">'+w.stage+'</span>'+
+        '<span style="margin-left:auto;color:var(--mid);">conf '+w.confidence+' &middot; '+w.source_count+' src</span>'+
+        '<a href="trade.html?ticker='+encodeURIComponent(w.ticker)+'" style="color:var(--green);text-decoration:none;">Trade &rarr;</a>'+
+        '</div>';
+    }).join('');
+  }catch(e){ el.innerHTML='<div class="dash-loading"><span>whispers unavailable</span></div>'; }
+}
+
 // ── Refresh all ───────────────────────────────────────────────────────────────
 function refreshAll(){
   document.getElementById('pb-signals').innerHTML='<div class="dash-loading"><span>REFRESHING...</span></div>';
   document.getElementById('pb-news').innerHTML='<div class="dash-loading"><span>REFRESHING...</span></div>';
   document.getElementById('pb-yt').innerHTML='<div class="dash-loading"><span>REFRESHING...</span></div>';
-  fetchIntel();fetchNews();fetchYT();
+  fetchIntel();fetchNews();fetchYT();fetchWhispers();
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
@@ -942,10 +1001,12 @@ fetchMonitor();   // clocks + tickers (60s refresh)
 fetchIntel();     // intelligence signals (5m)
 fetchNews();      // news feeds (10m)
 fetchYT();        // youtube feeds (30m)
+fetchWhispers();  // AI whispers (10m)
 setInterval(fetchMonitor, 60000);
 setInterval(fetchIntel,  300000);
 setInterval(fetchNews,   600000);
 setInterval(fetchYT,    1800000);
+setInterval(fetchWhispers, 600000);
 </script>
 <script src="mini-player.js"></script>
 </body>
