@@ -107,6 +107,15 @@
       document.body.appendChild(a);
     }
     var nav = document.querySelector('nav .nav-links');
+    if (nav && !nav.querySelector('a[href="parlor.html"]')) {   // the new flagship — reachable everywhere
+      var pli = document.createElement('li');
+      var pa = document.createElement('a');
+      pa.href = 'parlor.html'; pa.textContent = 'The Parlor';
+      pli.appendChild(pa);
+      var pcta = nav.querySelector('.nav-cta');
+      if (pcta && pcta.parentElement && pcta.parentElement.tagName === 'LI') nav.insertBefore(pli, pcta.parentElement);
+      else nav.appendChild(pli);
+    }
     if (nav && !nav.querySelector('.midas-gear')) {
       var li = document.createElement('li');
       var g = document.createElement('a');

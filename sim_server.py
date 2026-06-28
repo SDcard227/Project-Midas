@@ -1371,6 +1371,76 @@ def api_funnies_moderate():
     return jsonify(funnies.moderate(int(data["id"]), data.get("action")))
 
 
+# ── THE PARLOR — play-money prediction markets (Phase 0 of the Kalshi path) ──
+@app.route("/parlor")
+def parlor_page():
+    return send_from_directory(BASE, "parlor.html")
+
+
+@app.route("/api/parlor/markets")
+def api_parlor_markets():
+    from brain import parlor
+    parlor.seed_if_empty()
+    out = {"markets": parlor.list_markets(request.args.get("status", "open"))}
+    u = _current_user()
+    if u:
+        out["balance"] = parlor.get_balance(u["id"])
+    return jsonify(out)
+
+
+@app.route("/api/parlor/me")
+def api_parlor_me():
+    from brain import parlor
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to play."}), 401
+    return jsonify({"balance": parlor.get_balance(u["id"]), "bets": parlor.user_bets(u["id"])})
+
+
+@app.route("/api/parlor/bet", methods=["POST"])
+def api_parlor_bet():
+    from brain import parlor
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to place a bet."}), 401
+    data = request.get_json(silent=True) or {}
+    res = parlor.place_bet(u["id"], data.get("market_id"), data.get("side"), data.get("stake"))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/parlor/leaderboard")
+def api_parlor_leaderboard():
+    from brain import parlor, accounts
+    rows = parlor.leaderboard()
+    for r in rows:
+        u = accounts.get_user(r["user_id"])
+        r["name"] = u["name"] if u else "Anon"
+    return jsonify({"leaders": rows})
+
+
+@app.route("/api/parlor/market", methods=["POST"])
+def api_parlor_create():
+    from brain import parlor
+    u = _current_user()
+    if not _is_admin(u):
+        return jsonify({"error": "Admin only."}), 403
+    data = request.get_json(silent=True) or {}
+    res = parlor.create_market(data.get("question", ""), data.get("ticker", ""),
+                               data.get("rule", ""), data.get("closes_at", ""),
+                               data.get("category", ""), u["id"])
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/parlor/resolve", methods=["POST"])
+def api_parlor_resolve():
+    from brain import parlor
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    data = request.get_json(silent=True) or {}
+    res = parlor.resolve_market(int(data.get("market_id", 0)), data.get("outcome"))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
 @app.route("/api/health")
 def api_health():
     """Which API keys the server can see (presence only, never values).

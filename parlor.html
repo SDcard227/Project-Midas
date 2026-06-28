@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — The Parlor</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--text);cursor:pointer;padding:0 6px;z-index:300}
+    @media(max-width:880px){
+      nav{padding:0 18px}
+      .nav-links{position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);
+        border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .25s}
+      .nav-links.open{max-height:420px}
+      .nav-links li{width:100%}.nav-links a{display:block;padding:13px 24px;border-top:1px solid var(--border)}
+      .nav-burger{display:block}
+    }
+
+    .wrap{max-width:1100px;margin:0 auto;padding:88px 24px 40px}
+    .top{display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;margin-bottom:6px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;
+      text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:12px}
+    h1{font-size:clamp(2rem,5vw,2.8rem);font-weight:600;margin-bottom:4px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;margin-bottom:8px;max-width:640px}
+    .wallet{font-family:var(--mono);text-align:right;white-space:nowrap}
+    .wallet .amt{font-size:1.5rem;color:var(--green);font-weight:600}
+    .wallet .lbl{font-size:.58rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim)}
+    .wallet a{color:var(--teal);font-size:.8rem;text-decoration:none}
+
+    .tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin:14px 0 20px;flex-wrap:wrap}
+    .tab{font-family:var(--mono);font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);
+      background:none;border:none;border-bottom:2px solid transparent;padding:10px 16px;cursor:pointer}
+    .tab:hover{color:var(--mid)}
+    .tab.active{color:var(--text);border-bottom-color:var(--amber)}
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:16px}
+    .mk{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 17px;display:flex;flex-direction:column}
+    .mk-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+    .mk-cat{font-family:var(--mono);font-size:.56rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amber)}
+    .mk-tick{font-family:var(--mono);font-size:.62rem;color:var(--teal);font-weight:600}
+    .mk-q{font-size:1.02rem;font-weight:600;line-height:1.35;margin-bottom:12px;min-height:42px}
+    .tote{height:9px;border-radius:5px;overflow:hidden;display:flex;background:var(--surface);border:1px solid var(--border)}
+    .tote .y{background:var(--green)}.tote .n{background:var(--red)}
+    .tote-l{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.62rem;margin-top:5px;color:var(--mid)}
+    .tote-l .yy{color:var(--green)}.tote-l .nn{color:var(--red)}
+    .odds{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--border)}
+    .bet{display:flex;gap:6px;margin-top:11px}
+    .bet input{width:74px;font-family:var(--mono);font-size:.82rem;border:1px solid var(--border2);background:var(--bg);padding:7px 8px;outline:none;color:var(--text);text-align:center}
+    .bet button{flex:1;font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;border:none;color:#fff;cursor:pointer;border-radius:2px;padding:8px 0}
+    .bet .by{background:var(--green)}.bet .bn{background:var(--red)}
+    .bet button:disabled{opacity:.45;cursor:default}
+    .admin-row{display:flex;gap:6px;margin-top:8px}
+    .admin-row button{flex:1;font-family:var(--mono);font-size:.56rem;letter-spacing:.08em;text-transform:uppercase;background:var(--surface);border:1px solid var(--border2);color:var(--mid);cursor:pointer;border-radius:2px;padding:5px 0}
+    .admin-row button:hover{border-color:var(--text);color:var(--text)}
+
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:9px 12px;font-size:.84rem;border-bottom:1px solid var(--border)}
+    th{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);font-weight:400}
+    td.mono,th.mono{font-family:var(--mono)}
+    .win{color:var(--green);font-weight:600}.loss{color:var(--red)}.push{color:var(--dim)}
+    .pill{font-family:var(--mono);font-size:.56rem;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px;border:1px solid currentColor}
+    .pill.yes{color:var(--green)}.pill.no{color:var(--red)}.pill.open{color:var(--teal)}
+    .panel{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);overflow-x:auto;-webkit-overflow-scrolling:touch}
+    .muted{font-family:var(--mono);font-size:.78rem;color:var(--dim);text-align:center;padding:34px}
+    .note{font-family:var(--mono);font-size:.66rem;color:var(--dim);margin-top:18px;line-height:1.6;border-top:1px solid var(--border);padding-top:14px}
+    .admin-box{background:var(--surface);border:1px dashed var(--border2);padding:14px 16px;margin-bottom:18px;display:none}
+    .admin-box h3{font-family:var(--mono);font-size:.64rem;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);margin-bottom:9px}
+    .admin-box input,.admin-box select{font-family:var(--title);font-size:.84rem;border:1px solid var(--border2);background:var(--bg);padding:7px 9px;outline:none;color:var(--text);margin:0 6px 6px 0}
+    .admin-box button{font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:var(--text);color:var(--bg);border:none;padding:8px 14px;cursor:pointer;border-radius:2px}
+    .hidden{display:none}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)" style="position:fixed;top:72px;left:16px;z-index:150;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:3px;text-decoration:none">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links">
+      <li><a href="intelligence.html">Signals</a></li>
+      <li><a href="whispers.html">The Wire</a></li>
+      <li><a href="gossip.html">The Floor</a></li>
+      <li><a href="parlor.html" class="active">The Parlor</a></li>
+      <li><a href="pit.html">The Pit</a></li>
+      <li><a href="account.html" class="nav-cta">Account</a></li>
+    </ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <span class="badge">Play-money · The Races</span>
+        <h1>THE <span>PARLOR</span></h1>
+        <p class="sub">Stake your Bucks, call the outcome. The crowd sets the odds, the winners split the pool. No real money, just bragging rights and a reputation to build.</p>
+      </div>
+      <div class="wallet" id="wallet">
+        <div class="lbl">Your stake</div>
+        <div class="amt" id="bal">—</div>
+        <div id="wallet-sub"></div>
+      </div>
+    </div>
+
+    <div class="admin-box" id="adminBox">
+      <h3>⚙ Pit Boss — admin</h3>
+      <div>
+        <input id="aq" placeholder="Market question" size="42" maxlength="200">
+        <input id="acat" placeholder="Category" size="12" maxlength="40">
+        <input id="atick" placeholder="Ticker" size="6" maxlength="6">
+        <button onclick="adminCreate()">Open market</button>
+      </div>
+      <div class="note" style="border:none;padding:6px 0 0">Resolve buttons appear on each open market below.</div>
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" data-t="card" onclick="tab('card')">The Card</button>
+      <button class="tab" data-t="mine" onclick="tab('mine')">My Bets</button>
+      <button class="tab" data-t="results" onclick="tab('results')">Results</button>
+      <button class="tab" data-t="board" onclick="tab('board')">Winners' Circle</button>
+    </div>
+
+    <div id="card"><div class="muted">loading the card…</div></div>
+    <div id="mine" class="hidden"></div>
+    <div id="results" class="hidden"></div>
+    <div id="board" class="hidden"></div>
+
+    <div class="note">
+      The Parlor is play-money — credits aren't cashable, so it's a skill contest, not a wager (no gambling licence needed).
+      Ticker-backed markets settle from the price data; the rest are called by the house.
+      This is Phase 0 — the same board later rides a regulated exchange's API for real-money event trading.
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ME=null, MARKETS=[];
+
+function tab(t){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active',b.dataset.t===t));
+  ['card','mine','results','board'].forEach(s=>$(s).classList.toggle('hidden',s!==t));
+  if(t==='mine')    loadMine();
+  if(t==='results') loadResults();
+  if(t==='board')   loadBoard();
+}
+
+async function boot(){
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
+  if(ME && ME.is_admin) $('adminBox').style.display='block';
+  loadMarkets();
+}
+
+function toteCard(m){
+  const yes=m.yes_pct, no=100-yes;
+  const odds = (m.yes_odds? 'YES pays '+m.yes_odds+'x':'YES pays —') + '  ·  ' + (m.no_odds? 'NO pays '+m.no_odds+'x':'NO pays —');
+  const canBet = !!ME;
+  const admin = ME && ME.is_admin ? `<div class="admin-row">
+      <button onclick="adminResolve(${m.id},'yes')">Resolve YES</button>
+      <button onclick="adminResolve(${m.id},'no')">Resolve NO</button></div>` : '';
+  return `<div class="mk">
+    <div class="mk-top"><span class="mk-cat">${esc(m.category)}</span><span class="mk-tick">${m.ticker?('$'+esc(m.ticker)):''}</span></div>
+    <div class="mk-q">${esc(m.question)}</div>
+    <div class="tote"><div class="y" style="width:${yes}%"></div><div class="n" style="width:${no}%"></div></div>
+    <div class="tote-l"><span class="yy">${yes}% YES</span><span class="nn">${no}% NO</span></div>
+    <div class="odds"><span>${odds}</span><span>${m.total} pool · ${m.bets} bets</span></div>
+    <div class="bet">
+      <input id="stk-${m.id}" type="number" min="10" max="1000" value="50" ${canBet?'':'disabled'}>
+      <button class="by" onclick="bet(${m.id},'yes')" ${canBet?'':'disabled'}>Bet YES</button>
+      <button class="bn" onclick="bet(${m.id},'no')" ${canBet?'':'disabled'}>Bet NO</button>
+    </div>
+    ${admin}
+  </div>`;
+}
+
+async function loadMarkets(){
+  try{
+    const r=await (await fetch('/api/parlor/markets?status=open')).json();
+    MARKETS=r.markets||[];
+    if('balance' in r) setBal(r.balance);
+    else setBal(null);
+    $('card').innerHTML = MARKETS.length
+      ? '<div class="grid">'+MARKETS.map(toteCard).join('')+'</div>'
+      : '<div class="muted">No open markets right now. Check back after the bell.</div>';
+  }catch(e){ $('card').innerHTML='<div class="muted">Could not load the card.</div>'; }
+}
+
+function setBal(b){
+  if(b===null || b===undefined){
+    $('bal').textContent='—';
+    $('wallet-sub').innerHTML='<a href="account.html">Log in to play</a>';
+  }else{
+    $('bal').textContent=Number(b).toLocaleString()+' ₿';
+    $('wallet-sub').innerHTML='<span class="lbl">Midas Bucks</span>';
+  }
+}
+
+async function bet(mid, side){
+  if(!ME){ midasToast('Log in to place a bet.','error'); return; }
+  const stake=parseInt(($('stk-'+mid)||{}).value,10);
+  if(!stake){ midasToast('Enter a stake.','error'); return; }
+  try{
+    const r=await (await fetch('/api/parlor/bet',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({market_id:mid,side,stake})})).json();
+    if(r.error){ midasToast(r.error,'error'); return; }
+    if('balance' in r) setBal(r.balance);
+    midasToast('Bet placed — '+stake+' ₿ on '+side.toUpperCase()+'.');
+    loadMarkets();
+  }catch(e){ midasToast('Bet failed.','error'); }
+}
+
+async function loadMine(){
+  if(!ME){ $('mine').innerHTML='<div class="muted">Log in to track your bets.</div>'; return; }
+  try{
+    const r=await (await fetch('/api/parlor/me')).json();
+    if('balance' in r) setBal(r.balance);
+    const b=r.bets||[];
+    if(!b.length){ $('mine').innerHTML='<div class="muted">No bets yet. Hit The Card.</div>'; return; }
+    $('mine').innerHTML='<div class="panel"><table><thead><tr><th>Market</th><th>Side</th><th class="mono">Stake</th><th>Status</th><th class="mono">Result</th></tr></thead><tbody>'+
+      b.map(x=>{
+        let res='<span class="push">—</span>', st='<span class="pill open">Open</span>';
+        if(x.settled){
+          st = x.outcome ? '<span class="pill '+x.outcome+'">'+x.outcome.toUpperCase()+'</span>' : st;
+          if(x.payout>x.stake)      res='<span class="win">+'+(x.payout-x.stake)+' ₿</span>';
+          else if(x.payout===x.stake) res='<span class="push">refunded</span>';
+          else                      res='<span class="loss">-'+x.stake+' ₿</span>';
+        }
+        return '<tr><td>'+esc(x.question)+'</td><td><span class="pill '+x.side+'">'+x.side.toUpperCase()+'</span></td><td class="mono">'+x.stake+'</td><td>'+st+'</td><td class="mono">'+res+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }catch(e){ $('mine').innerHTML='<div class="muted">Could not load your bets.</div>'; }
+}
+
+async function loadResults(){
+  try{
+    const r=await (await fetch('/api/parlor/markets?status=resolved')).json();
+    const m=r.markets||[];
+    if(!m.length){ $('results').innerHTML='<div class="muted">Nothing settled yet.</div>'; return; }
+    $('results').innerHTML='<div class="panel"><table><thead><tr><th>Market</th><th>Outcome</th><th class="mono">Pool</th></tr></thead><tbody>'+
+      m.map(x=>'<tr><td>'+esc(x.question)+'</td><td><span class="pill '+(x.outcome||'open')+'">'+((x.outcome||'—').toUpperCase())+'</span></td><td class="mono">'+x.total+' ₿</td></tr>').join('')+
+      '</tbody></table></div>';
+  }catch(e){ $('results').innerHTML='<div class="muted">Could not load results.</div>'; }
+}
+
+async function loadBoard(){
+  try{
+    const r=await (await fetch('/api/parlor/leaderboard')).json();
+    const L=r.leaders||[];
+    if(!L.length){ $('board').innerHTML='<div class="muted">No players yet. Be the first in the Circle.</div>'; return; }
+    $('board').innerHTML='<div class="panel"><table><thead><tr><th class="mono">#</th><th>Player</th><th class="mono">Bucks</th><th class="mono">Bets</th><th class="mono">Wins</th></tr></thead><tbody>'+
+      L.map((x,i)=>'<tr><td class="mono">'+(i+1)+'</td><td>'+esc(x.name)+'</td><td class="mono win">'+Number(x.credits).toLocaleString()+'</td><td class="mono">'+x.bets+'</td><td class="mono">'+x.wins+'</td></tr>').join('')+
+      '</tbody></table></div>';
+  }catch(e){ $('board').innerHTML='<div class="muted">Could not load the Circle.</div>'; }
+}
+
+// ── admin ──
+async function adminCreate(){
+  const q=$('aq').value.trim(); if(q.length<8){ midasToast('Question too short.','error'); return; }
+  const r=await (await fetch('/api/parlor/market',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({question:q,category:$('acat').value,ticker:$('atick').value})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  $('aq').value=''; midasToast('Market opened.'); loadMarkets();
+}
+async function adminResolve(mid,outcome){
+  const r=await (await fetch('/api/parlor/resolve',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({market_id:mid,outcome})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  midasToast(r.voided?'Voided — stakes refunded.':('Settled '+outcome.toUpperCase()+' — '+r.paid+' ₿ paid.'));
+  loadMarkets();
+}
+
+boot();
+</script>
+</body>
+</html>

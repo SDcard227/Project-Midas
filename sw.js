@@ -3,7 +3,7 @@
    (so you never see stale market data or a stale feed). */
 const CACHE = 'midas-v1';
 const CORE = ['/', '/index.html', '/midas-theme.js', '/whispers.html', '/gossip.html',
-              '/intelligence.html', '/pit.html', '/funnies.html', '/manifest.json'];
+              '/intelligence.html', '/pit.html', '/parlor.html', '/funnies.html', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
