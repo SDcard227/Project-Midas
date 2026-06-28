@@ -184,7 +184,7 @@ async function poll(initial){
     if(msgs.length){ LAST=d.last_id||LAST; if(initial||nearBottom) box.scrollTop=box.scrollHeight; }
   }catch(e){}
 }
-function openProfileSafe(uid){ if(uid) location.href='leaderboard.html'; }
+function openProfileSafe(uid){ if(uid) location.href='profile.html?u='+uid; }
 async function loadPlays(){
   if(!ACTIVE){ $('plays').innerHTML=''; return; }
   try{
