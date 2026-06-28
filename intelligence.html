@@ -823,6 +823,25 @@ async function loadNews(){
   }
 }
 
+// ── Personalization: a "For You" desk keyed off the saved assessment sectors ──
+const SECTOR_KW={
+  'Tech & AI':['ai','artificial intelligence','chip','semiconductor','software','cloud','nvidia','apple','microsoft','google','alphabet','meta','data center','gpu','openai'],
+  'Energy':['oil','crude','natural gas','opec','energy','solar','renewable','barrel','gasoline','pipeline'],
+  'Healthcare':['health','pharma','drug','fda','medical','hospital','therapy'],
+  'Finance & Banks':['bank','fed ','interest rate','finance','lending','jpmorgan','goldman','credit','mortgage','treasury','rate cut','rate hike'],
+  'Autos & EVs':['ev ','electric vehicle','tesla','automaker','vehicle','rivian','lucid'],
+  'Industrials':['industrial','manufacturing','factory','boeing','defense','aerospace'],
+  'Biotech':['biotech','clinical trial','gene','vaccine','fda approval'],
+  'Media & Entertainment':['media','streaming','netflix','disney','box office','entertainment'],
+  'Consumer & Retail':['retail','consumer','walmart','amazon','shopping','sales'],
+  'Crypto-adjacent':['crypto','bitcoin','ethereum','blockchain','coinbase','stablecoin','token']
+};
+function myNewsSectors(){ try{ const p=JSON.parse(localStorage.getItem('midas_profile')||'null'); return (p&&Array.isArray(p.sectors))?p.sectors:[]; }catch(e){ return []; } }
+function matchesMe(a){
+  const secs=myNewsSectors(); if(!secs.length) return false;
+  const t=((a.title||'')+' '+(a.desc||'')).toLowerCase();
+  return secs.some(s=>{ const k=SECTOR_KW[s]; return k && k.some(w=>t.indexOf(w)>-1); });
+}
 function renderNews(catFilter){
   catFilter = catFilter || _newsActiveSource || 'ALL';
   _newsActiveSource = catFilter;
@@ -830,13 +849,21 @@ function renderNews(catFilter){
   const ORDER = ['Markets','Energy & Commodities','Metals & Minerals','Crypto','Macro & World','Underground'];
   const catOf = a => a.category || 'Markets';
   const present = new Set(_newsAllArticles.map(catOf));
-  const cats = ['ALL', ...ORDER.filter(x=>present.has(x))];
-  const countOf = x => x==='ALL' ? _newsAllArticles.length : _newsAllArticles.filter(a=>catOf(a)===x).length;
-  const filtered = catFilter==='ALL' ? _newsAllArticles : _newsAllArticles.filter(a=>catOf(a)===catFilter);
+  const hasProfile = myNewsSectors().length>0;
+  const matchCount = hasProfile ? _newsAllArticles.filter(matchesMe).length : 0;
+  const cats = ['FORYOU', 'ALL', ...ORDER.filter(x=>present.has(x))];
+  const countOf = x => x==='FORYOU' ? matchCount : (x==='ALL' ? _newsAllArticles.length : _newsAllArticles.filter(a=>catOf(a)===x).length);
+  const filtered = catFilter==='FORYOU' ? _newsAllArticles.filter(matchesMe)
+                 : catFilter==='ALL' ? _newsAllArticles
+                 : _newsAllArticles.filter(a=>catOf(a)===catFilter);
 
-  const deskName = catFilter==='ALL' ? 'World Desk' : catFilter+' Desk';
+  const deskName = catFilter==='FORYOU' ? 'Your Desk' : catFilter==='ALL' ? 'World Desk' : catFilter+' Desk';
   const tabs = `<div class="news-filter-bar">
-    ${cats.map(x=>`<button class="news-filter-btn${x===catFilter?' active':''}" onclick="renderNews('${x.replace(/'/g,"\\'")}')">${x==='ALL'?'All':x} · ${countOf(x)}</button>`).join('')}
+    ${cats.map(x=>{
+      const lbl = x==='FORYOU' ? 'For you' : x==='ALL' ? 'All' : x;
+      const cnt = (x==='FORYOU' && !hasProfile) ? '' : ' · '+countOf(x);
+      return `<button class="news-filter-btn${x===catFilter?' active':''}" onclick="renderNews('${x.replace(/'/g,"\\'")}')">${lbl}${cnt}</button>`;
+    }).join('')}
   </div>`;
 
   const updTs = new Date().toLocaleTimeString();
@@ -846,8 +873,10 @@ function renderNews(catFilter){
     <button onclick="_newsLoaded=false;loadNews()" style="background:transparent;border:1px solid var(--border2);font-family:var(--mono);font-size:0.65rem;letter-spacing:0.16em;color:var(--dim);padding:6px 14px;cursor:pointer;white-space:nowrap;">↻ REFRESH</button>
   </div>`;
 
-  if(!filtered.length){
-    html += '<div class="no-data">NO STORIES ON THIS DESK</div>';
+  if(catFilter==='FORYOU' && !hasProfile){
+    html += '<div class="no-data">Take the 60-second assessment to build your For You desk. <a href="survey.html" style="color:var(--teal)">Start the assessment →</a></div>';
+  } else if(!filtered.length){
+    html += '<div class="no-data">'+(catFilter==='FORYOU'?'No stories match your interests right now. Check back as the wire updates.':'NO STORIES ON THIS DESK')+'</div>';
   } else {
     html += '<div class="news-grid">';
     filtered.forEach(a=>{
@@ -855,7 +884,7 @@ function renderNews(catFilter){
         ? `<a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>`
         : a.title;
       html += `<div class="news-card">
-        <div class="news-source">${a.source}${catFilter==='ALL' && a.category ? ' · '+a.category : ''}</div>
+        <div class="news-source">${a.source}${(catFilter==='ALL'||catFilter==='FORYOU') && a.category ? ' · '+a.category : ''}</div>
         <div class="news-title">${linkEl}</div>
         ${a.desc ? `<div class="news-desc">${a.desc}</div>` : ''}
         <div class="news-date">${a.pubdate||''}</div>
