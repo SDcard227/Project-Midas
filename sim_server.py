@@ -1656,6 +1656,42 @@ def api_score_outcomes():
     return jsonify({"scored": _score_outcomes(min_age_hours=float(request.args.get("min_age", 24)))})
 
 
+def _parlor_autoresolve():
+    """Settle price-backed Parlor markets whose close time has passed, off the Alpaca
+    feed. Graceful: no key / no data -> the market just waits for the house."""
+    from brain import parlor
+    done = 0
+    for m in parlor.markets_due():
+        try:
+            closes = _alpaca_closes(m["ticker"], days=15)
+            if closes is None or len(closes) < 2:
+                continue
+            outcome = parlor.eval_rule(m["rule"], list(closes))
+            if outcome in ("yes", "no"):
+                parlor.resolve_market(m["id"], outcome)
+                done += 1
+        except Exception as e:
+            _log.warning(f"Parlor auto-resolve {m.get('id')}: {e}")
+    return done
+
+
+def _parlor_autoresolve_loop():
+    while True:
+        try:
+            _parlor_autoresolve()
+        except Exception:
+            pass
+        _time.sleep(900)   # every 15 min — settle markets past their bell
+
+
+@app.route("/api/parlor/autoresolve", methods=["POST"])
+def api_parlor_autoresolve():
+    """Admin trigger for the Parlor price-settler (also runs every 15 min)."""
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    return jsonify({"resolved": _parlor_autoresolve()})
+
+
 try:
     _threading.Thread(target=_prewarm, daemon=True).start()
 except Exception as _e:
@@ -1670,6 +1706,12 @@ except Exception as _e:
 
 try:
     _threading.Thread(target=_score_outcomes_loop, daemon=True).start()
+except Exception as _e:
+    pass
+
+
+try:
+    _threading.Thread(target=_parlor_autoresolve_loop, daemon=True).start()
 except Exception as _e:
     pass
 
