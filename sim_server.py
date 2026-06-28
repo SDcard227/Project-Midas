@@ -1493,6 +1493,11 @@ def messages_page():
     return send_from_directory(BASE, "messages.html")
 
 
+@app.route("/welcome")
+def welcome_page():
+    return send_from_directory(BASE, "welcome.html")
+
+
 @app.route("/api/dm/inbox")
 def api_dm_inbox():
     from brain import messages, accounts

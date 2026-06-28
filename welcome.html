@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Welcome</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--text);cursor:pointer;padding:0 6px}
+    @media(max-width:880px){nav{padding:0 18px}.nav-links{position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .25s}.nav-links.open{max-height:520px}.nav-links li{width:100%}.nav-links a{display:block;padding:13px 24px;border-top:1px solid var(--border)}.nav-burger{display:block}}
+
+    .wrap{max-width:680px;margin:0 auto;padding:96px 24px 60px}
+    .badge{display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--amber);border:1px solid var(--amber);padding:3px 10px;border-radius:2px;margin-bottom:12px}
+    h1{font-size:clamp(1.9rem,5vw,2.7rem);font-weight:600;margin-bottom:4px}
+    h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;margin-bottom:8px}
+    .prog{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--dim);margin:18px 0 14px}
+    .step{display:flex;gap:15px;align-items:flex-start;background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 18px;margin-bottom:12px;text-decoration:none;color:inherit;transition:box-shadow .15s,transform .15s}
+    .step:hover{box-shadow:0 6px 20px rgba(30,26,20,.12);transform:translateY(-1px)}
+    .step.done{opacity:.66}
+    .sn{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:.82rem;font-weight:600;color:var(--mid)}
+    .step.done .sn{background:var(--green);border-color:var(--green);color:#fff}
+    .st{flex:1}
+    .st .t{font-weight:600;font-size:1.02rem}
+    .st .d{font-size:.88rem;color:var(--mid);line-height:1.5;margin-top:2px}
+    .step .go{font-family:var(--mono);font-size:.7rem;color:var(--teal);align-self:center;white-space:nowrap}
+    .step.done .go{color:var(--green)}
+    .finish{display:block;text-align:center;margin-top:22px;font-family:var(--mono);font-size:.72rem;letter-spacing:.08em;text-transform:uppercase;background:var(--green);color:#fff;padding:13px;border-radius:3px;text-decoration:none}
+    .skip{display:block;text-align:center;margin-top:12px;font-family:var(--mono);font-size:.68rem;color:var(--dim);text-decoration:none}
+    .muted{font-family:var(--mono);font-size:.82rem;color:var(--dim);text-align:center;padding:40px}
+    .muted a{color:var(--teal)}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)" style="position:fixed;top:72px;left:16px;z-index:150;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:3px;text-decoration:none">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links"></ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <div id="body"><div class="muted">loading…</div></div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+function tookAssessment(){
+  try{ const p=JSON.parse(localStorage.getItem('midas_profile')||'null'); return !!(p&&Array.isArray(p.sectors)&&p.sectors.length); }catch(e){ return false; }
+}
+
+async function boot(){
+  let me=null;
+  try{ me=(await (await fetch('/api/me')).json()).user; }catch(e){}
+  if(!me){
+    $('body').innerHTML='<div class="muted">Make an account first, then we\'ll get you set up. <a href="account.html">Get Access &rarr;</a></div>';
+    return;
+  }
+  const steps=[
+    {done:tookAssessment(), t:"Tune your feed", d:"Take the 60-second assessment so the Wire and “For You” match what you actually trade.", href:"survey.html", go:"Take it"},
+    {done:!!(me.bio&&me.bio.trim()), t:"Set up your profile", d:"Add a bio so the floor knows who's calling it. Your real name is the anchor.", href:"profile.html", go:"Edit profile"},
+    {done:false, t:"Make your first call", d:"Drop a take on the Floor and tag a $TICKER. Every call gets scored , that's how you build credibility.", href:"gossip.html", go:"The Floor"},
+    {done:false, t:"Back a prediction", d:"You've got 1,000 free Bucks. Put them on a market in the Parlor , the crowd sets the odds.", href:"parlor.html", go:"The Parlor"},
+  ];
+  const doneN=steps.filter(s=>s.done).length;
+  const name=esc((me.nickname||me.name||"").split(' ')[0]||me.name||"");
+  $('body').innerHTML =
+    '<span class="badge">Welcome aboard</span>'+
+    '<h1>Welcome to <span>Midas</span>'+(name?(', '+name):'')+'.</h1>'+
+    '<p class="sub">You’re in. Here’s how to get the most out of the floor , a few quick steps.</p>'+
+    '<div class="prog">'+doneN+' of '+steps.length+' done</div>'+
+    steps.map((s,i)=>
+      '<a class="step'+(s.done?' done':'')+'" href="'+s.href+'">'+
+        '<div class="sn">'+(s.done?'✓':(i+1))+'</div>'+
+        '<div class="st"><div class="t">'+esc(s.t)+'</div><div class="d">'+esc(s.d)+'</div></div>'+
+        '<div class="go">'+(s.done?'Done':esc(s.go))+' →</div></a>').join('')+
+    '<a class="finish" href="whispers.html">Jump into The Wire &rarr;</a>'+
+    '<a class="skip" href="intelligence.html">or browse the Signals first</a>';
+}
+boot();
+</script>
+</body>
+</html>

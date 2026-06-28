@@ -242,6 +242,7 @@ async function submitAuth(){
       method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(body)})).json();
     if(r.error){ $('authMsg').textContent=r.error; }
+    else if(MODE==='signup'){ location.href='welcome.html'; }   // new users -> onboarding
     else { showAccount(r.user); }
   }catch(e){ $('authMsg').textContent='Server error: '+e.message; }
   finally{ $('submitBtn').disabled=false; }
