@@ -18,7 +18,19 @@ from brain.backtest import Backtest
 
 app  = Flask(__name__)
 BASE = os.path.dirname(os.path.abspath(__file__))
-app.secret_key = os.getenv("SECRET_KEY", "midas-dev-secret-change-me")
+# Session secret: env value in prod; else a random per-process key (NOT a known
+# string) so sessions can't be forged if SECRET_KEY is unset.
+import secrets as _secrets
+app.secret_key = os.getenv("SECRET_KEY") or _secrets.token_hex(32)
+if not os.getenv("SECRET_KEY"):
+    print("  WARNING: SECRET_KEY not set — using a random key (sessions reset on restart). Set it in prod.")
+# Harden the session cookie. SameSite=Lax blocks CSRF on cross-site POSTs;
+# Secure only on a real HTTPS deploy (Render sets RENDER) so local HTTP still works.
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SECURE=bool(os.getenv("RENDER")),
+)
 try:
     from brain import accounts as _accounts
     _accounts.init_db()
@@ -166,9 +178,40 @@ def _alpaca_closes(ticker, days=370):
 
 
 @app.after_request
-def _add_cors(response):
-    response.headers["Access-Control-Allow-Origin"] = "*"
+def _security_headers(response):
+    # Same-origin app, so no wildcard CORS. Add basic hardening headers instead.
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "SAMEORIGIN"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
     return response
+
+
+_RL = {}
+def _rate_ok(name, limit, per_sec=60):
+    """In-memory per-IP fixed-window rate limit (single-worker scope, fine on Render free)."""
+    try:
+        ip = (request.headers.get("X-Forwarded-For", "") or request.remote_addr or "?").split(",")[0].strip()
+    except Exception:
+        ip = "?"
+    now = _time.time()
+    cnt, start = _RL.get((ip, name), (0, now))
+    if now - start > per_sec:
+        cnt, start = 0, now
+    cnt += 1
+    _RL[(ip, name)] = (cnt, start)
+    return cnt <= limit
+
+
+@app.before_request
+def _rate_guard():
+    # Blanket abuse protection: tight on auth (brute-force/signup spam), looser on
+    # general activity (comments/chat/votes). Stops bots and AI-cost-bombs.
+    if request.method == "POST" and request.path.startswith("/api/"):
+        if request.path in ("/api/register", "/api/login"):
+            if not _rate_ok("auth", 8, 60):
+                return jsonify({"error": "Too many attempts, wait a minute."}), 429
+        elif not _rate_ok("post", 60, 60):
+            return jsonify({"error": "Going too fast, slow down a moment."}), 429
 
 
 @app.route("/intelligence")
@@ -1262,8 +1305,22 @@ def api_account():
         return jsonify({"error": str(e)})
 
 
+def _trading_guard():
+    """Trade endpoints run paper-mode on the OPERATOR's keys, so they must never be
+    open to the public (anyone could place trades on the account). Off unless
+    ENABLE_TRADING=1 and the caller is logged in."""
+    if os.getenv("ENABLE_TRADING", "0") != "1":
+        return jsonify({"error": "Trading is disabled on this deployment."}), 403
+    if not _current_user():
+        return jsonify({"error": "Log in to trade."}), 401
+    return None
+
+
 @app.route("/api/buy", methods=["POST"])
 def api_buy():
+    g = _trading_guard()
+    if g:
+        return g
     d = request.get_json(silent=True) or {}
     ticker = (d.get("ticker") or "").strip().upper()
     try:
@@ -1284,6 +1341,9 @@ def api_buy():
 
 @app.route("/api/sell", methods=["POST"])
 def api_sell():
+    g = _trading_guard()
+    if g:
+        return g
     d = request.get_json(silent=True) or {}
     ticker = (d.get("ticker") or "").strip().upper()
     if not ticker:
