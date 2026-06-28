@@ -58,6 +58,26 @@
     }, 3200);
   };
 
+  // 5) PWA — make Midas installable (manifest + apple meta + service worker).
+  (function () {
+    function meta(n, c) { var m = document.createElement('meta'); m.name = n; m.content = c; document.head.appendChild(m); }
+    if (!document.querySelector('link[rel="manifest"]')) {
+      var lm = document.createElement('link'); lm.rel = 'manifest'; lm.href = '/manifest.json';
+      document.head.appendChild(lm);
+    }
+    meta('theme-color', '#f5f0e8');
+    meta('apple-mobile-web-app-capable', 'yes');
+    meta('apple-mobile-web-app-status-bar-style', 'default');
+    meta('apple-mobile-web-app-title', 'Midas');
+    var la = document.createElement('link'); la.rel = 'apple-touch-icon'; la.href = '/apple-touch-icon.png';
+    document.head.appendChild(la);
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function () {
+        navigator.serviceWorker.register('/sw.js').catch(function () {});
+      });
+    }
+  })();
+
   // 4) Forward button (mirrors Back) + a Settings gear in the nav (reachable everywhere).
   document.addEventListener('DOMContentLoaded', function () {
     if (!document.getElementById('midas-fwd')) {
