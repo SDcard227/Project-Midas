@@ -412,7 +412,8 @@ function sortRows(rows){
   return r;
 }
 function renderWire(){
-  const wire=document.getElementById('wire'); if(!wire||!WIRE_ROWS.length) return;
+  const wire=document.getElementById('wire'); if(!wire) return;
+  if(!WIRE_ROWS.length){ wire.innerHTML='<div class="wire-empty">The wire is quiet, no stories in yet. (Set ANTHROPIC_API_KEY to light it up.)</div>'; return; }
   const rows=sortRows(WIRE_ROWS);
   let html = wireStory(rows[0],true) + '<div class="wire-cols">'+rows.slice(1).map(x=>wireStory(x,false)).join('')+'</div>';
   if(GATE.gated && GATE.locked>0){
@@ -485,7 +486,7 @@ async function funLoadFeatured(){
     el.innerHTML=items.length?items.map(m=>
       '<div class="fun-card"><img src="/uploads/'+esc(m.filename)+'" loading="lazy" onerror="this.style.display=\'none\'"><div class="ft">'+(m.caption?esc(m.caption):'<span style="color:var(--dim)">untitled</span>')+'</div><div class="fs">by '+esc(m.author)+'</div></div>').join('')
       :'<div class="wire-empty">No community art yet. Submit a comic and be first.</div>';
-  }catch(e){}
+  }catch(e){ const el=document.getElementById('fun-community'); if(el) el.innerHTML='<div class="wire-empty">Could not load the gallery , try again in a moment.</div>'; }
 }
 async function funLoadMemes(){
   try{
@@ -494,7 +495,7 @@ async function funLoadMemes(){
     el.innerHTML=items.length?items.map(m=>
       '<a class="fun-card" href="'+esc(m.link)+'" target="_blank" rel="noopener">'+(m.thumb?'<img src="'+esc(m.thumb)+'" loading="lazy" onerror="this.style.display=\'none\'">':'')+'<div class="ft">'+esc(m.title)+'</div><div class="fs">'+esc(m.source)+'</div></a>').join('')
       :'<div class="wire-empty">The internet is quiet. The wisdom above never sleeps.</div>';
-  }catch(e){}
+  }catch(e){ const el=document.getElementById('fun-memes'); if(el) el.innerHTML='<div class="wire-empty">Could not reach the meme feed.</div>'; }
 }
 function funOpenSubmit(){ if(!ME){ location.href='account.html'; return; } document.getElementById('fun-modal').style.display='flex'; }
 function funCloseSubmit(){ document.getElementById('fun-modal').style.display='none'; }
