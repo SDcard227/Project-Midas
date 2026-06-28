@@ -138,6 +138,13 @@ def set_stripe_customer(user_id, customer_id):
                   (customer_id, user_id))
 
 
+def get_stripe_customer(user_id):
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT stripe_customer_id FROM users WHERE id=?", (user_id,)).fetchone()
+    return (r["stripe_customer_id"] if r else None)
+
+
 def set_tier_by_customer(customer_id, tier):
     """Used by the Stripe webhook on subscription create/cancel."""
     tier = (tier or "free").lower()

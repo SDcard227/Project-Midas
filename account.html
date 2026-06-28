@@ -191,6 +191,7 @@
         <div class="plan" data-tier="premium"><div class="pn">Premium</div><div class="pp">$79<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">Full-auto trading: Midas runs it for you, hands-off.</div><button class="planbtn" id="btn-premium" onclick="upgrade('premium')">Upgrade</button></div>
       </div>
       <div class="plan-note" id="billNote">Loading plans…</div>
+      <p id="manageSub" style="display:none;margin-top:8px"><a href="javascript:void(0)" onclick="manageSub()" style="font-family:var(--mono);font-size:.74rem;color:var(--teal)">Manage or cancel subscription &rarr;</a></p>
     </div>
   </div>
 
@@ -204,6 +205,7 @@ function showAccount(u){
   $('uName').textContent=u.name||'';
   $('uEmail').textContent=u.email;
   $('uTier').textContent=(u.tier||'free').toUpperCase();
+  if($('manageSub')) $('manageSub').style.display = (u.tier||'free')!=='free' ? 'block' : 'none';
   document.querySelectorAll('.plan').forEach(p=>{
     const cur=p.getAttribute('data-tier')===(u.tier||'free');
     p.classList.toggle('cur',cur);
@@ -264,6 +266,13 @@ async function checkBilling(){
   } else if(note){
     note.textContent='Pick a plan to subscribe through Stripe. You trade on your own brokerage, this is a software subscription, not an investment account.';
   }
+}
+async function manageSub(){
+  try{
+    const r=await (await fetch('/api/billing/portal',{method:'POST'})).json();
+    if(r.url){ window.location=r.url; return; }
+    midasToast(r.error||'Could not open billing.', 'error');
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
 }
 async function upgrade(tier){
   const b=$('btn-'+tier);
