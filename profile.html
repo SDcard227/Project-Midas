@@ -64,6 +64,9 @@
     .stat .sub{font-family:var(--mono);font-size:.7rem;color:var(--mid);margin-top:3px}
     .repdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;margin-left:4px}
     .win{color:var(--green)}.loss{color:var(--red)}
+    .pcounts{font-family:var(--mono);font-size:.72rem;color:var(--mid);margin-top:6px}
+    .pcounts b{color:var(--text)}
+    .mutual{color:var(--teal);font-weight:600;text-transform:uppercase;font-size:.58rem;letter-spacing:.1em;border:1px solid var(--teal);padding:1px 6px;border-radius:2px;margin-left:4px}
 
     .sec-h{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:22px 0 10px;border-bottom:1px solid var(--border);padding-bottom:7px}
     .take{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:12px 15px;margin-bottom:9px}
@@ -115,9 +118,12 @@ function render(){
   const net=(par.net>=0?'+':'')+Number(par.net||0).toLocaleString();
   const loc=[P.state,P.country].filter(Boolean).join(', ');
 
+  const dmLabel = P.dm_privacy==='mutuals' ? 'Mutuals only' : 'Everyone';
   const actions = P.is_me
-    ? `<a class="btn" href="account.html">Account &amp; settings</a><button class="btn" onclick="editBio()">Edit bio</button>`
-    : `<button class="btn primary" onclick="location='messages.html?u='+P.id">Message</button><button class="btn danger" onclick="block()">Block</button>`;
+    ? `<a class="btn" href="account.html">Account</a><button class="btn" onclick="editBio()">Edit bio</button><button class="btn" id="dmBtn" onclick="toggleDmPrivacy()" title="Who can DM you">DMs: ${dmLabel}</button>`
+    : (ME
+        ? `<button class="btn ${P.i_follow?'':'primary'}" onclick="toggleFollow()">${P.i_follow?'Following':'Follow'}</button><button class="btn" onclick="location='messages.html?u='+P.id">Message</button><button class="btn danger" onclick="block()">Block</button>`
+        : `<a class="btn primary" href="account.html">Log in to follow &amp; message</a>`);
 
   const bio = P.bio
     ? '<div class="bio" id="bioBox">'+esc(P.bio)+'</div>'
@@ -144,6 +150,7 @@ function render(){
         <div class="pname" style="color:${hue}">${esc(P.name)}${P.verified?' <span class="verified" title="Verified">✓</span>':''}</div>
         ${P.nickname?'<div class="pnick">goes by “'+esc(P.nickname)+'”</div>':''}
         <div class="pmeta">${(P.tier||'free').toUpperCase()} · joined ${joined(P.joined)}${loc?(' · '+esc(loc)):''}</div>
+        <div class="pcounts"><b>${P.followers||0}</b> followers · <b>${P.following||0}</b> following${P.mutual?'<span class="mutual">mutual</span>':''}</div>
         <div class="pactions">${actions}</div>
       </div>
     </div>
@@ -176,6 +183,25 @@ async function block(){
     await fetch('/api/dm/block',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:P.id})});
     midasToast(P.name+' blocked.');
   }catch(e){ midasToast('Could not block.','error'); }
+}
+async function toggleFollow(){
+  const action=P.i_follow?'unfollow':'follow';
+  try{
+    const r=await (await fetch('/api/follow',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:P.id,action})})).json();
+    if(r.error){ midasToast(r.error,'error'); return; }
+    P.i_follow=r.following; P.mutual=r.mutual;
+    P.followers=Math.max(0,(P.followers||0)+(r.following?1:-1));
+    render();
+  }catch(e){ midasToast('Could not update.','error'); }
+}
+async function toggleDmPrivacy(){
+  const val=P.dm_privacy==='mutuals'?'open':'mutuals';
+  try{
+    const r=await (await fetch('/api/dm-privacy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({value:val})})).json();
+    P.dm_privacy=(r.user&&r.user.dm_privacy)||val;
+    midasToast('DMs set to '+(P.dm_privacy==='mutuals'?'mutuals only':'everyone')+'.');
+    render();
+  }catch(e){ midasToast('Could not update.','error'); }
 }
 
 boot();

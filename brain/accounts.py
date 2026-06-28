@@ -42,7 +42,7 @@ def init_db():
         )""")
         # migrate older DBs
         cols = [r["name"] for r in c.execute("PRAGMA table_info(users)").fetchall()]
-        for col in ("stripe_customer_id", "first_name", "last_name", "country", "state", "verify_token", "nickname", "bio"):
+        for col in ("stripe_customer_id", "first_name", "last_name", "country", "state", "verify_token", "nickname", "bio", "dm_privacy"):
             if col not in cols:
                 c.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
         if "verified" not in cols:
@@ -66,6 +66,7 @@ def _row_to_user(r):
             "tier": r["tier"], "created_at": r["created_at"],
             "country": (r["country"] or "").strip(), "state": (r["state"] or "").strip(),
             "bio": (r["bio"].strip() if "bio" in keys and r["bio"] else ""),
+            "dm_privacy": (r["dm_privacy"] if "dm_privacy" in keys and r["dm_privacy"] else "open"),
             "verified": bool(r["verified"]) if "verified" in keys else False}
 
 
@@ -180,6 +181,15 @@ def set_bio(user_id, bio):
     init_db()
     with _conn() as c:
         c.execute("UPDATE users SET bio=? WHERE id=?", (bio[:400], user_id))
+    return {"user": get_user(user_id)}
+
+
+def set_dm_privacy(user_id, value):
+    """Who can DM this user: 'open' (anyone) or 'mutuals' (only mutual follows)."""
+    value = "mutuals" if (value or "").lower() == "mutuals" else "open"
+    init_db()
+    with _conn() as c:
+        c.execute("UPDATE users SET dm_privacy=? WHERE id=?", (value, user_id))
     return {"user": get_user(user_id)}
 
 
