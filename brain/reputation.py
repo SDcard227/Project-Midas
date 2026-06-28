@@ -176,11 +176,14 @@ def _score_from(total, correct):
 def compute(user_id):
     """Score the user's calls vs real price moves, cache the result, return detail."""
     init_db()
-    with _conn() as c:
-        rows = c.execute(
-            "SELECT ticker, sentiment, created_at FROM comments "
-            "WHERE user_id=? AND sentiment IN ('bullish','bearish') AND ticker NOT IN ('','GOSSIP')",
-            (user_id,)).fetchall()
+    try:
+        with _conn() as c:
+            rows = c.execute(
+                "SELECT ticker, sentiment, created_at FROM comments "
+                "WHERE user_id=? AND sentiment IN ('bullish','bearish') AND ticker NOT IN ('','GOSSIP')",
+                (user_id,)).fetchall()
+    except Exception:
+        rows = []          # no comments table yet (fresh DB) -> nothing to score
     calls = [(r["ticker"], r["sentiment"], r["created_at"]) for r in rows]
     detail = _resolve_calls(calls) if calls else []
     resolved = [d for d in detail if d["correct"] is not None]
@@ -202,10 +205,14 @@ def leaderboard(scope="world", country="", state="", limit=50, max_compute=15):
     """Rank users by reputation. scope: world | country | state. Refreshes rep for
     users with calls (bounded per request) then ranks those with scored calls."""
     init_db()
+    try:
+        with _conn() as c:
+            caller_ids = [r["user_id"] for r in c.execute(
+                "SELECT DISTINCT user_id FROM comments WHERE sentiment IN ('bullish','bearish') "
+                "AND ticker NOT IN ('','GOSSIP') AND user_id IS NOT NULL").fetchall()]
+    except Exception:
+        caller_ids = []
     with _conn() as c:
-        caller_ids = [r["user_id"] for r in c.execute(
-            "SELECT DISTINCT user_id FROM comments WHERE sentiment IN ('bullish','bearish') "
-            "AND ticker NOT IN ('','GOSSIP') AND user_id IS NOT NULL").fetchall()]
         rep_rows = {r["user_id"]: r for r in c.execute("SELECT * FROM user_rep").fetchall()}
     now = datetime.now(timezone.utc)
     computed = 0

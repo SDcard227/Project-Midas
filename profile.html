@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Profile</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--text);cursor:pointer;padding:0 6px;z-index:300}
+    @media(max-width:880px){
+      nav{padding:0 18px}
+      .nav-links{position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);
+        border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .25s}
+      .nav-links.open{max-height:520px}
+      .nav-links li{width:100%}.nav-links a{display:block;padding:13px 24px;border-top:1px solid var(--border)}
+      .nav-burger{display:block}
+    }
+    .wrap{max-width:840px;margin:0 auto;padding:92px 24px 50px}
+    .muted{font-family:var(--mono);font-size:.82rem;color:var(--dim);text-align:center;padding:40px}
+
+    .phead{display:flex;gap:18px;align-items:flex-start;flex-wrap:wrap}
+    .pavatar{width:64px;height:64px;border-radius:50%;background:var(--surface);border:2px solid var(--border2);
+      display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:1.5rem;font-weight:600;flex:none}
+    .pmain{flex:1;min-width:220px}
+    .pname{font-size:1.7rem;font-weight:600;line-height:1.2}
+    .pnick{font-family:var(--mono);font-size:.74rem;color:var(--dim);margin-top:2px}
+    .pmeta{font-family:var(--mono);font-size:.64rem;color:var(--dim);letter-spacing:.06em;margin-top:7px;text-transform:uppercase}
+    .verified{color:var(--teal);font-weight:600}
+    .pactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+    .btn{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:3px;padding:8px 15px;text-decoration:none;border:1px solid var(--border2);background:var(--card);color:var(--mid)}
+    .btn:hover{border-color:var(--text);color:var(--text)}
+    .btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+    .btn.danger:hover{border-color:var(--red);color:var(--red)}
+
+    .bio{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:15px 18px;margin:20px 0;font-size:.96rem;color:var(--mid);white-space:pre-wrap;line-height:1.6}
+    .bio.empty{color:var(--dim);font-style:italic}
+    .bio-edit{width:100%;font-family:var(--title);font-size:.95rem;border:1px solid var(--border2);background:var(--bg);padding:11px 13px;outline:none;color:var(--text);resize:vertical;min-height:84px}
+    .bio-row{display:flex;gap:8px;margin-top:8px;justify-content:flex-end}
+
+    .stats{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:8px 0 22px}
+    @media(max-width:560px){.stats{grid-template-columns:1fr}}
+    .stat{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:16px 18px}
+    .stat h3{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin-bottom:10px}
+    .stat .big{font-size:1.8rem;font-weight:600}
+    .stat .sub{font-family:var(--mono);font-size:.7rem;color:var(--mid);margin-top:3px}
+    .repdot{display:inline-block;width:11px;height:11px;border-radius:50%;vertical-align:middle;margin-left:4px}
+    .win{color:var(--green)}.loss{color:var(--red)}
+
+    .sec-h{font-family:var(--mono);font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;color:var(--dim);margin:22px 0 10px;border-bottom:1px solid var(--border);padding-bottom:7px}
+    .take{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:12px 15px;margin-bottom:9px}
+    .take .tt{font-size:.95rem}
+    .take .tm{font-family:var(--mono);font-size:.6rem;color:var(--dim);margin-top:5px;letter-spacing:.04em}
+    .tag{font-family:var(--mono);font-size:.58rem;padding:1px 6px;border-radius:2px;border:1px solid currentColor}
+    .bull{color:var(--green)}.bear{color:var(--red)}
+    .hold{display:flex;justify-content:space-between;font-family:var(--mono);font-size:.8rem;padding:7px 14px;border-bottom:1px solid var(--border)}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)" style="position:fixed;top:72px;left:16px;z-index:150;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:3px;text-decoration:none">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links"></ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <div id="body"><div class="muted">loading profile…</div></div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ME=null, P=null;
+
+function qsU(){ const m=location.search.match(/[?&]u=(\d+)/); return m?m[1]:null; }
+function initials(n){ return (n||'?').split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase(); }
+function joined(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'short'}); }catch(e){ return ''; } }
+
+async function boot(){
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
+  const uid = qsU() || (ME && ME.id);
+  if(!uid){ $('body').innerHTML='<div class="muted">Log in to see your profile. <a href="account.html" style="color:var(--teal)">Account &rarr;</a></div>'; return; }
+  try{
+    P=await (await fetch('/api/profile/'+uid)).json();
+    if(P.error){ $('body').innerHTML='<div class="muted">'+esc(P.error)+'</div>'; return; }
+    render();
+  }catch(e){ $('body').innerHTML='<div class="muted">Could not load this profile.</div>'; }
+}
+
+function render(){
+  const rep=P.reputation||{}, par=P.parlor||{}, takes=(P.takes&&P.takes.takes)||[];
+  const hue=rep.hue||'#9a9088';
+  const acc=(rep.accuracy!=null)?Math.round(rep.accuracy*100)+'%':'unrated';
+  const pwr=(par.win_rate!=null)?par.win_rate+'%':'—';
+  const net=(par.net>=0?'+':'')+Number(par.net||0).toLocaleString();
+  const loc=[P.state,P.country].filter(Boolean).join(', ');
+
+  const actions = P.is_me
+    ? `<a class="btn" href="account.html">Account &amp; settings</a><button class="btn" onclick="editBio()">Edit bio</button>`
+    : `<button class="btn primary" onclick="location='messages.html?u='+P.id">Message</button><button class="btn danger" onclick="block()">Block</button>`;
+
+  const bio = P.bio
+    ? '<div class="bio" id="bioBox">'+esc(P.bio)+'</div>'
+    : (P.is_me ? '<div class="bio empty" id="bioBox">No bio yet — tell the floor who you are. Hit “Edit bio”.</div>'
+               : '<div class="bio empty" id="bioBox">No bio yet.</div>');
+
+  const holds=(P.portfolio&&P.portfolio.holdings)||[];
+  const holdHtml = holds.length
+    ? '<div class="sec-h">Holdings</div><div class="stat" style="padding:4px 0">'+holds.map(h=>
+        '<div class="hold"><span>$'+esc(h.ticker)+' · '+h.shares+'</span><span class="'+(h.pnl>=0?'win':'loss')+'">'+(h.pnl>=0?'+':'')+h.pnl_pct+'%</span></div>').join('')+'</div>'
+    : '';
+
+  const takeHtml = takes.length
+    ? takes.map(t=>{
+        const tag=t.sentiment==='bullish'?'<span class="tag bull">BULL</span>':t.sentiment==='bearish'?'<span class="tag bear">BEAR</span>':'';
+        return '<div class="take"><div class="tt">'+esc(t.text)+'</div><div class="tm">'+(t.ticker?('$'+esc(t.ticker)+' · '):'')+tag+' · ▲'+t.upvotes+'</div></div>';
+      }).join('')
+    : '<div class="muted" style="padding:18px">No takes on the Floor yet.</div>';
+
+  $('body').innerHTML = `
+    <div class="phead">
+      <div class="pavatar" style="border-color:${hue}">${esc(initials(P.name))}</div>
+      <div class="pmain">
+        <div class="pname" style="color:${hue}">${esc(P.name)}${P.verified?' <span class="verified" title="Verified">✓</span>':''}</div>
+        ${P.nickname?'<div class="pnick">goes by “'+esc(P.nickname)+'”</div>':''}
+        <div class="pmeta">${(P.tier||'free').toUpperCase()} · joined ${joined(P.joined)}${loc?(' · '+esc(loc)):''}</div>
+        <div class="pactions">${actions}</div>
+      </div>
+    </div>
+    ${bio}
+    <div class="stats">
+      <div class="stat"><h3>Caller reputation</h3><div class="big" style="color:${hue}">${rep.score!=null?rep.score:'—'}<span class="repdot" style="background:${hue}"></span></div><div class="sub">${acc} on ${rep.total||0} scored calls</div></div>
+      <div class="stat"><h3>Parlor record</h3><div class="big">${par.wins||0}-${par.losses||0}</div><div class="sub">${pwr} win rate · <span class="${(par.net||0)>=0?'win':'loss'}">${net} ₿</span></div></div>
+    </div>
+    ${holdHtml}
+    <div class="sec-h">Top takes</div>
+    ${takeHtml}`;
+}
+
+function editBio(){
+  const cur=P.bio||'';
+  $('bioBox').outerHTML='<div id="bioBox"><textarea class="bio-edit" id="bioIn" maxlength="400" placeholder="Who are you on the floor? Your style, your edge, your record…">'+esc(cur)+'</textarea><div class="bio-row"><button class="btn" onclick="render()">Cancel</button><button class="btn primary" onclick="saveBio()">Save bio</button></div></div>';
+  $('bioIn').focus();
+}
+async function saveBio(){
+  const bio=$('bioIn').value;
+  try{
+    const r=await (await fetch('/api/profile/bio',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({bio})})).json();
+    if(r.error){ midasToast(r.error,'error'); return; }
+    P.bio=(r.user&&r.user.bio)||bio; midasToast('Bio saved.'); render();
+  }catch(e){ midasToast('Could not save.','error'); }
+}
+async function block(){
+  if(!confirm('Block '+P.name+'? They won’t be able to message you.')) return;
+  try{
+    await fetch('/api/dm/block',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:P.id})});
+    midasToast(P.name+' blocked.');
+  }catch(e){ midasToast('Could not block.','error'); }
+}
+
+boot();
+</script>
+</body>
+</html>

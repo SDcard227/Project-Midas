@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — Messages</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--text);cursor:pointer;padding:0 6px;z-index:300}
+    @media(max-width:880px){nav{padding:0 18px}
+      .nav-links{position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .25s}
+      .nav-links.open{max-height:520px}.nav-links li{width:100%}.nav-links a{display:block;padding:13px 24px;border-top:1px solid var(--border)}.nav-burger{display:block}}
+
+    .wrap{max-width:1000px;margin:0 auto;padding:84px 24px 24px}
+    h1{font-size:1.7rem;font-weight:600;margin-bottom:2px}h1 span{color:var(--amber);font-weight:300}
+    .sub{color:var(--mid);font-weight:300;font-size:.9rem;margin-bottom:16px}
+    .dm{display:grid;grid-template-columns:280px 1fr;gap:16px;height:70vh;min-height:440px}
+    @media(max-width:720px){.dm{grid-template-columns:1fr}.dm.threadopen .inbox{display:none}}
+    .inbox,.thread{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);display:flex;flex-direction:column;overflow:hidden}
+    .inbox-h,.thread-h{padding:12px 16px;border-bottom:1px solid var(--border);font-family:var(--mono);font-size:.66rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+    .ilist{flex:1;overflow-y:auto}
+    .convo{padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer}
+    .convo:hover,.convo.active{background:var(--surface)}
+    .convo .cn{font-weight:600;font-size:.92rem;display:flex;justify-content:space-between;align-items:center}
+    .convo .cl{font-size:.76rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+    .badge{background:var(--red);color:#fff;font-family:var(--mono);font-size:.58rem;border-radius:9px;padding:1px 6px;min-width:17px;text-align:center}
+    .thread-h{display:flex;justify-content:space-between;align-items:center;text-transform:none;letter-spacing:0}
+    .thread-h .tn{font-family:var(--title);font-weight:600;font-size:1rem;color:var(--text)}
+    .thread-h a{color:var(--teal);text-decoration:none;font-family:var(--mono);font-size:.64rem}
+    .msgs{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:8px}
+    .bub{max-width:74%;padding:9px 13px;border-radius:12px;font-size:.92rem;line-height:1.4;word-wrap:break-word}
+    .bub.them{align-self:flex-start;background:var(--surface);border:1px solid var(--border);border-bottom-left-radius:3px}
+    .bub.me{align-self:flex-end;background:var(--green);color:#fff;border-bottom-right-radius:3px}
+    .bub .bt{font-family:var(--mono);font-size:.52rem;opacity:.6;margin-top:3px}
+    .composer{border-top:1px solid var(--border);padding:12px 14px;display:flex;gap:8px}
+    .composer input{flex:1;font-family:var(--title);font-size:.94rem;border:1px solid var(--border2);background:var(--bg);padding:10px 13px;outline:none;color:var(--text)}
+    .composer button{font-family:var(--mono);font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;background:var(--green);color:#fff;border:none;padding:0 20px;cursor:pointer;border-radius:2px}
+    .muted{font-family:var(--mono);font-size:.8rem;color:var(--dim);text-align:center;padding:30px}
+    .muted a{color:var(--teal)}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)" style="position:fixed;top:72px;left:16px;z-index:150;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:3px;text-decoration:none">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links"></ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <h1>MESS<span>AGES</span></h1>
+    <p class="sub">Private DMs. Talk plays one-on-one — find someone sharp on the Floor or the Winners' Circle and reach out.</p>
+    <div id="gate"></div>
+    <div class="dm" id="dm" style="display:none">
+      <div class="inbox">
+        <div class="inbox-h">Conversations</div>
+        <div class="ilist" id="ilist"><div class="muted">loading…</div></div>
+      </div>
+      <div class="thread">
+        <div class="thread-h" id="thread-h"><span class="tn">Pick a conversation</span></div>
+        <div class="msgs" id="msgs"><div class="muted">Select a conversation, or open someone's profile and hit “Message”.</div></div>
+        <div id="composer-wrap"></div>
+      </div>
+    </div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let ME=null, ACTIVE=null, POLL=null;
+
+function qsU(){ const m=location.search.match(/[?&]u=(\d+)/); return m?m[1]:null; }
+function timeAgo(iso){ try{ const s=Math.floor((Date.now()-new Date(iso).getTime())/1000);
+  if(s<60)return'now'; if(s<3600)return Math.floor(s/60)+'m'; if(s<86400)return Math.floor(s/3600)+'h'; return Math.floor(s/86400)+'d'; }catch(e){ return''; } }
+
+async function boot(){
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
+  if(!ME){ $('gate').innerHTML='<div class="muted">Log in to send and read messages. <a href="account.html">Account &rarr;</a></div>'; return; }
+  fetch('/api/notifications/read',{method:'POST'}).then(function(){ if(window.midasPollNotif) window.midasPollNotif(); }).catch(function(){});
+  $('dm').style.display='grid';
+  await loadInbox();
+  const u=qsU(); if(u) openThread(parseInt(u,10));
+}
+
+async function loadInbox(){
+  try{
+    const c=(await (await fetch('/api/dm/inbox')).json()).conversations||[];
+    if(!c.length && !ACTIVE){ $('ilist').innerHTML='<div class="muted">No conversations yet.</div>'; return; }
+    $('ilist').innerHTML=c.map(cv=>
+      '<div class="convo'+(ACTIVE===cv.other_id?' active':'')+'" onclick="openThread('+cv.other_id+')">'+
+        '<div class="cn">'+esc(cv.name)+(cv.unread?'<span class="badge">'+cv.unread+'</span>':'')+'</div>'+
+        '<div class="cl">'+esc(cv.last)+'</div></div>').join('') || '<div class="muted">No conversations yet.</div>';
+  }catch(e){}
+}
+
+async function openThread(other){
+  ACTIVE=other;
+  $('dm').classList.add('threadopen');
+  loadInbox();
+  await renderThread();
+  if(POLL) clearInterval(POLL);
+  POLL=setInterval(renderThread, 6000);
+}
+
+async function renderThread(){
+  if(!ACTIVE) return;
+  try{
+    const r=await (await fetch('/api/dm/thread/'+ACTIVE)).json();
+    const other=r.other||{id:ACTIVE,name:'User'};
+    $('thread-h').innerHTML='<span class="tn">'+esc(other.name)+'</span><a href="profile.html?u='+ACTIVE+'">view profile &rarr;</a>';
+    const m=r.messages||[];
+    $('msgs').innerHTML = m.length ? m.map(x=>
+      '<div class="bub '+(x.mine?'me':'them')+'">'+esc(x.body)+'<div class="bt">'+timeAgo(x.created_at)+'</div></div>').join('')
+      : '<div class="muted">No messages yet — say hello.</div>';
+    $('msgs').scrollTop=$('msgs').scrollHeight;
+    $('composer-wrap').innerHTML='<div class="composer"><input id="cin" maxlength="2000" placeholder="Message…" onkeydown="if(event.key===\'Enter\')sendMsg()"><button onclick="sendMsg()">Send</button></div>';
+  }catch(e){}
+}
+
+async function sendMsg(){
+  const inp=$('cin'); if(!inp) return;
+  const body=inp.value.trim(); if(!body) return;
+  inp.value='';
+  try{
+    const r=await (await fetch('/api/dm/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to_id:ACTIVE,body})})).json();
+    if(r.error){ midasToast(r.error,'error'); inp.value=body; return; }
+    renderThread(); loadInbox();
+  }catch(e){ midasToast('Send failed.','error'); inp.value=body; }
+}
+
+boot();
+</script>
+</body>
+</html>

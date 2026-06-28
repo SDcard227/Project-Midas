@@ -42,7 +42,7 @@ def init_db():
         )""")
         # migrate older DBs
         cols = [r["name"] for r in c.execute("PRAGMA table_info(users)").fetchall()]
-        for col in ("stripe_customer_id", "first_name", "last_name", "country", "state", "verify_token", "nickname"):
+        for col in ("stripe_customer_id", "first_name", "last_name", "country", "state", "verify_token", "nickname", "bio"):
             if col not in cols:
                 c.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
         if "verified" not in cols:
@@ -65,6 +65,7 @@ def _row_to_user(r):
             "real_name": real_name, "nickname": nick, "name": display,
             "tier": r["tier"], "created_at": r["created_at"],
             "country": (r["country"] or "").strip(), "state": (r["state"] or "").strip(),
+            "bio": (r["bio"].strip() if "bio" in keys and r["bio"] else ""),
             "verified": bool(r["verified"]) if "verified" in keys else False}
 
 
@@ -170,6 +171,15 @@ def set_nickname(user_id, nickname):
     init_db()
     with _conn() as c:
         c.execute("UPDATE users SET nickname=? WHERE id=?", (nickname[:24], user_id))
+    return {"user": get_user(user_id)}
+
+
+def set_bio(user_id, bio):
+    """Set/clear a user's profile bio (plain text, capped at 400 chars)."""
+    bio = (bio or "").strip()
+    init_db()
+    with _conn() as c:
+        c.execute("UPDATE users SET bio=? WHERE id=?", (bio[:400], user_id))
     return {"user": get_user(user_id)}
 
 
