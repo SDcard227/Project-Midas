@@ -507,6 +507,7 @@
 
 <script>
 const SIM = ``;
+const esc=s=>(s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
 // ── Data stores ───────────────────────────────────────────────────────────────
 let _intel = null;
@@ -698,9 +699,9 @@ function renderNewsPane(srcFilter){
   if(src!=='ALL') articles=articles.filter(a=>a.source===src);
   let html='';
   articles.slice(0,30).forEach(a=>{
-    const linkEl=a.link?`<a href="${a.link}" target="_blank" rel="noopener">${a.title}</a>`:a.title;
+    const linkEl=a.link?`<a href="${esc(a.link)}" target="_blank" rel="noopener">${esc(a.title)}</a>`:esc(a.title);
     html+=`<div class="news-item">
-      <div class="news-src">${a.source} <span style="color:var(--dim);font-size:0.55rem">${a.region||''}</span></div>
+      <div class="news-src">${esc(a.source)} <span style="color:var(--dim);font-size:0.55rem">${esc(a.region||'')}</span></div>
       <div class="news-hl">${linkEl}</div>
       <div class="news-dt">${a.pubdate||''}</div>
     </div>`;
@@ -743,10 +744,10 @@ function renderYTPane(filter){
     const dateStr=v.pubdate?new Date(v.pubdate).toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
     const url=v.link||v.embedUrl||'';
     html+=`<div class="yt-item" onclick="openMediaItem(${JSON.stringify(url)})">
-      ${v.thumb?`<img class="yt-thumb" src="${v.thumb}" loading="lazy">`:`<div class="yt-thumb"></div>`}
+      ${v.thumb?`<img class="yt-thumb" src="${esc(v.thumb)}" loading="lazy">`:`<div class="yt-thumb"></div>`}
       <div class="yt-info">
-        <div class="yt-ch">${v.channel}</div>
-        <div class="yt-ttl">${v.title}</div>
+        <div class="yt-ch">${esc(v.channel)}</div>
+        <div class="yt-ttl">${esc(v.title)}</div>
         <div class="yt-date">${dateStr}</div>
       </div>
     </div>`;
@@ -860,11 +861,11 @@ function renderL3(){
   const el=document.getElementById('l3-news-articles');
   let html='';
   _news.articles.slice(0,20).forEach(a=>{
-    const link=a.link?`<a href="${a.link}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${a.title}</a>`:a.title;
+    const link=a.link?`<a href="${esc(a.link)}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none">${esc(a.title)}</a>`:esc(a.title);
     html+=`<div style="padding:10px 0;border-bottom:1px solid var(--border);">
-      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px">${a.source}</div>
+      <div style="font-family:var(--mono);font-size:0.6rem;letter-spacing:0.18em;color:var(--amber);margin-bottom:4px">${esc(a.source)}</div>
       <div style="font-size:0.83rem;font-weight:500;color:var(--text);line-height:1.4">${link}</div>
-      ${a.desc?`<div style="font-size:0.75rem;color:var(--mid);margin-top:4px;line-height:1.5">${a.desc}</div>`:''}
+      ${a.desc?`<div style="font-size:0.75rem;color:var(--mid);margin-top:4px;line-height:1.5">${esc(a.desc)}</div>`:''}
       <div style="font-family:var(--mono);font-size:0.6rem;color:var(--dim);margin-top:4px">${a.pubdate||''}</div>
     </div>`;
   });
@@ -925,10 +926,10 @@ function renderL5(){
     const dateStr=v.pubdate?new Date(v.pubdate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}):'';
     const url=v.link||v.embedUrl||'';
     html+=`<div class="yt-card" onclick="openMediaItem(${JSON.stringify(url)})">
-      ${v.thumb?`<img class="yt-card-thumb" src="${v.thumb}" loading="lazy">`:`<div class="yt-card-thumb" style="background:var(--surface);display:flex;align-items:center;justify-content:center;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--dim)">${v.channel}</span></div>`}
+      ${v.thumb?`<img class="yt-card-thumb" src="${esc(v.thumb)}" loading="lazy">`:`<div class="yt-card-thumb" style="background:var(--surface);display:flex;align-items:center;justify-content:center;"><span style="font-family:var(--mono);font-size:0.6rem;color:var(--dim)">${esc(v.channel)}</span></div>`}
       <div class="yt-card-body">
-        <div class="yt-card-ch">${v.channel}</div>
-        <div class="yt-card-title">${v.title}</div>
+        <div class="yt-card-ch">${esc(v.channel)}</div>
+        <div class="yt-card-title">${esc(v.title)}</div>
         <div class="yt-card-date">${dateStr}</div>
       </div>
     </div>`;
