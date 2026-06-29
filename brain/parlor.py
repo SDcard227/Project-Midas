@@ -419,3 +419,35 @@ def seed_if_empty():
         return
     for mk in _DEFAULT_MARKETS:
         create_market(**mk)
+
+
+# ── culture markets (bet on taste, not just tickers) ─────────────────────────
+# Kalshi/Polymarket own finance + politics; nobody owns TASTE. These are 'manual'
+# markets (no price feed for culture) — the Pit Boss settles them by hand, and later
+# oracles (Box Office Mojo, OpenCritic, Spotify, Kickstarter) can auto-settle some.
+_CULTURE_CATEGORIES = ("Film", "Art", "Music", "Games", "Design", "Drops", "Studios")
+
+_CULTURE_MARKETS = [
+    {"question": "Will the year's biggest film open above $100M domestic?", "rule": "manual", "category": "Film"},
+    {"question": "Will an A24 release crack 90+ on the critics' aggregators this year?", "rule": "manual", "category": "Film"},
+    {"question": "Will this month's most-hyped gallery drop sell out within 24 hours?", "rule": "manual", "category": "Art"},
+    {"question": "Will a debut artist pass 1M monthly listeners this quarter?", "rule": "manual", "category": "Music"},
+    {"question": "Will the year's most-anticipated indie game score 90+ on OpenCritic?", "rule": "manual", "category": "Games"},
+    {"question": "Will the next flagship sneaker drop resell above retail within 30 days?", "rule": "manual", "category": "Drops"},
+    {"question": "Will a major streetwear collab sell out on launch day?", "rule": "manual", "category": "Design"},
+    {"question": "Will a small studio's next crowdfunding campaign hit its funding goal?", "rule": "manual", "category": "Studios"},
+]
+
+
+def seed_culture():
+    """Idempotent top-up: add the culture starter card if the Parlor has none in the
+    culture categories yet (so an already-seeded board still gets the new categories)."""
+    init_db()
+    with _conn() as c:
+        qs = ",".join("?" * len(_CULTURE_CATEGORIES))
+        has = c.execute(f"SELECT 1 AS x FROM parlor_markets WHERE category IN ({qs}) LIMIT 1",
+                        _CULTURE_CATEGORIES).fetchone()
+    if has:
+        return
+    for mk in _CULTURE_MARKETS:
+        create_market(**mk)

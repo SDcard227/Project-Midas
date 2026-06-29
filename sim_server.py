@@ -1423,6 +1423,7 @@ def parlor_page():
 def api_parlor_markets():
     from brain import parlor
     parlor.seed_if_empty()
+    parlor.seed_culture()      # top-up: culture categories on an already-seeded board
     out = {"markets": parlor.list_markets(request.args.get("status", "open"))}
     u = _current_user()
     if u:
