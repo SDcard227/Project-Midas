@@ -358,13 +358,11 @@ def _build_intel():
 
 @app.route("/api/intelligence")
 def api_intelligence():
-    global _intel_data, _intel_ts
-    if _intel_data is None or _time.time() - _intel_ts > 300:
-        with _intel_lock:
-            if _intel_data is None or _time.time() - _intel_ts > 300:
-                _intel_data = _build_intel()
-                _intel_ts   = _time.time()
-    return jsonify(_intel_data)
+    def _b():
+        global _intel_data, _intel_ts
+        _intel_data = _build_intel(); _intel_ts = _time.time()
+    _bg_refresh("intel", _b, _intel_data is None or _time.time() - _intel_ts > 300)
+    return jsonify(_intel_data if _intel_data is not None else {"tickers": [], "warming": True})
 
 
 @app.route("/api/search")
@@ -658,19 +656,35 @@ def api_youtube():
 
 @app.route("/api/news")
 def api_news():
-    global _news_data, _news_ts
-    if _news_data is None or _time.time() - _news_ts > 600:
-        with _news_lock:
-            if _news_data is None or _time.time() - _news_ts > 600:
-                _news_data = _build_news()
-                _news_ts   = _time.time()
-    return jsonify(_news_data)
+    def _b():
+        global _news_data, _news_ts
+        _news_data = _build_news(); _news_ts = _time.time()
+    _bg_refresh("news", _b, _news_data is None or _time.time() - _news_ts > 600)
+    return jsonify(_news_data if _news_data is not None else {"articles": [], "warming": True})
 
 
 # ── WHISPERS — AI news edge (feeds → Claude filter → corroboration ledger) ────
 _whisper_data = None
 _whisper_ts   = 0.0
 _whisper_lock = _threading.Lock()
+
+
+_BUSY = {}
+def _bg_refresh(kind, builder, stale):
+    """Kick a background cache refresh if stale and not already running. NEVER blocks the
+    request: heavy builds (wire/news/signals) run off-thread, so a cold cache returns
+    instantly ('warming') instead of hanging until the gateway 504s."""
+    if not stale or _BUSY.get(kind):
+        return
+    _BUSY[kind] = True
+    def _run():
+        try:
+            builder()
+        except Exception as e:
+            _log.warning(f"{kind} refresh failed: {e}")
+        finally:
+            _BUSY[kind] = False
+    _threading.Thread(target=_run, daemon=True).start()
 
 
 # ── Tier gating: Free sees a limited slice of the wire; Pro/Premium see it all ─
@@ -707,39 +721,27 @@ def _gate_whispers(data):
 def api_whispers():
     """Early-signal feed: rising news events not yet mainstream. Cached 10 min
     because each refresh runs Claude over the latest headlines."""
-    global _whisper_data, _whisper_ts
-    if _whisper_data is None or _time.time() - _whisper_ts > 600:
-        with _whisper_lock:
-            if _whisper_data is None or _time.time() - _whisper_ts > 600:
-                try:
-                    from brain.news_pipeline import run_scan
-                    _whisper_data = run_scan()
-                except Exception as e:
-                    _log.warning(f"Whisper scan failed: {e}")
-                    _whisper_data = {"updated": _dt.now().isoformat(),
-                                     "whispers": [], "top": [], "error": str(e)}
-                _whisper_ts = _time.time()
-    # The Wire is FREE (no gating). Subscriptions gate the TRADING PROGRAMS
-    # (semi-auto / full-auto), not the social/content layer. _gate_whispers kept
-    # for reference but no longer applied.
+    def _b():
+        global _whisper_data, _whisper_ts
+        from brain.news_pipeline import run_scan
+        _whisper_data = run_scan(); _whisper_ts = _time.time()
+    _bg_refresh("whispers", _b, _whisper_data is None or _time.time() - _whisper_ts > 600)
+    if _whisper_data is None:
+        return jsonify({"updated": _dt.now().isoformat(), "whispers": [], "wire": [],
+                        "haulers": [], "top": [], "ai_enabled": False, "warming": True})
     return jsonify(_whisper_data)
 
 
 @app.route("/api/suggestions")
 def api_suggestions():
     """Semi-auto: the top Wire signals as approve-able trade suggestions."""
-    global _whisper_data, _whisper_ts
-    if _whisper_data is None or _time.time() - _whisper_ts > 600:
-        with _whisper_lock:
-            if _whisper_data is None or _time.time() - _whisper_ts > 600:
-                try:
-                    from brain.news_pipeline import run_scan
-                    _whisper_data = run_scan()
-                except Exception as e:
-                    _log.warning(f"suggestions scan failed: {e}")
-                    _whisper_data = {"whispers": [], "haulers": []}
-                _whisper_ts = _time.time()
-    rows = (_whisper_data.get("haulers", []) or []) + (_whisper_data.get("whispers", []) or [])
+    def _b():
+        global _whisper_data, _whisper_ts
+        from brain.news_pipeline import run_scan
+        _whisper_data = run_scan(); _whisper_ts = _time.time()
+    _bg_refresh("whispers", _b, _whisper_data is None or _time.time() - _whisper_ts > 600)
+    wd = _whisper_data or {}
+    rows = (wd.get("haulers", []) or []) + (wd.get("whispers", []) or [])
     rows = sorted(rows, key=lambda x: x.get("confidence", 0), reverse=True)[:8]
     sugg = [{"ticker": w.get("ticker"), "direction": w.get("direction"),
              "confidence": round(w.get("confidence", 0)), "stage": w.get("stage"),
