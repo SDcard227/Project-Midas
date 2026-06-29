@@ -126,6 +126,8 @@ function render(){
   const pwr=(par.win_rate!=null)?par.win_rate+'%':'—';
   const net=(par.net>=0?'+':'')+Number(par.net||0).toLocaleString();
   const loc=[P.state,P.country].filter(Boolean).join(', ');
+  const exg=P.exchange||{}, sc0=exg.score||0;
+  const scHit=(exg.hit_rate!=null)?(exg.hit_rate+'% hit'):'unrated';
 
   const dmLabel = P.dm_privacy==='mutuals' ? 'Mutuals only' : 'Everyone';
   const actions = P.is_me
@@ -168,6 +170,7 @@ function render(){
     <div class="stats">
       <div class="stat"><h3>Caller reputation</h3><div class="big" style="color:${hue}">${rep.score!=null?rep.score:'—'}<span class="repdot" style="background:${hue}"></span></div><div class="sub">${acc} on ${rep.total||0} scored calls</div></div>
       <div class="stat"><h3>Parlor record</h3><div class="big">${par.wins||0}-${par.losses||0}</div><div class="sub">${pwr} win rate · <span class="${(par.net||0)>=0?'win':'loss'}">${net} ₿</span></div></div>
+      <div class="stat"><h3>Scout score</h3><div class="big ${sc0>=0?'win':'loss'}">${sc0>=0?'+':''}${Number(sc0).toLocaleString()}</div><div class="sub">${scHit} · ${exg.open_positions||0} open on the Exchange</div></div>
     </div>
     ${holdHtml}
     <div class="sec-h">Top takes</div>

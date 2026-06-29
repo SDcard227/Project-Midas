@@ -41,7 +41,8 @@ except Exception:
 
 
 # Tables whose primary key is NOT a column named `id`, so `RETURNING id` is invalid.
-_NO_ID_TABLES = {"user_rep", "parlor_wallet", "comment_votes", "follows", "dm_blocks"}
+_NO_ID_TABLES = {"user_rep", "parlor_wallet", "comment_votes", "follows", "dm_blocks",
+                 "exch_holdings", "exch_stats"}
 # For `INSERT OR REPLACE`, the conflict column to upsert on (Postgres ON CONFLICT).
 _UPSERT_CONFLICT = {"user_rep": "user_id"}
 

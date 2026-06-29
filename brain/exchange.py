@@ -61,6 +61,12 @@ def init_db():
             cost     INTEGER NOT NULL DEFAULT 0,
             UNIQUE(user_id, asset_id)
         )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS exch_stats (
+            user_id  INTEGER PRIMARY KEY,
+            realized INTEGER NOT NULL DEFAULT 0,
+            wins     INTEGER NOT NULL DEFAULT 0,
+            losses   INTEGER NOT NULL DEFAULT 0
+        )""")
 
 
 # ── bonding curve (pure, testable) ───────────────────────────────────────────
@@ -200,6 +206,13 @@ def sell(user_id, ticker, shares):
         else:
             c.execute("UPDATE exch_holdings SET shares=?, cost=? WHERE user_id=? AND asset_id=?",
                       (new_shares, max(0, h["cost"] - cost_out), user_id, a["id"]))
+        pnl = value - cost_out                       # scout track record: realized P&L on this exit
+        if c.execute("SELECT 1 AS x FROM exch_stats WHERE user_id=?", (user_id,)).fetchone():
+            c.execute("UPDATE exch_stats SET realized=realized+?, wins=wins+?, losses=losses+? WHERE user_id=?",
+                      (pnl, 1 if pnl > 0 else 0, 1 if pnl < 0 else 0, user_id))
+        else:
+            c.execute("INSERT INTO exch_stats (user_id, realized, wins, losses) VALUES (?,?,?,?)",
+                      (user_id, pnl, 1 if pnl > 0 else 0, 1 if pnl < 0 else 0))
     return {"ok": True, "sold": round(sell_n, 4), "value": value, "pnl": value - cost_out,
             "new_price": round(price(max(0.0, s - sell_n)), 4), "balance": parlor.get_balance(user_id)}
 
@@ -272,6 +285,41 @@ def portfolio(user_id):
     value = sum(r["value"] for r in out)
     return {"holdings": out, "invested": invested, "value": value,
             "pnl": value - invested, "balance": parlor.get_balance(user_id)}
+
+
+# ── scout reputation (credibility for backing winners early) ─────────────────
+
+def scout(user_id):
+    """A user's scouting track record: realized + unrealized P&L on the Exchange, hit
+    rate, open positions, best call. The bonding curve already pays early backers, so
+    P&L IS the earliness signal; this turns it into a public credibility score for taste."""
+    init_db()
+    p = portfolio(user_id)
+    unrealized = p["pnl"]
+    best = max(p["holdings"], key=lambda h: h["pnl"], default=None) if p["holdings"] else None
+    with _conn() as c:
+        st = c.execute("SELECT realized, wins, losses FROM exch_stats WHERE user_id=?",
+                       (user_id,)).fetchone()
+    realized = (st["realized"] if st else 0)
+    wins = (st["wins"] if st else 0) + sum(1 for h in p["holdings"] if h["pnl"] > 0)
+    losses = (st["losses"] if st else 0) + sum(1 for h in p["holdings"] if h["pnl"] < 0)
+    decided = wins + losses
+    return {"score": realized + unrealized, "realized": realized, "unrealized": unrealized,
+            "open_positions": len(p["holdings"]), "wins": wins, "losses": losses,
+            "hit_rate": round(wins / decided * 100) if decided else None,
+            "best_call": ({"ticker": best["ticker"], "pnl": best["pnl"]}
+                          if best and best["pnl"] > 0 else None)}
+
+
+def scout_leaderboard(limit=20):
+    """Rank scouts by total (realized + unrealized) Exchange P&L. The taste board."""
+    init_db()
+    with _conn() as c:
+        uids = set(r["user_id"] for r in c.execute("SELECT DISTINCT user_id FROM exch_holdings").fetchall())
+        uids |= set(r["user_id"] for r in c.execute("SELECT user_id FROM exch_stats").fetchall())
+    out = [dict(user_id=uid, **scout(uid)) for uid in uids]
+    out.sort(key=lambda x: x["score"], reverse=True)
+    return out[:limit]
 
 
 # ── moderation (the team vets submissions) ───────────────────────────────────
