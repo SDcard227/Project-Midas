@@ -57,7 +57,8 @@
     .gp{background:var(--card);border:1px solid var(--border);padding:14px 16px;cursor:pointer;transition:border-color .15s}
     .gp:hover{border-color:var(--border2)}
     .gp-h{display:flex;align-items:center;gap:9px;margin-bottom:6px}
-    .gp-author{font-family:var(--mono);font-size:.7rem;color:var(--text);font-weight:600}
+    .gp-author{font-family:var(--mono);font-size:.7rem;color:var(--text);font-weight:600;text-decoration:none}
+    a.gp-author:hover{text-decoration:underline;cursor:pointer}
     .gp-sent{font-family:var(--mono);font-size:.6rem;text-transform:uppercase}
     .gp-votes{display:flex;gap:5px;margin-left:auto}
     .gp-vote{font-family:var(--mono);font-size:.62rem;background:var(--surface);border:1px solid var(--border2);color:var(--mid);
@@ -175,7 +176,7 @@ function renderFeed(){
   const rows=ROWS.slice().sort((a,b)=> SORT==='new' ? b.id-a.id : ((b.upvotes-b.downvotes)-(a.upvotes-a.downvotes))||(b.id-a.id));
   feed.innerHTML=rows.map(r=>{
     const rc=r.reply_count||0, hue=(r.rep&&r.rep.hue)?r.rep.hue:'var(--text)';
-    return '<div class="gp" onclick="openThread('+r.id+')"><div class="gp-h"><span class="gp-author" style="color:'+hue+'">'+esc(r.author)+'</span>'+sentTag(r.sentiment)+
+    return '<div class="gp" onclick="openThread('+r.id+')"><div class="gp-h">'+authorTag(r,hue)+sentTag(r.sentiment)+
       '<span class="gp-votes"><button class="gp-vote up" onclick="vote('+r.id+',\'up\',event)">&#9650; '+(r.upvotes||0)+'</button>'+
       '<button class="gp-vote down" onclick="vote('+r.id+',\'down\',event)">&#9660; '+(r.downvotes||0)+'</button></span></div>'+
       '<div class="gp-text">'+linkify(r.text)+'</div>'+
@@ -221,6 +222,12 @@ async function vote(id,dir,ev){
 
 let THREAD_OPEN=null;
 function repHue(c){ return (c&&c.rep&&c.rep.hue) ? c.rep.hue : 'var(--text)'; }
+function authorTag(o,hue){
+  const n=esc(o.author);
+  return o.user_id
+    ? '<a class="gp-author" style="color:'+hue+'" href="profile.html?u='+o.user_id+'" onclick="event.stopPropagation()">'+n+'</a>'
+    : '<span class="gp-author" style="color:'+hue+'">'+n+'</span>';
+}
 function cVotes(c){
   return '<span class="gp-votes"><button class="gp-vote up" onclick="vote('+c.id+',\'up\',event)">&#9650; '+(c.upvotes||0)+'</button>'+
     '<button class="gp-vote down" onclick="vote('+c.id+',\'down\',event)">&#9660; '+(c.downvotes||0)+'</button></span>';
@@ -241,11 +248,11 @@ async function refreshThread(){
 }
 function renderThread(d){
   const r=d.root;
-  let h='<div class="troot"><div class="gp-h"><span class="gp-author" style="color:'+repHue(r)+'">'+esc(r.author)+'</span>'+sentTag(r.sentiment)+cVotes(r)+'</div>'+
+  let h='<div class="troot"><div class="gp-h">'+authorTag(r,repHue(r))+sentTag(r.sentiment)+cVotes(r)+'</div>'+
     '<div class="gp-text" style="font-size:1.02rem">'+linkify(r.text)+'</div></div>';
   h+='<div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--dim);padding:13px 22px 2px;text-transform:uppercase">'+d.count+' '+(d.count===1?'reply':'replies')+'</div>';
   h+=(d.replies||[]).map(c=>
-    '<div class="treply"><div class="gp-h"><span class="gp-author" style="color:'+repHue(c)+'">'+esc(c.author)+'</span>'+sentTag(c.sentiment)+cVotes(c)+'</div>'+
+    '<div class="treply"><div class="gp-h">'+authorTag(c,repHue(c))+sentTag(c.sentiment)+cVotes(c)+'</div>'+
     '<div class="tr-text">'+linkify(c.text)+'</div></div>').join('');
   if(!d.replies.length) h+='<div style="padding:4px 22px 12px;font-family:var(--mono);font-size:.7rem;color:var(--dim)">No replies yet, start it off.</div>';
   if(ME){
