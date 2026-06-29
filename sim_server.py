@@ -1594,12 +1594,25 @@ def api_notifications_read():
 def api_health():
     """Which API keys the server can see (presence only, never values).
     Confirms whether env vars are set in production."""
-    return jsonify({
+    from brain import db
+    out = {
         "alpaca_key":    bool(os.getenv("ALPACA_API_KEY")),
         "alpaca_secret": bool(os.getenv("ALPACA_SECRET_KEY")),
         "finnhub":       bool(os.getenv("FINNHUB_API_KEY")),
         "anthropic":     bool(os.getenv("ANTHROPIC_API_KEY")),
-    })
+        "db_backend":    "postgres" if db._is_pg() else "sqlite",
+        "has_database_url": bool(os.getenv("DATABASE_URL")),
+    }
+    try:
+        from brain import accounts
+        accounts.init_db()
+        with db.get_conn() as c:
+            out["users_count"] = c.execute("SELECT COUNT(*) AS n FROM users").fetchone()["n"]
+        out["users_ok"] = True
+    except Exception as e:
+        out["users_ok"] = False
+        out["users_error"] = f"{type(e).__name__}: {str(e)[:240]}"
+    return jsonify(out)
 
 
 @app.route("/api/rate", methods=["POST"])
