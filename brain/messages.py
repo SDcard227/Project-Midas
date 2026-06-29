@@ -3,6 +3,7 @@ MIDAS — messages: private 1-on-1 DMs. Inbox = your conversations; a thread = t
 messages between you and one other user. Block stops someone from DMing you. Stored
 in the shared DB. Light by design; moderation is block + report.
 """
+import os
 from datetime import datetime, timezone
 
 from brain import db
@@ -10,6 +11,55 @@ from brain import db
 
 def _conn():
     return db.get_conn()
+
+
+# ── encryption at rest ───────────────────────────────────────────────────────
+# DM bodies are stored encrypted IF SECRET_KEY (or MIDAS_MSG_KEY) is set, so a raw DB
+# leak exposes nothing. With no key it's plaintext (no behaviour change). The server can
+# still read messages in memory, so moderation + the mutuals gate keep working. (This is
+# encryption-at-rest, not end-to-end; full E2EE would block those features.)
+_FERNET_CACHE = "uninit"
+_ENC_MARK = "enc1:"
+
+
+def _fernet():
+    global _FERNET_CACHE
+    if _FERNET_CACHE != "uninit":
+        return _FERNET_CACHE
+    sk = os.getenv("SECRET_KEY") or os.getenv("MIDAS_MSG_KEY")
+    if not sk:
+        _FERNET_CACHE = None
+        return None
+    try:
+        import hashlib, base64
+        from cryptography.fernet import Fernet
+        key = base64.urlsafe_b64encode(hashlib.sha256(("midas-dm::" + sk).encode()).digest())
+        _FERNET_CACHE = Fernet(key)
+    except Exception:
+        _FERNET_CACHE = None
+    return _FERNET_CACHE
+
+
+def _enc(text):
+    f = _fernet()
+    if not f or not text:
+        return text
+    try:
+        return _ENC_MARK + f.encrypt(text.encode("utf-8")).decode("ascii")
+    except Exception:
+        return text
+
+
+def _dec(text):
+    if not text or not text.startswith(_ENC_MARK):
+        return text                       # plaintext / legacy message
+    f = _fernet()
+    if not f:
+        return "[encrypted, set SECRET_KEY to read]"
+    try:
+        return f.decrypt(text[len(_ENC_MARK):].encode("ascii")).decode("utf-8")
+    except Exception:
+        return "[encrypted]"
 
 
 def _now():
@@ -75,7 +125,7 @@ def send(from_id, to_id, body):
         return {"error": "They only take DMs from mutuals , you both have to follow each other."}
     with _conn() as c:
         c.execute("INSERT INTO dm_messages (from_id, to_id, body, created_at) VALUES (?,?,?,?)",
-                  (from_id, to_id, body[:2000], _now()))
+                  (from_id, to_id, _enc(body[:2000]), _now()))
     return {"ok": True, "to_id": to_id}
 
 
@@ -88,7 +138,7 @@ def thread(user_id, other_id, limit=200):
             " ORDER BY id ASC LIMIT ?", (user_id, other_id, other_id, user_id, limit)).fetchall()
         c.execute("UPDATE dm_messages SET read=1 WHERE to_id=? AND from_id=?", (user_id, other_id))
     return [{"id": r["id"], "from_id": r["from_id"], "mine": r["from_id"] == user_id,
-             "body": r["body"], "created_at": r["created_at"]} for r in rows]
+             "body": _dec(r["body"]), "created_at": r["created_at"]} for r in rows]
 
 
 def inbox(user_id):
@@ -101,7 +151,7 @@ def inbox(user_id):
     for r in rows:
         other = r["to_id"] if r["from_id"] == user_id else r["from_id"]
         if other not in convos:
-            convos[other] = {"other_id": other, "last": r["body"],
+            convos[other] = {"other_id": other, "last": _dec(r["body"]),
                              "created_at": r["created_at"], "unread": 0}
         if r["to_id"] == user_id and not r["read"]:
             convos[other]["unread"] += 1
