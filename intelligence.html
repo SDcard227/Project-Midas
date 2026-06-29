@@ -422,11 +422,17 @@ function startCountdown(){
 }
 
 // ── Fetch ────────────────────────────────────────────────────────────────────
+let _intelTries=0;
 async function fetchIntel(){
   try{
     const res=await fetch(`${SIM}/api/intelligence`);
     if(!res.ok)throw new Error(`HTTP ${res.status}`);
     intelData=await res.json();
+    if(intelData.warming && !(intelData.tickers||[]).length){   // cold cache: signals building, poll until ready
+      _intelTries=(_intelTries||0)+1;
+      if(_intelTries<=8){ setTimeout(fetchIntel, 3000); return; }
+    }
+    _intelTries=0;
     renderAll(intelData);
     const d=new Date(intelData.updated);
     const upd=document.getElementById('last-updated');
@@ -802,13 +808,14 @@ function closeSearch(){
 
 // ── News Feed ─────────────────────────────────────────────────────────────────
 let _newsLoaded = false;
+let _newsTries = 0;
 let _newsAllArticles = [];
 let _newsActiveSource = 'ALL';
 
 async function loadNews(){
   if(_newsLoaded) return;
   const c = document.getElementById('panel-news').querySelector('.container');
-  c.innerHTML = '<div class="intel-loading"><div class="spin">FETCHING LIVE NEWS FEEDS...</div></div>';
+  if(!_newsTries) c.innerHTML = '<div class="intel-loading"><div class="spin">FETCHING LIVE NEWS FEEDS...</div></div>';
   let d = null, lastErr = null;
   for (let attempt = 0; attempt < 2 && !d; attempt++){     // retry once: covers a cold-start warmup
     try {
@@ -828,6 +835,12 @@ async function loadNews(){
     </div>`;
     return;
   }
+  if (d.warming && !(d.articles||[]).length){          // cold cache: the scan is building, poll until it lands
+    _newsTries = (_newsTries||0)+1;
+    c.innerHTML = '<div class="intel-loading"><div class="spin">WARMING UP THE WIRE… pulling live headlines</div></div>';
+    if (_newsTries <= 8){ _newsLoaded=false; setTimeout(loadNews, 3000); return; }
+  }
+  _newsTries = 0;
   _newsAllArticles = d.articles || [];
   _newsLoaded = true;
   try {
