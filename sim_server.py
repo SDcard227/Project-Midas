@@ -101,9 +101,13 @@ def simulate():
         tax_rate             = tax_rate,
     )
 
-    buf = io.StringIO()
-    with contextlib.redirect_stdout(buf):
-        bt.run()
+    try:
+        buf = io.StringIO()
+        with contextlib.redirect_stdout(buf):
+            bt.run()
+    except Exception as e:
+        _log.warning(f"simulate failed: {e}")
+        return jsonify({"error": "Backtest could not run right now. Try again in a moment."}), 503
 
     def fix(v):
         if hasattr(v, "isoformat"):

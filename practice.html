@@ -211,20 +211,20 @@ async function runSim(){
   });
   $('runBtn').disabled = true;
   $('result').innerHTML = '<div class="card"><div class="muted">Running '+$('year').value+
-    ' simulation… (pulling market data from Alpaca)</div></div>';
+    ' simulation… (pulling live market data)</div></div>';
   try{
     const d = await (await fetch('/api/simulate?'+p.toString())).json();
     lastData = d;
     if(!d.timeline || !d.timeline.length){
-      $('result').innerHTML = '<div class="card"><div class="muted">No data came back. '+
-        'The backtest needs ALPACA_API_KEY + ALPACA_SECRET_KEY in your .env (free). '+
-        (d.error?('Error: '+d.error):'')+'</div></div>';
+      $('result').innerHTML = '<div class="card"><div class="muted">No data came back for that period. '+
+        'Try another year, or hit Run again in a moment. '+
+        (d.error?('('+d.error+')'):'')+'</div></div>';
       return;
     }
     render(d);
   }catch(e){
-    $('result').innerHTML = '<div class="card"><div class="muted">Server not reachable: '+
-      e.message+'. Start it with: python sim_server.py</div></div>';
+    $('result').innerHTML = '<div class="card"><div class="muted">Could not run that simulation, '+
+      'give it a moment and try again.</div></div>';
   }finally{ $('runBtn').disabled = false; }
 }
 
