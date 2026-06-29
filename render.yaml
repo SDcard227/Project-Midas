@@ -2,6 +2,10 @@
 # Use as a Blueprint (New + > Blueprint), or copy the build/start commands into
 # an existing Render web service. The background threads (prewarm + rep re-scoring)
 # start at module level, so gunicorn runs them on import.
+databases:
+  - name: midas-db
+    plan: free            # free Postgres -> accounts/trades/listings PERSIST across deploys + restarts
+
 services:
   - type: web
     name: project-midas
@@ -11,6 +15,10 @@ services:
     startCommand: gunicorn sim_server:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
     healthCheckPath: /api/health
     envVars:
+      - key: DATABASE_URL            # auto-wired from the database above -> the persistence fix
+        fromDatabase:
+          name: midas-db
+          property: connectionString
       - key: PYTHON_VERSION
         value: "3.12.4"
       - key: SECRET_KEY          # Flask session secret — Render generates one
