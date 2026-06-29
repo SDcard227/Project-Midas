@@ -159,14 +159,52 @@ _intel_lock = _threading.Lock()
 _pol        = _PolTracker(lookback_days=90)
 
 
+_STOOQ_CACHE = {}
+
+def _stooq_closes(ticker, days=370):
+    """Free daily closes from stooq (NO API key) — the fallback when Alpaca isn't set,
+    so Signals + the Parlor's price markets still work with zero keys. Cached 30 min
+    (even misses) to be kind to stooq. Returns a pandas Series (most recent `days`) or None."""
+    tkey = (ticker or "").lower().strip()
+    if not tkey:
+        return None
+    hit = _STOOQ_CACHE.get(tkey)
+    if not (hit and _time.time() - hit[0] < 1800):
+        s = None
+        try:
+            import urllib.request
+            url = "https://stooq.com/q/d/l/?s=%s.us&i=d" % tkey
+            rq = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(rq, timeout=8) as resp:
+                text = resp.read().decode("utf-8", "replace")
+            lines = [ln for ln in text.splitlines() if ln.strip()]
+            if len(lines) >= 16 and lines[0].lower().startswith("date"):
+                vals = []
+                for ln in lines[1:]:
+                    p = ln.split(",")
+                    if len(p) >= 5:
+                        try:
+                            vals.append(float(p[4]))      # Close column
+                        except ValueError:
+                            pass
+                if len(vals) >= 15:
+                    s = _pd.Series(vals).dropna()
+        except Exception as e:
+            _log.debug(f"stooq closes {ticker}: {e}")
+            s = None
+        _STOOQ_CACHE[tkey] = (_time.time(), s)
+        hit = _STOOQ_CACHE[tkey]
+    s = hit[1]
+    return s.iloc[-days:] if (s is not None and len(s)) else None
+
+
 def _alpaca_closes(ticker, days=370):
-    """Daily closes for the past `days` from Alpaca (replaces dead yfinance).
-    Returns a pandas Series of floats, or None if unavailable / no keys set."""
+    """Daily closes for the past `days`. Alpaca when keys are set, else a free stooq
+    fallback (so Signals + Parlor auto-resolve work with no keys). pandas Series or None."""
     key = os.getenv("ALPACA_API_KEY")
     sec = os.getenv("ALPACA_SECRET_KEY")
     if not (key and sec):
-        _log.warning("Live data off — set ALPACA_API_KEY/SECRET in .env.")
-        return None
+        return _stooq_closes(ticker, days)             # free fallback, no key needed
     try:
         client = _StockClient(key, sec)
         req = _BarsReq(symbol_or_symbols=ticker, timeframe=_TF.Day,
@@ -174,14 +212,14 @@ def _alpaca_closes(ticker, days=370):
         df = getattr(client.get_stock_bars(req), "df", None)
     except Exception as e:
         _log.debug(f"Alpaca closes {ticker}: {e}")
-        return None
+        return _stooq_closes(ticker, days)
     if df is None or df.empty:
-        return None
+        return _stooq_closes(ticker, days)
     df = df.reset_index()
     if "symbol" in df.columns:
         df = df[df["symbol"] == ticker]
     if df.empty or "close" not in df.columns:
-        return None
+        return _stooq_closes(ticker, days)
     return _pd.Series(df["close"].astype(float).values).dropna()
 
 
