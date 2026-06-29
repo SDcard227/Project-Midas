@@ -1688,6 +1688,32 @@ def api_bucks_send():
     return jsonify(res), (400 if res.get("error") else 200)
 
 
+@app.route("/api/exchange/comments/<ticker>", methods=["GET", "POST"])
+def api_exchange_comments(ticker):
+    """Discussion on an Exchange listing, namespaced 'exch:<TICKER>' so it never mixes
+    with the Floor's stock-ticker threads. Reuses the comments engine."""
+    from brain import comments
+    ev = "exch:" + (ticker or "").upper()
+    if request.method == "POST":
+        from brain import notifications, accounts
+        u = _current_user()
+        if not u:
+            return jsonify({"error": "Log in to post."}), 401
+        data = request.get_json(silent=True) or {}
+        res = comments.add_comment(u, ev, (ticker or "").upper(), data.get("text", ""))
+        if res.get("ok"):
+            try:
+                for uid in accounts.resolve_handles(data.get("text", "")):
+                    if uid != u["id"]:
+                        notifications.push(uid, "mention",
+                                           f"{u['name']} mentioned you on ${(ticker or '').upper()}",
+                                           "exchange.html?t=" + (ticker or "").upper())
+            except Exception:
+                pass
+        return jsonify(res), (400 if res.get("error") else 200)
+    return jsonify(comments.list_comments(event_id=ev))
+
+
 # ── PROFILE — bio + all your Midas info in one place ─────────────────────────
 @app.route("/profile")
 def profile_page():

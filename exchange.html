@@ -207,8 +207,36 @@ async function openDetail(ticker){
       sparkline(a.history)+
       link+proof+ownerLine+
       trade+
-      '<div class="note">Price rises as people buy and falls as they sell (a bonding curve). Early backers win if a name runs. Play-money only — a taste game, not real investing.</div>'+
-    '</div>';
+      '<div class="note">Price rises as people buy and falls as they sell (a bonding curve). Early backers win if a name runs. Play-money only, a taste game, not real investing.</div>'+
+    '</div>'+
+    '<div id="adisc" class="panel"><div class="muted">loading discussion…</div></div>';
+  loadAComments(a.ticker);
+}
+
+function linkifyC(t){
+  var s='color:var(--teal);text-decoration:none';
+  return esc(t)
+    .replace(/\$([A-Za-z]{1,6})\b/g,function(m,x){ return '<a style="'+s+'" href="exchange.html?t='+x.toUpperCase()+'">$'+x.toUpperCase()+'</a>'; })
+    .replace(/@([A-Za-z0-9_]{2,20})\b/g,function(m,h){ return '<a style="'+s+'" href="profile.html?h='+h.toLowerCase()+'">@'+h+'</a>'; });
+}
+async function loadAComments(ticker){
+  if(!$('adisc')) return;
+  let d; try{ d=await (await fetch('/api/exchange/comments/'+encodeURIComponent(ticker))).json(); }catch(e){ d={comments:[]}; }
+  const cs=d.comments||[];
+  const box=ME
+    ? '<div style="display:flex;gap:8px;margin-bottom:14px"><input id="acmt" placeholder="Say why it runs… (@mention, $TICKER)" maxlength="500" style="flex:1"><button class="btn buy" onclick="postAComment(\''+esc(ticker)+'\')">Post</button></div>'
+    : '<div class="note" style="margin-bottom:12px">Log in to join the discussion.</div>';
+  const list=cs.length?cs.map(function(c){
+    var hue=(c.rep&&c.rep.hue)||'var(--text)';
+    return '<div style="border-top:1px solid var(--border);padding:10px 0"><a href="profile.html?u='+(c.user_id||0)+'" style="font-family:var(--mono);font-size:.72rem;font-weight:600;color:'+hue+';text-decoration:none">'+esc(c.author)+'</a><div style="font-size:.92rem;color:var(--text);margin-top:3px">'+linkifyC(c.text)+'</div></div>';
+  }).join(''):'<div class="muted" style="padding:10px 0">No takes yet. Start the thread.</div>';
+  $('adisc').innerHTML='<div style="font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:12px">Discussion &middot; '+cs.length+'</div>'+box+list;
+}
+async function postAComment(ticker){
+  const el=$('acmt'); const text=(el.value||'').trim(); if(text.length<2){ midasToast('Say a little more.','error'); return; }
+  const r=await (await fetch('/api/exchange/comments/'+encodeURIComponent(ticker),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  el.value=''; loadAComments(ticker);
 }
 
 async function doBuy(ticker){
