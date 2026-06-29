@@ -638,7 +638,7 @@ function renderCongress(tickers){
   </div>`;
 
   if(!trades.length){
-    html+=`<div class="no-data">No recent congressional trades found for watched tickers.<br>Data refreshes every 6 hours from public House + Senate disclosure feeds.</div>`;
+    html+=`<div class="no-data">No congressional trades to show yet. This reads House &amp; Senate disclosures via <b>FMP</b>, so set a free <b>FMP_API_KEY</b> (financialmodelingprep.com) to light it up.</div>`;
     c.innerHTML=html; return;
   }
 
