@@ -808,18 +808,32 @@ async function loadNews(){
   if(_newsLoaded) return;
   const c = document.getElementById('panel-news').querySelector('.container');
   c.innerHTML = '<div class="intel-loading"><div class="spin">FETCHING LIVE NEWS FEEDS...</div></div>';
+  let d = null, lastErr = null;
+  for (let attempt = 0; attempt < 2 && !d; attempt++){     // retry once: covers a cold-start warmup
+    try {
+      const res = await fetch(`${SIM}/api/news`, {cache:'no-store'});
+      if (!res.ok) throw new Error('HTTP ' + res.status);   // a 504 HTML body would break res.json()
+      d = await res.json();
+    } catch(e) {
+      lastErr = e;
+      if (attempt === 0) await new Promise(r => setTimeout(r, 2500));
+    }
+  }
+  if (!d) {
+    c.innerHTML = `<div class="intel-error">
+      <div class="err-title">Couldn't reach the news feed</div>
+      <div style="font-size:0.82rem;color:var(--mid);margin-bottom:10px;">The wire was warming up or briefly unreachable. Give it a moment.</div>
+      <button onclick="_newsLoaded=false;loadNews()" class="err-cmd" style="cursor:pointer;border:1px solid var(--border2);background:transparent;">&#8635; Try again</button>
+    </div>`;
+    return;
+  }
+  _newsAllArticles = d.articles || [];
+  _newsLoaded = true;
   try {
-    const res = await fetch(`${SIM}/api/news`);
-    const d   = await res.json();
-    _newsAllArticles = d.articles || [];
-    _newsLoaded = true;
     renderNews('ALL');
   } catch(e) {
-    c.innerHTML = `<div class="intel-error">
-      <div class="err-title">Cannot load news feeds</div>
-      <div style="font-size:0.82rem;color:var(--mid);margin-bottom:10px;">Check that sim_server.py is running and has network access.</div>
-      <div class="err-cmd">py sim_server.py</div>
-    </div>`;
+    c.innerHTML = '<div class="intel-error"><div class="err-title">News render error</div>' +
+      '<div style="font-size:0.82rem;color:var(--mid)">' + String(e && e.message || e) + '</div></div>';
   }
 }
 
