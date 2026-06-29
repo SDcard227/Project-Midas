@@ -411,6 +411,19 @@ function sortRows(rows){
   else r.sort((a,b)=>String(b.last_seen||'').localeCompare(String(a.last_seen||''))); // most recent first
   return r;
 }
+function renderRawWire(d){
+  const wire=document.getElementById('wire'); if(!wire) return;
+  const rows=d.wire||[];
+  const note='<div class="wire-empty" style="text-align:left;padding:14px 16px;margin-bottom:14px;border-style:solid;"><b style="color:var(--mid)">Raw wire</b> , '+rows.length+' live headlines from '+Object.keys(d.sources||{}).length+' sources ('+(d.scanned||rows.length)+' scanned). The smart layer (ranking, $tickers, bull/bear, confidence) turns on with <b>ANTHROPIC_API_KEY</b>.</div>';
+  const cards=rows.map(function(a){
+    var src='<div style="font-family:var(--mono);font-size:.58rem;letter-spacing:.1em;text-transform:uppercase;color:var(--dim);margin-bottom:4px;">'+esc(a.source||'')+'</div>';
+    var ttl=a.link
+      ?'<a href="'+esc(a.link)+'" target="_blank" rel="noopener noreferrer" style="font-size:.92rem;color:var(--text);text-decoration:none;line-height:1.4;">'+esc(a.title||'')+'</a>'
+      :'<div style="font-size:.92rem;color:var(--text);line-height:1.4;">'+esc(a.title||'')+'</div>';
+    return '<div style="break-inside:avoid;margin-bottom:16px;">'+src+ttl+'</div>';
+  }).join('');
+  wire.innerHTML=note+'<div class="wire-cols">'+cards+'</div>';
+}
 function renderWire(){
   const wire=document.getElementById('wire'); if(!wire) return;
   if(!WIRE_ROWS.length){ wire.innerHTML='<div class="wire-empty">The wire is quiet, no stories in yet. (Set ANTHROPIC_API_KEY to light it up.)</div>'; return; }
@@ -530,9 +543,10 @@ async function loadBoard(){
     const seen={}; WIRE_ROWS=[];
     for(const r of (d.haulers||[]).concat(d.whispers||[])){ if(r&&!seen[r.id]){seen[r.id]=1;WIRE_ROWS.push(r);} }
     if(!WIRE_ROWS.length){
+      if((d.wire||[]).length){ renderRawWire(d); return; }   // raw RSS news, no AI key needed
       wire.innerHTML='<div class="wire-empty">'+(d.ai_enabled
         ?'The wire is quiet right now. Stories appear as the scanner hears market news.'
-        :'AI is off, set ANTHROPIC_API_KEY to light up the wire.')+'</div>';
+        :'No stories in yet, check back in a few minutes.')+'</div>';
       return;
     }
     renderWire();
