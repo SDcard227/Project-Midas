@@ -1590,6 +1590,27 @@ def api_exchange_scout():
     return jsonify({"scouts": board})
 
 
+@app.route("/api/bucks/send", methods=["POST"])
+def api_bucks_send():
+    """Send play-money Bucks to another user (gifting a game score, not money transmission)."""
+    from brain import parlor, accounts, notifications
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    to_id = int(data.get("to", 0) or 0)
+    if not accounts.get_user(to_id):
+        return jsonify({"error": "No such user."}), 404
+    res = parlor.transfer(u["id"], to_id, data.get("amount"))
+    if res.get("ok"):
+        try:
+            notifications.push(to_id, "bucks",
+                               f"{u['name']} sent you {res['amount']} Bucks", "profile.html")
+        except Exception:
+            pass
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
 # ── PROFILE — bio + all your Midas info in one place ─────────────────────────
 @app.route("/profile")
 def profile_page():

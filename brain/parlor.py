@@ -66,6 +66,13 @@ def init_db():
             settled    INTEGER NOT NULL DEFAULT 0,
             created_at TEXT NOT NULL
         )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS bucks_transfers (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            from_id    INTEGER NOT NULL,
+            to_id      INTEGER NOT NULL,
+            amount     INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+        )""")
 
 
 # ── wallet ───────────────────────────────────────────────────────────────────
@@ -85,6 +92,37 @@ def get_balance(user_id):
 def _adjust(c, user_id, delta):
     c.execute("UPDATE parlor_wallet SET credits = credits + ?, updated=? WHERE user_id=?",
               (delta, _now(), user_id))
+
+
+def transfer(from_user, to_user, amount):
+    """Send play-money Bucks to another user. Bucks are NON-CASHABLE, free-granted game
+    credits, so this is gifting a game score, NOT money transmission. Atomic + safeguarded.
+    ⚠️ LEGAL LINE: Bucks may be transferable OR purchasable-with-real-money, never both,
+    and never cashable — that's what keeps Midas a game and not an unlicensed money business."""
+    if from_user == to_user:
+        return {"error": "You can't send Bucks to yourself."}
+    try:
+        amount = int(amount)
+    except (TypeError, ValueError):
+        return {"error": "Enter a whole number of Bucks."}
+    if amount < 1:
+        return {"error": "Amount must be at least 1 Buck."}
+    if amount > 100000:
+        return {"error": "That's more than anyone has."}
+    bal = get_balance(from_user)      # ensures the sender wallet exists
+    get_balance(to_user)              # ensures the recipient wallet exists
+    if bal < amount:
+        return {"error": "Not enough Bucks."}
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT credits FROM parlor_wallet WHERE user_id=?", (from_user,)).fetchone()
+        if not r or r["credits"] < amount:     # re-check inside the transaction
+            return {"error": "Not enough Bucks."}
+        _adjust(c, from_user, -amount)
+        _adjust(c, to_user, amount)
+        c.execute("INSERT INTO bucks_transfers (from_id,to_id,amount,created_at) VALUES (?,?,?,?)",
+                  (from_user, to_user, amount, _now()))
+    return {"ok": True, "balance": get_balance(from_user), "amount": amount}
 
 
 # ── markets ──────────────────────────────────────────────────────────────────

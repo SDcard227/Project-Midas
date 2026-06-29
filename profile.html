@@ -133,7 +133,7 @@ function render(){
   const actions = P.is_me
     ? `<a class="btn" href="account.html">Account</a><button class="btn" onclick="editBio()">Edit bio</button><button class="btn" id="dmBtn" onclick="toggleDmPrivacy()" title="Who can DM you">DMs: ${dmLabel}</button>`
     : (ME
-        ? `<button class="btn ${P.i_follow?'':'primary'}" onclick="toggleFollow()">${P.i_follow?'Following':'Follow'}</button><button class="btn" onclick="location='messages.html?u='+P.id">Message</button><button class="btn danger" onclick="block()">Block</button>`
+        ? `<button class="btn ${P.i_follow?'':'primary'}" onclick="toggleFollow()">${P.i_follow?'Following':'Follow'}</button><button class="btn" onclick="location='messages.html?u='+P.id">Message</button><button class="btn" onclick="sendBucks()">Send Bucks</button><button class="btn danger" onclick="block()">Block</button>`
         : `<a class="btn primary" href="account.html">Log in to follow &amp; message</a>`);
 
   const bio = P.bio
@@ -205,6 +205,15 @@ async function block(){
     await fetch('/api/dm/block',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:P.id})});
     midasToast(P.name+' blocked.');
   }catch(e){ midasToast('Could not block.','error'); }
+}
+async function sendBucks(){
+  const a=prompt('Send how many Bucks to '+P.name+'? (play-money, non-cashable)');
+  if(a===null) return;
+  try{
+    const r=await (await fetch('/api/bucks/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:P.id,amount:a})})).json();
+    if(r.error){ midasToast(r.error,'error'); return; }
+    midasToast('Sent '+r.amount+' Bucks to '+P.name+'.');
+  }catch(e){ midasToast('Could not send.','error'); }
 }
 async function toggleFollow(){
   const action=P.i_follow?'unfollow':'follow';
