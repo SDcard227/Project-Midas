@@ -76,6 +76,7 @@
     .treply{padding:13px 22px;border-bottom:1px solid var(--border)}
     .tr-text{font-size:.9rem;margin-top:3px;line-height:1.5}
     .tr-text a{color:var(--teal);text-decoration:none;font-family:var(--mono);font-weight:600}
+    .gp-text a.mention,.tr-text a.mention{font-family:var(--title);font-weight:500}
     .treply-box{padding:15px 22px}
     .treply-box textarea{width:100%;font-family:var(--title);font-size:.9rem;border:1px solid var(--border2);background:var(--bg);padding:10px 12px;outline:none;resize:vertical;min-height:56px;color:var(--text)}
   </style>
@@ -151,8 +152,11 @@ function sentTag(s){
   return '<span class="gp-sent" style="color:'+c+'">'+a+' '+esc(s)+'</span>';
 }
 function linkify(t){
-  return esc(t).replace(/\$([A-Za-z]{1,5})\b/g,(m,sym)=>
-    '<a href="whispers.html?q='+sym.toUpperCase()+'">$'+sym.toUpperCase()+'</a>');
+  return esc(t)
+    .replace(/\$([A-Za-z]{1,5})\b/g,(m,sym)=>
+      '<a href="whispers.html?q='+sym.toUpperCase()+'">$'+sym.toUpperCase()+'</a>')
+    .replace(/@([A-Za-z0-9_]{2,20})\b/g,(m,h)=>
+      '<a class="mention" href="profile.html?h='+h.toLowerCase()+'">@'+h+'</a>');
 }
 function renderTrend(){
   const counts={};

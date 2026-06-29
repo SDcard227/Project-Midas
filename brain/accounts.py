@@ -21,7 +21,22 @@ _DB = os.getenv("DB_PATH") or os.path.join(
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _NAME_RE  = re.compile(r"^[A-Za-z][A-Za-z'\-. ]{0,39}$")   # real names only, no handles
 _NICK_RE  = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._'\-]{0,23}$")  # optional display nickname
+_HANDLE_RE = re.compile(r"^[a-z0-9_]{2,20}$")   # unique @handle for mentions
 _VALID_TIERS = {"free", "pro", "premium"}
+
+
+def _slugify(s):
+    s = re.sub(r"[^a-z0-9_]", "", (s or "").lower())[:20]
+    return s or "user"
+
+
+def _unique_handle(c, base):
+    base = _slugify(base)
+    h, n = base, 1
+    while c.execute("SELECT 1 AS x FROM users WHERE handle=?", (h,)).fetchone():
+        n += 1
+        h = (base + str(n))[:20]
+    return h
 
 
 def _conn():
@@ -42,7 +57,7 @@ def init_db():
         )""")
         # migrate older DBs
         cols = [r["name"] for r in c.execute("PRAGMA table_info(users)").fetchall()]
-        for col in ("stripe_customer_id", "first_name", "last_name", "country", "state", "verify_token", "nickname", "bio", "dm_privacy"):
+        for col in ("stripe_customer_id", "first_name", "last_name", "country", "state", "verify_token", "nickname", "bio", "dm_privacy", "handle"):
             if col not in cols:
                 c.execute(f"ALTER TABLE users ADD COLUMN {col} TEXT")
         if "verified" not in cols:
@@ -67,6 +82,7 @@ def _row_to_user(r):
             "country": (r["country"] or "").strip(), "state": (r["state"] or "").strip(),
             "bio": (r["bio"].strip() if "bio" in keys and r["bio"] else ""),
             "dm_privacy": (r["dm_privacy"] if "dm_privacy" in keys and r["dm_privacy"] else "open"),
+            "handle": (r["handle"] if "handle" in keys and r["handle"] else ""),
             "verified": bool(r["verified"]) if "verified" in keys else False}
 
 
@@ -97,6 +113,12 @@ def create_user(email, password, first_name="", last_name="", country="", state=
                  (country or "").strip()[:40], (state or "").strip()[:40], nickname[:24], "free",
                  secrets.token_urlsafe(24), datetime.now(timezone.utc).isoformat()))
             uid = cur.lastrowid
+        try:                                    # auto-assign a unique @handle
+            with _conn() as c:
+                h = _unique_handle(c, nickname or first_name or email.split("@")[0])
+                c.execute("UPDATE users SET handle=? WHERE id=?", (h, uid))
+        except Exception:
+            pass
         return {"user": get_user(uid)}
     except db.IntegrityError:
         return {"error": "That email is already registered."}
@@ -191,6 +213,46 @@ def set_dm_privacy(user_id, value):
     with _conn() as c:
         c.execute("UPDATE users SET dm_privacy=? WHERE id=?", (value, user_id))
     return {"user": get_user(user_id)}
+
+
+def set_handle(user_id, handle):
+    """Set a unique @handle (2-20 lowercase letters/numbers/underscore)."""
+    handle = (handle or "").strip().lower().lstrip("@")
+    if not _HANDLE_RE.match(handle):
+        return {"error": "Handle: 2-20 lowercase letters, numbers, or underscore."}
+    init_db()
+    with _conn() as c:
+        if c.execute("SELECT 1 AS x FROM users WHERE handle=? AND id<>?", (handle, user_id)).fetchone():
+            return {"error": "That handle is taken."}
+        c.execute("UPDATE users SET handle=? WHERE id=?", (handle, user_id))
+    return {"user": get_user(user_id)}
+
+
+def get_by_handle(handle):
+    handle = (handle or "").strip().lower().lstrip("@")
+    if not handle:
+        return None
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT * FROM users WHERE handle=?", (handle,)).fetchone()
+    return _row_to_user(r)
+
+
+def resolve_handles(text):
+    """Find @handles in text -> deduped list of user_ids (for @mention notifications)."""
+    if not text:
+        return []
+    handles = set(m.lower() for m in re.findall(r"@([A-Za-z0-9_]{2,20})", text))
+    if not handles:
+        return []
+    init_db()
+    out = []
+    with _conn() as c:
+        for h in handles:
+            r = c.execute("SELECT id FROM users WHERE handle=?", (h,)).fetchone()
+            if r:
+                out.append(r["id"])
+    return out
 
 
 def get_verify_token(user_id):
