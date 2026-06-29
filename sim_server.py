@@ -73,8 +73,10 @@ def simulate():
     conf_min       = float(request.args.get("conf_min", 0.5))
     conf_max       = float(request.args.get("conf_max", 2.0))
 
+    _tk = [t.strip().upper() for t in (request.args.get("tickers") or "").split(",")
+           if t.strip().isalpha() and len(t.strip()) <= 6][:6]
     bt = Backtest(
-        watchlist            = ["AAPL", "MSFT", "NVDA", "SPY"],
+        watchlist            = _tk or ["AAPL", "MSFT", "NVDA", "SPY"],
         start_date           = f"{year}-01-01",
         end_date             = f"{year+1}-01-01",
         starting_balance     = balance,
