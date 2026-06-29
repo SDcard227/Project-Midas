@@ -258,6 +258,10 @@ def run_scan(ledger: SignalLedger = None, model: str = None,
         "whispers": ledger.whispers(),
         "haulers": haulers,
         "top": ledger.top_signals(5),
+        # raw firehose — so the Wire shows live news even with AI off (no API key needed).
+        # Newest first; capped so the payload stays small.
+        "wire": [{"source": a["source"], "title": a["title"], "link": a.get("link", "")}
+                 for a in articles[:60]],
     }
 
 
