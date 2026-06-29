@@ -470,9 +470,22 @@ def _fetch_rss(name, region, url):
 
 
 def _build_news():
+    """Fetch all RSS feeds CONCURRENTLY. Sequential (20 feeds x up to 8s) overran the
+    gateway on a cold cache, so the page got a 504 and showed 'Cannot load news feeds'.
+    Returns whatever finishes within the budget; slow stragglers just miss this build."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    ex = ThreadPoolExecutor(max_workers=12)
+    futs = [ex.submit(_fetch_rss, n, r, u) for n, r, u in _NEWS_FEEDS]
     all_articles = []
-    for name, region, url in _NEWS_FEEDS:
-        all_articles.extend(_fetch_rss(name, region, url))
+    try:
+        for f in as_completed(futs, timeout=18):
+            try:
+                all_articles.extend(f.result() or [])
+            except Exception:
+                pass
+    except Exception as e:
+        _log.debug(f"news build partial (timeout): {e}")
+    ex.shutdown(wait=False)
     return {"updated": _dt.now().isoformat(), "articles": all_articles}
 
 
