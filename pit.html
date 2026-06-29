@@ -124,7 +124,9 @@ const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"
 let ME=null, ROOMS=[], ACTIVE=null, LAST=0, POLL=null;
 
 function linkify(t){
-  return esc(t).replace(/\$([A-Za-z]{1,5})\b/g,(m,s)=>'<a href="whispers.html?q='+s.toUpperCase()+'">$'+s.toUpperCase()+'</a>');
+  return esc(t)
+    .replace(/\$([A-Za-z]{1,5})\b/g,(m,s)=>'<a href="whispers.html?q='+s.toUpperCase()+'">$'+s.toUpperCase()+'</a>')
+    .replace(/@([A-Za-z0-9_]{2,20})\b/g,(m,h)=>'<a class="mention" href="profile.html?h='+h.toLowerCase()+'">@'+h+'</a>');
 }
 function timeAgo(iso){
   try{ const s=Math.floor((Date.now()-new Date(iso).getTime())/1000);

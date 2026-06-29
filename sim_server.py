@@ -919,6 +919,15 @@ def api_room_messages(room_id):
             return jsonify({"error": "Log in to chat."}), 401
         data = request.get_json(silent=True) or {}
         res = chat.post_message(user, room_id, data.get("text"))
+        if not res.get("error"):
+            try:
+                from brain import notifications, accounts
+                for uid in accounts.resolve_handles(data.get("text", "")):
+                    if uid != user["id"]:
+                        notifications.push(uid, "mention",
+                                           f"{user['name']} mentioned you in the Pit", "pit.html")
+            except Exception:
+                pass
         return jsonify(res), (400 if res.get("error") else 200)
     after = int(request.args.get("after", 0) or 0)
     return jsonify(chat.list_messages(room_id, after))
