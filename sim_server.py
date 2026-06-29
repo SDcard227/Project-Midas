@@ -1488,6 +1488,97 @@ def api_parlor_resolve():
     return jsonify(res), (400 if res.get("error") else 200)
 
 
+# ── THE EXCHANGE — trade anything like a stock (play-money hype market) ───────
+@app.route("/exchange")
+def exchange_page():
+    return send_from_directory(BASE, "exchange.html")
+
+
+@app.route("/api/exchange/assets")
+def api_exchange_assets():
+    from brain import exchange, parlor
+    exchange.seed_if_empty()
+    out = {"assets": exchange.list_assets(request.args.get("category") or None)}
+    u = _current_user()
+    if u:
+        out["balance"] = parlor.get_balance(u["id"])
+        out["is_admin"] = _is_admin(u)
+        if _is_admin(u):
+            out["pending"] = exchange.list_pending()
+    return jsonify(out)
+
+
+@app.route("/api/exchange/asset/<ticker>")
+def api_exchange_asset(ticker):
+    from brain import exchange
+    a = exchange.get_asset(ticker)
+    if not a:
+        return jsonify({"error": "No such asset."}), 404
+    return jsonify(a)
+
+
+@app.route("/api/exchange/portfolio")
+def api_exchange_portfolio():
+    from brain import exchange
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    return jsonify(exchange.portfolio(u["id"]))
+
+
+@app.route("/api/exchange/buy", methods=["POST"])
+def api_exchange_buy():
+    from brain import exchange
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to trade."}), 401
+    data = request.get_json(silent=True) or {}
+    res = exchange.buy(u["id"], data.get("ticker", ""), data.get("bucks"))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/exchange/sell", methods=["POST"])
+def api_exchange_sell():
+    from brain import exchange
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to trade."}), 401
+    data = request.get_json(silent=True) or {}
+    res = exchange.sell(u["id"], data.get("ticker", ""), data.get("shares"))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/exchange/submit", methods=["POST"])
+def api_exchange_submit():
+    from brain import exchange
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in to submit a listing."}), 401
+    data = request.get_json(silent=True) or {}
+    res = exchange.create_asset(
+        data.get("name", ""), data.get("category", ""), data.get("blurb", ""),
+        data.get("ticker", ""), created_by=u["id"], link=data.get("link", ""),
+        image=data.get("image", ""), proof=data.get("proof", ""), status="pending")
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/exchange/moderate", methods=["POST"])
+def api_exchange_moderate():
+    from brain import exchange, notifications
+    if not _is_admin(_current_user()):
+        return jsonify({"error": "Admin only."}), 403
+    data = request.get_json(silent=True) or {}
+    res = exchange.moderate(int(data.get("asset_id", 0)), data.get("action"))
+    if res.get("ok") and res.get("created_by"):
+        try:
+            verb = "approved and is now LIVE" if res["status"] == "listed" else "was not approved"
+            notifications.push(res["created_by"], "listing",
+                               f"Your listing {res['name']} {verb}", "exchange.html")
+        except Exception:
+            pass
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
 # ── PROFILE — bio + all your Midas info in one place ─────────────────────────
 @app.route("/profile")
 def profile_page():
