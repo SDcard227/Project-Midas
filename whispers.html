@@ -382,7 +382,7 @@ function wireStory(x, lead){
     '</article>';
 }
 
-let WIRE_ROWS=[]; let WIRE_SORT='recent'; let GATE={}; let WIRE_TRIES=0;
+let WIRE_ROWS=[]; let WIRE_SORT='recent'; let GATE={}; let WIRE_TRIES=0; let RAW_WIRE=null;
 // ── Personalization: tune the wire to the saved assessment profile ──
 const TICKER_SECTOR={
   AAPL:'Tech & AI',MSFT:'Tech & AI',NVDA:'Tech & AI',GOOGL:'Tech & AI',GOOG:'Tech & AI',
@@ -426,7 +426,7 @@ function renderRawWire(d){
 }
 function renderWire(){
   const wire=document.getElementById('wire'); if(!wire) return;
-  if(!WIRE_ROWS.length){ wire.innerHTML='<div class="wire-empty">The wire is quiet, no stories in yet. (Set ANTHROPIC_API_KEY to light it up.)</div>'; return; }
+  if(!WIRE_ROWS.length){ if(RAW_WIRE&&(RAW_WIRE.wire||[]).length){ renderRawWire(RAW_WIRE); return; } wire.innerHTML='<div class="wire-empty">The wire is quiet, no stories in yet. Try “Most recent”, or set ANTHROPIC_API_KEY for ranked whispers.</div>'; return; }
   const rows=sortRows(WIRE_ROWS);
   let html = wireStory(rows[0],true) + '<div class="wire-cols">'+rows.slice(1).map(x=>wireStory(x,false)).join('')+'</div>';
   if(GATE.gated && GATE.locked>0){
@@ -543,7 +543,7 @@ async function loadBoard(){
     const seen={}; WIRE_ROWS=[];
     for(const r of (d.haulers||[]).concat(d.whispers||[])){ if(r&&!seen[r.id]){seen[r.id]=1;WIRE_ROWS.push(r);} }
     if(!WIRE_ROWS.length){
-      if((d.wire||[]).length){ WIRE_TRIES=0; renderRawWire(d); return; }   // raw RSS news, no AI key needed
+      if((d.wire||[]).length){ WIRE_TRIES=0; RAW_WIRE=d; renderRawWire(d); return; }   // raw RSS news, no AI key needed
       if(d.warming && (WIRE_TRIES=(WIRE_TRIES||0)+1) <= 8){   // cold cache: the scan is building, poll until it lands
         wire.innerHTML='<div class="wire-empty">Warming up the wire… pulling live headlines.</div>';
         setTimeout(loadBoard, 3000); return;
