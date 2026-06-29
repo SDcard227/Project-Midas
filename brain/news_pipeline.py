@@ -271,7 +271,7 @@ def run_scan(ledger: SignalLedger = None, model: str = None,
     haulers = ledger.haulers()
     if ai_enabled and fact_check and haulers:
         from .fact_checker import review_event
-        for h in haulers:
+        for h in haulers[:8]:                       # cost cap: review at most 8 haulers per scan
             h["review"] = review_event(h, model=review_model)
             h["reviewed_confidence"] = round(h["confidence"] * h["review"]["multiplier"], 1)
 
