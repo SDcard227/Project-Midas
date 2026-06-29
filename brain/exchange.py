@@ -67,6 +67,11 @@ def init_db():
             wins     INTEGER NOT NULL DEFAULT 0,
             losses   INTEGER NOT NULL DEFAULT 0
         )""")
+        c.execute("""CREATE TABLE IF NOT EXISTS exch_prices (
+            asset_id INTEGER NOT NULL,
+            price    REAL NOT NULL,
+            ts       TEXT NOT NULL
+        )""")
 
 
 # ── bonding curve (pure, testable) ───────────────────────────────────────────
@@ -107,6 +112,12 @@ def _adjust(c, user_id, delta):
               (int(delta), _now(), user_id))
 
 
+def _log_price(c, asset_id, p):
+    """Record a price point so each asset has a chartable history."""
+    c.execute("INSERT INTO exch_prices (asset_id, price, ts) VALUES (?,?,?)",
+              (asset_id, round(p, 4), _now()))
+
+
 # ── listing ──────────────────────────────────────────────────────────────────
 
 def _slug_ticker(name):
@@ -137,6 +148,7 @@ def create_asset(name, category="", blurb="", ticker="", created_by=None,
             (name[:80], t, (category or "Culture")[:40], (blurb or "")[:240],
              (link or "")[:300], (image or "")[:300], (proof or "")[:600], status,
              created_by, _now()))
+        _log_price(c, cur.lastrowid, BASE)        # initial price point at listing
         return {"id": cur.lastrowid, "ticker": t, "status": status}
 
 
@@ -165,6 +177,7 @@ def buy(user_id, ticker, bucks):
             return {"error": "Buy too small."}
         _adjust(c, user_id, -bucks)
         c.execute("UPDATE exch_assets SET shares=? WHERE id=?", (s + n, a["id"]))
+        _log_price(c, a["id"], price(s + n))
         h = c.execute("SELECT shares,cost FROM exch_holdings WHERE user_id=? AND asset_id=?",
                       (user_id, a["id"])).fetchone()
         if h:
@@ -201,6 +214,7 @@ def sell(user_id, ticker, shares):
         new_shares = h["shares"] - sell_n
         _adjust(c, user_id, value)
         c.execute("UPDATE exch_assets SET shares=? WHERE id=?", (max(0.0, s - sell_n), a["id"]))
+        _log_price(c, a["id"], price(max(0.0, s - sell_n)))
         if new_shares <= 1e-9:
             c.execute("DELETE FROM exch_holdings WHERE user_id=? AND asset_id=?", (user_id, a["id"]))
         else:
@@ -234,7 +248,8 @@ def list_assets(category=None, limit=300):
             out.append({"id": a["id"], "name": a["name"], "ticker": a["ticker"],
                         "category": a["category"] or "Culture", "blurb": a["blurb"] or "",
                         "price": round(price(s), 4), "shares": round(s, 2),
-                        "mcap": int(round(market_cap(s))), "holders": holders})
+                        "mcap": int(round(market_cap(s))), "holders": holders,
+                        "change_pct": round((price(s) / BASE - 1) * 100, 1)})
     return out[:limit]
 
 
@@ -258,12 +273,16 @@ def get_asset(ticker):
                     owner = {"id": u["id"], "name": u["name"], "handle": u.get("handle", "")}
             except Exception:
                 owner = None
+        hist = c.execute("SELECT price, ts FROM exch_prices WHERE asset_id=? ORDER BY ts DESC LIMIT 40",
+                         (a["id"],)).fetchall()
+        history = [{"price": r["price"], "ts": r["ts"]} for r in reversed(hist)]
         return {"id": a["id"], "name": a["name"], "ticker": a["ticker"],
                 "category": a["category"] or "Culture", "blurb": g("blurb"),
                 "link": g("link"), "image": g("image"), "proof": g("proof"),
                 "status": a["status"] or "pending", "owner": owner,
                 "price": round(price(s), 4), "shares": round(s, 2),
-                "mcap": int(round(market_cap(s))), "holders": holders}
+                "mcap": int(round(market_cap(s))), "holders": holders,
+                "change_pct": round((price(s) / BASE - 1) * 100, 1), "history": history}
 
 
 def portfolio(user_id):
