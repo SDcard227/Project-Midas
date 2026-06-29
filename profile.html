@@ -112,11 +112,14 @@ async function boot(){
   }
   uid = uid || (ME && ME.id);
   if(!uid){ $('body').innerHTML='<div class="muted">Log in to see your profile. <a href="account.html" style="color:var(--teal)">Account &rarr;</a></div>'; return; }
-  try{
-    P=await (await fetch('/api/profile/'+uid)).json();
-    if(P.error){ $('body').innerHTML='<div class="muted">'+esc(P.error)+'</div>'; return; }
-    render();
-  }catch(e){ $('body').innerHTML='<div class="muted">Could not load this profile.</div>'; }
+  P=null;
+  for(let a=0;a<2&&!P;a++){
+    try{ const r=await fetch('/api/profile/'+uid,{cache:'no-store'}); if(!r.ok) throw 0; P=await r.json(); }
+    catch(e){ if(a===0) await new Promise(x=>setTimeout(x,2000)); }
+  }
+  if(!P){ $('body').innerHTML='<div class="muted">Could not load this profile right now. <a href="javascript:location.reload()" style="color:var(--teal)">Retry</a></div>'; return; }
+  if(P.error){ $('body').innerHTML='<div class="muted">'+esc(P.error)+'</div>'; return; }
+  render();
 }
 
 function render(){

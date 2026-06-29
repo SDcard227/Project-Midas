@@ -377,6 +377,7 @@
 
 <script>
 const SIM = ``;
+const esc = s => (s||'').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));  // top-level so every render fn can use it
 const MARKETS = [
   {id:"nyc", tz:"America/New_York",  open:9.5, close:16},
   {id:"lon", tz:"Europe/London",     open:8,   close:16.5},
