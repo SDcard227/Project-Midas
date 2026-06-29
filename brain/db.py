@@ -156,6 +156,16 @@ def get_conn():
         import psycopg2
         url = os.getenv("DATABASE_URL", "").replace("postgres://", "postgresql://", 1)
         return _PgConn(psycopg2.connect(url))
-    c = sqlite3.connect(_SQLITE_PATH)
+    # timeout + WAL fix "database is locked" under gunicorn's threads + the daemons:
+    # WAL lets readers run during a write, and busy_timeout makes a writer wait for the
+    # lock instead of erroring instantly. check_same_thread=False is safe here because a
+    # fresh connection is opened per call (and GC may close it on another thread).
+    c = sqlite3.connect(_SQLITE_PATH, timeout=15, check_same_thread=False)
     c.row_factory = sqlite3.Row
+    try:
+        c.execute("PRAGMA journal_mode=WAL")
+        c.execute("PRAGMA busy_timeout=15000")
+        c.execute("PRAGMA synchronous=NORMAL")
+    except Exception:
+        pass
     return c
