@@ -382,7 +382,7 @@ function wireStory(x, lead){
     '</article>';
 }
 
-let WIRE_ROWS=[]; let WIRE_SORT='recent'; let GATE={};
+let WIRE_ROWS=[]; let WIRE_SORT='recent'; let GATE={}; let WIRE_TRIES=0;
 // ── Personalization: tune the wire to the saved assessment profile ──
 const TICKER_SECTOR={
   AAPL:'Tech & AI',MSFT:'Tech & AI',NVDA:'Tech & AI',GOOGL:'Tech & AI',GOOG:'Tech & AI',
@@ -543,12 +543,17 @@ async function loadBoard(){
     const seen={}; WIRE_ROWS=[];
     for(const r of (d.haulers||[]).concat(d.whispers||[])){ if(r&&!seen[r.id]){seen[r.id]=1;WIRE_ROWS.push(r);} }
     if(!WIRE_ROWS.length){
-      if((d.wire||[]).length){ renderRawWire(d); return; }   // raw RSS news, no AI key needed
+      if((d.wire||[]).length){ WIRE_TRIES=0; renderRawWire(d); return; }   // raw RSS news, no AI key needed
+      if(d.warming && (WIRE_TRIES=(WIRE_TRIES||0)+1) <= 8){   // cold cache: the scan is building, poll until it lands
+        wire.innerHTML='<div class="wire-empty">Warming up the wire… pulling live headlines.</div>';
+        setTimeout(loadBoard, 3000); return;
+      }
       wire.innerHTML='<div class="wire-empty">'+(d.ai_enabled
         ?'The wire is quiet right now. Stories appear as the scanner hears market news.'
-        :'No stories in yet, check back in a few minutes.')+'</div>';
+        :'No stories in yet, hit refresh in a moment.')+'</div>';
       return;
     }
+    WIRE_TRIES=0;
     renderWire();
     if(/[?&]view=funnies/.test(location.search)){ var fb=document.getElementById('ws-funnies'); if(fb) setSort('funnies', fb); }
   }catch(e){
