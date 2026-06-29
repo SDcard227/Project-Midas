@@ -145,8 +145,10 @@
       ups and downs, the system's confidence each day, and how much you'd have made.</p>
 
     <div class="controls">
+      <div class="ctl"><label>Stock(s)</label>
+        <input id="tickers" value="AAPL,MSFT,NVDA,SPY" placeholder="NVDA  or  AAPL,TSLA" style="width:160px" /></div>
       <div class="ctl"><label>Year</label>
-        <select id="year"><option>2021</option><option>2022</option><option selected>2023</option><option>2024</option></select></div>
+        <select id="year"><option>2008</option><option>2009</option><option>2010</option><option>2011</option><option>2012</option><option>2013</option><option>2014</option><option>2015</option><option>2016</option><option>2017</option><option>2018</option><option>2019</option><option>2020</option><option>2021</option><option>2022</option><option selected>2023</option><option>2024</option><option>2025</option></select></div>
       <div class="ctl"><label>Month</label>
         <select id="month" onchange="applyView()">
           <option value="0" selected>All year</option>
@@ -167,7 +169,7 @@
         <input id="bal" type="number" value="1000" min="100" step="100" style="width:90px" /></div>
       <button class="run" id="runBtn" onclick="runSim()">Run</button>
     </div>
-    <div class="note">Daily / swing engine on AAPL · MSFT · NVDA · SPY, after costs + 22% tax. Day-trading mode (5-min bars) is a separate engine, coming next.</div>
+    <div class="note">Daily / swing engine on the stocks you pick (up to 6), after costs + 22% tax. Free data here reaches back to ~2008. Day-trading mode (5-min bars) is a separate engine, coming next.</div>
 
     <div class="save-row">
       <div class="ctl"><label>Label this session</label>
@@ -205,6 +207,7 @@ async function runSim(){
   if(timer){ clearInterval(timer); timer=null; }
   const p = new URLSearchParams({
     mode:$('mode').value, freq:$('freq').value, year:$('year').value,
+    tickers:$('tickers').value||'AAPL,MSFT,NVDA,SPY',
     balance:$('bal').value||'1000', floor_pct:'80', floor_mode:$('floor').value,
     trail_pct:'15', deploy:'10', reinvest:'75', watcher:'60', max_trades:'0',
     conf_min:'0.5', conf_max:'2', tax:'22'
