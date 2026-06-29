@@ -160,7 +160,7 @@
         ['intelligence.html', 'Signals'], ['whispers.html', 'The Wire'],
         ['gossip.html', 'The Floor'], ['parlor.html', 'The Parlor'],
         ['exchange.html', 'The Exchange'], ['pit.html', 'The Pit'],
-        ['practice.html', 'Replay']
+        ['practice.html', 'Replay'], ['dashboard.html', 'Command']
       ];
       var _item = function (n) {
         return '<li><a href="' + n[0] + '"' + (n[0] === path ? ' class="active"' : '') + '>' + n[1] + '</a></li>';
