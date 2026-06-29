@@ -161,39 +161,57 @@ _pol        = _PolTracker(lookback_days=90)
 
 _STOOQ_CACHE = {}
 
+def _free_closes_fetch(tkey):
+    """One raw attempt at free closes: Yahoo's chart API (JSON, datacenter-friendly),
+    then stooq (CSV). No cache. Returns a pandas Series or None."""
+    import urllib.request
+    try:                                              # Yahoo chart API, no key
+        import json as _json
+        url = ("https://query1.finance.yahoo.com/v8/finance/chart/%s"
+               "?range=2y&interval=1d" % tkey.upper())
+        rq = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(rq, timeout=8) as resp:
+            d = _json.loads(resp.read().decode("utf-8", "replace"))
+        q = d["chart"]["result"][0]["indicators"]["quote"][0]["close"]
+        vals = [float(x) for x in q if x is not None]
+        if len(vals) >= 15:
+            return _pd.Series(vals).dropna()
+    except Exception as e:
+        _log.debug(f"yahoo closes {tkey}: {e}")
+    try:                                              # stooq CSV fallback, no key
+        rq = urllib.request.Request("https://stooq.com/q/d/l/?s=%s.us&i=d" % tkey.lower(),
+                                    headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(rq, timeout=8) as resp:
+            text = resp.read().decode("utf-8", "replace")
+        lines = [ln for ln in text.splitlines() if ln.strip()]
+        if len(lines) >= 16 and lines[0].lower().startswith("date"):
+            vals = []
+            for ln in lines[1:]:
+                p = ln.split(",")
+                if len(p) >= 5:
+                    try:
+                        vals.append(float(p[4]))      # Close column
+                    except ValueError:
+                        pass
+            if len(vals) >= 15:
+                return _pd.Series(vals).dropna()
+    except Exception as e:
+        _log.debug(f"stooq closes {tkey}: {e}")
+    return None
+
+
 def _stooq_closes(ticker, days=370):
-    """Free daily closes from stooq (NO API key) — the fallback when Alpaca isn't set,
-    so Signals + the Parlor's price markets still work with zero keys. Cached 30 min
-    (even misses) to be kind to stooq. Returns a pandas Series (most recent `days`) or None."""
-    tkey = (ticker or "").lower().strip()
+    """Free daily closes (NO API key): Yahoo then stooq, cached 30 min (even misses) so
+    we don't hammer either. The fallback so Signals + the Parlor's price markets work
+    with zero keys. Returns a pandas Series (most recent `days`) or None."""
+    tkey = (ticker or "").strip()
     if not tkey:
         return None
-    hit = _STOOQ_CACHE.get(tkey)
+    ck = tkey.upper()
+    hit = _STOOQ_CACHE.get(ck)
     if not (hit and _time.time() - hit[0] < 1800):
-        s = None
-        try:
-            import urllib.request
-            url = "https://stooq.com/q/d/l/?s=%s.us&i=d" % tkey
-            rq = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(rq, timeout=8) as resp:
-                text = resp.read().decode("utf-8", "replace")
-            lines = [ln for ln in text.splitlines() if ln.strip()]
-            if len(lines) >= 16 and lines[0].lower().startswith("date"):
-                vals = []
-                for ln in lines[1:]:
-                    p = ln.split(",")
-                    if len(p) >= 5:
-                        try:
-                            vals.append(float(p[4]))      # Close column
-                        except ValueError:
-                            pass
-                if len(vals) >= 15:
-                    s = _pd.Series(vals).dropna()
-        except Exception as e:
-            _log.debug(f"stooq closes {ticker}: {e}")
-            s = None
-        _STOOQ_CACHE[tkey] = (_time.time(), s)
-        hit = _STOOQ_CACHE[tkey]
+        _STOOQ_CACHE[ck] = (_time.time(), _free_closes_fetch(tkey))
+        hit = _STOOQ_CACHE[ck]
     s = hit[1]
     return s.iloc[-days:] if (s is not None and len(s)) else None
 
