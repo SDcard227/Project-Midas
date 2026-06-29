@@ -1114,7 +1114,7 @@ def api_profile(user_id):
     u = accounts.get_user(user_id)
     if not u:
         return jsonify({"error": "No such user."}), 404
-    from brain import parlor, social
+    from brain import parlor, social, exchange
     rep = reputation.compute(user_id)   # scores their calls vs real price moves
     port = reputation.portfolio(user_id)
     takes = comments.by_user(user_id, 12)   # their most-upvoted posts
@@ -1131,7 +1131,7 @@ def api_profile(user_id):
                     "i_follow": bool(me and not is_me and social.is_following(me["id"], user_id)),
                     "mutual": bool(me and not is_me and social.is_mutual(me["id"], user_id)),
                     "dm_privacy": (u.get("dm_privacy") or "open") if is_me else None,
-                    "handle": u.get("handle", "")})
+                    "handle": u.get("handle", ""), "exchange": exchange.scout(user_id)})
 
 
 @app.route("/api/leaderboard")
@@ -1577,6 +1577,17 @@ def api_exchange_moderate():
         except Exception:
             pass
     return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/exchange/scout")
+def api_exchange_scout():
+    from brain import exchange, accounts
+    board = exchange.scout_leaderboard(20)
+    for r in board:
+        u = accounts.get_user(r["user_id"])
+        r["name"] = u["name"] if u else "—"
+        r["handle"] = (u.get("handle", "") if u else "")
+    return jsonify({"scouts": board})
 
 
 # ── PROFILE — bio + all your Midas info in one place ─────────────────────────

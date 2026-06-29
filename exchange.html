@@ -111,7 +111,7 @@ let ME=null, MODE='market', CAT='All', DATA={assets:[],balance:0,is_admin:false,
 
 function setBal(){ $('bal').innerHTML = ME ? ('Balance: <b>'+fmt(DATA.balance)+' &#8383;</b>') : '<a class="btn" href="account.html">Log in to trade</a>'; }
 function tabs(){
-  const t=[['market','Market'],['portfolio','Portfolio'],['submit','List something']];
+  const t=[['market','Market'],['portfolio','Portfolio'],['scouts','Scouts'],['submit','List something']];
   if(ME&&DATA.is_admin) t.push(['review','Review'+(DATA.pending&&DATA.pending.length?(' ('+DATA.pending.length+')'):'')]);
   $('tabs').innerHTML=t.map(([k,l])=>'<button class="tab'+(MODE===k?' active':'')+'" onclick="go(\''+k+'\')">'+l+'</button>').join('');
 }
@@ -133,6 +133,7 @@ function render(){
   setBal(); tabs();
   if(MODE==='market') return renderMarket();
   if(MODE==='portfolio') return renderPortfolio();
+  if(MODE==='scouts') return renderScouts();
   if(MODE==='submit') return renderSubmit();
   if(MODE==='review') return renderReview();
 }
@@ -212,6 +213,20 @@ async function renderPortfolio(){
   $('view').innerHTML=tot+body;
 }
 
+async function renderScouts(){
+  $('view').innerHTML='<div class="muted">loading the taste board…</div>';
+  let d; try{ d=await (await fetch('/api/exchange/scout')).json(); }catch(e){ d={scouts:[]}; }
+  const S=d.scouts||[];
+  if(!S.length){ $('view').innerHTML='<div class="muted">No scouts yet. Back something early and ride it up.</div>'; return; }
+  $('view').innerHTML='<div class="note" style="margin:0 0 10px">Scouts ranked by total Exchange P&amp;L (realized + open). Backing winners <b>early</b> is the whole game.</div>'+
+    '<div class="panel"><table><thead><tr><th class="mono">#</th><th>Scout</th><th class="mono">Score</th><th class="mono">Hit %</th><th class="mono">Open</th></tr></thead><tbody>'+
+    S.map((x,i)=>'<tr><td class="mono">'+(i+1)+'</td>'+
+      '<td><a href="profile.html?u='+x.user_id+'" style="color:var(--teal);text-decoration:none">'+esc(x.name)+'</a>'+(x.handle?' <span style="color:var(--dim);font-family:var(--mono);font-size:.7rem">@'+esc(x.handle)+'</span>':'')+'</td>'+
+      '<td class="mono '+(x.score>=0?'win':'loss')+'">'+(x.score>=0?'+':'')+fmt(x.score)+'</td>'+
+      '<td class="mono">'+(x.hit_rate!=null?x.hit_rate+'%':'—')+'</td>'+
+      '<td class="mono">'+x.open_positions+'</td></tr>').join('')+
+    '</tbody></table></div>';
+}
 function renderSubmit(){
   if(!ME){ $('view').innerHTML='<div class="muted">Log in to list something. <a href="account.html" style="color:var(--teal)">Account &rarr;</a></div>'; return; }
   $('view').innerHTML='<div class="panel">'+
