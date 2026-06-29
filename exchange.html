@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDAS — The Exchange</title>
+  <script src="midas-theme.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root{
+      --bg:#f5f0e8; --surface:#ede8dd; --card:#fff; --border:#ddd8ce; --border2:#c4bdb0;
+      --text:#1e1a14; --mid:#5c5045; --dim:#9a9088;
+      --green:#2d7a4f; --teal:#1a7080; --amber:#9a7018; --red:#8a3030;
+      --mono:'Share Tech Mono','Courier New',monospace; --title:'Outfit',sans-serif;
+      --shadow:0 1px 3px rgba(30,26,20,.07),0 4px 16px rgba(30,26,20,.05);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:var(--title);background:var(--bg);color:var(--text);line-height:1.6}
+    nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;align-items:center;
+      justify-content:space-between;padding:0 48px;height:60px;
+      background:rgba(245,240,232,.96);border-bottom:1px solid var(--border);backdrop-filter:blur(8px)}
+    .nav-logo{font-size:1.05rem;font-weight:600;text-decoration:none;letter-spacing:.08em;color:var(--text)}
+    .nav-logo span{color:var(--amber)}
+    .nav-links{display:flex;gap:24px;list-style:none}
+    .nav-links a{color:var(--dim);text-decoration:none;font-size:.82rem;letter-spacing:.04em}
+    .nav-links a:hover,.nav-links a.active{color:var(--text)}
+    .nav-cta{color:var(--green)!important;border:1px solid var(--green);padding:6px 16px;border-radius:2px}
+    .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:var(--text);cursor:pointer;padding:0 6px;z-index:300}
+    @media(max-width:880px){ nav{padding:0 18px}
+      .nav-links{position:fixed;top:60px;left:0;right:0;flex-direction:column;gap:0;background:var(--bg);
+        border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .25s}
+      .nav-links.open{max-height:520px}
+      .nav-links li{width:100%}.nav-links a{display:block;padding:13px 24px;border-top:1px solid var(--border)}
+      .nav-burger{display:block} }
+    .wrap{max-width:980px;margin:0 auto;padding:84px 22px 60px}
+    .muted{font-family:var(--mono);font-size:.82rem;color:var(--dim);text-align:center;padding:36px}
+    .hd{display:flex;align-items:flex-end;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+    .hd h1{font-size:1.9rem;font-weight:700;letter-spacing:-.01em}
+    .hd .sub{font-family:var(--mono);font-size:.66rem;color:var(--dim);text-transform:uppercase;letter-spacing:.14em}
+    .bal{font-family:var(--mono);font-size:.8rem;color:var(--mid)}
+    .bal b{color:var(--green);font-size:1.05rem}
+    .tabs{display:flex;gap:6px;margin:16px 0;flex-wrap:wrap}
+    .tab{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;background:var(--card);
+      border:1px solid var(--border2);color:var(--mid);padding:7px 14px;border-radius:3px;cursor:pointer}
+    .tab.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .cat-row{display:flex;gap:7px;flex-wrap:wrap;margin:6px 0 16px}
+    .cat-chip{font-family:var(--mono);font-size:.6rem;letter-spacing:.08em;text-transform:uppercase;background:var(--card);
+      border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:14px;cursor:pointer}
+    .cat-chip.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:13px}
+    .asset{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:14px 16px;cursor:pointer;transition:border-color .15s}
+    .asset:hover{border-color:var(--text)}
+    .a-top{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+    .a-tick{font-family:var(--mono);font-weight:600;font-size:.95rem;color:var(--teal)}
+    .a-cat{font-family:var(--mono);font-size:.54rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);border:1px solid var(--border2);padding:1px 6px;border-radius:2px}
+    .a-name{font-size:1.02rem;font-weight:600;margin:3px 0 2px}
+    .a-blurb{font-size:.84rem;color:var(--mid);overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+    .a-stats{display:flex;gap:14px;margin-top:9px;font-family:var(--mono);font-size:.68rem;color:var(--mid)}
+    .a-price{color:var(--green);font-weight:600}
+    .panel{background:var(--card);border:1px solid var(--border);box-shadow:var(--shadow);padding:18px 20px;margin-bottom:14px}
+    .d-img{width:100%;max-height:260px;object-fit:cover;border:1px solid var(--border);margin:10px 0;background:var(--surface)}
+    .d-row{display:flex;gap:18px;flex-wrap:wrap;font-family:var(--mono);font-size:.74rem;color:var(--mid);margin:8px 0}
+    .d-row b{color:var(--text)}
+    .field{display:block;margin:9px 0}
+    .field label{font-family:var(--mono);font-size:.6rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);display:block;margin-bottom:3px}
+    input,textarea,select{font-family:var(--title);font-size:.92rem;border:1px solid var(--border2);background:var(--bg);padding:9px 11px;outline:none;color:var(--text);width:100%}
+    textarea{resize:vertical;min-height:64px}
+    .btn{font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:3px;padding:9px 16px;text-decoration:none;border:1px solid var(--border2);background:var(--card);color:var(--mid);display:inline-block}
+    .btn:hover{border-color:var(--text);color:var(--text)}
+    .btn.buy{background:var(--green);border-color:var(--green);color:#fff}
+    .btn.sell{background:var(--red);border-color:var(--red);color:#fff}
+    .btn.ghost{background:none}
+    .trade{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+    .trade .field{margin:0;flex:1;min-width:120px}
+    .win{color:var(--green)}.loss{color:var(--red)}
+    table{width:100%;border-collapse:collapse}
+    th,td{text-align:left;padding:8px 6px;border-bottom:1px solid var(--border);font-size:.86rem}
+    th{font-family:var(--mono);font-size:.58rem;text-transform:uppercase;letter-spacing:.1em;color:var(--dim)}
+    td.mono,th.mono{font-family:var(--mono)}
+    .note{font-family:var(--mono);font-size:.62rem;color:var(--dim);line-height:1.5;margin-top:10px}
+    .pend{border-left:3px solid var(--amber)}
+  </style>
+</head>
+<body>
+  <a id="midas-back" href="index.html" onclick="return midasBack(event)" style="position:fixed;top:72px;left:16px;z-index:150;font-family:var(--mono);font-size:.64rem;letter-spacing:.08em;text-transform:uppercase;background:rgba(245,240,232,.92);border:1px solid var(--border2);color:var(--mid);padding:5px 11px;border-radius:3px;text-decoration:none">&larr; Back</a>
+  <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
+  <nav>
+    <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
+    <ul class="nav-links"></ul>
+    <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
+  </nav>
+
+  <div class="wrap">
+    <div class="hd">
+      <div>
+        <h1>The Exchange</h1>
+        <div class="sub">Trade anything like a stock &middot; play-money</div>
+      </div>
+      <div class="bal" id="bal"></div>
+    </div>
+    <div class="tabs" id="tabs"></div>
+    <div id="view"><div class="muted">loading the floor…</div></div>
+  </div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>(s||"").replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const httpOk=u=>/^https?:\/\//i.test(u||"");
+const fmt=n=>Number(n||0).toLocaleString(undefined,{maximumFractionDigits:2});
+let ME=null, MODE='market', CAT='All', DATA={assets:[],balance:0,is_admin:false,pending:[]};
+
+function setBal(){ $('bal').innerHTML = ME ? ('Balance: <b>'+fmt(DATA.balance)+' &#8383;</b>') : '<a class="btn" href="account.html">Log in to trade</a>'; }
+function tabs(){
+  const t=[['market','Market'],['portfolio','Portfolio'],['submit','List something']];
+  if(ME&&DATA.is_admin) t.push(['review','Review'+(DATA.pending&&DATA.pending.length?(' ('+DATA.pending.length+')'):'')]);
+  $('tabs').innerHTML=t.map(([k,l])=>'<button class="tab'+(MODE===k?' active':'')+'" onclick="go(\''+k+'\')">'+l+'</button>').join('');
+}
+function go(m){ MODE=m; render(); }
+
+async function boot(){
+  try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
+  await loadMarket();
+  const t=(location.search.match(/[?&]t=([A-Za-z0-9]+)/)||[])[1];
+  if(t){ openDetail(t); } else { render(); }
+}
+
+async function loadMarket(){
+  try{ DATA=await (await fetch('/api/exchange/assets')).json(); }catch(e){ DATA={assets:[]}; }
+  DATA.assets=DATA.assets||[]; setBal(); tabs();
+}
+
+function render(){
+  setBal(); tabs();
+  if(MODE==='market') return renderMarket();
+  if(MODE==='portfolio') return renderPortfolio();
+  if(MODE==='submit') return renderSubmit();
+  if(MODE==='review') return renderReview();
+}
+
+function renderMarket(){
+  const cats=['All',...Array.from(new Set(DATA.assets.map(a=>a.category)))];
+  const chips='<div class="cat-row">'+cats.map(c=>'<button class="cat-chip'+(c===CAT?' active':'')+'" onclick="CAT=\''+esc(c)+'\';render()">'+esc(c)+'</button>').join('')+'</div>';
+  const shown=CAT==='All'?DATA.assets:DATA.assets.filter(a=>a.category===CAT);
+  const grid=shown.length?('<div class="grid">'+shown.map(a=>
+    '<div class="asset" onclick="openDetail(\''+esc(a.ticker)+'\')">'+
+      '<div class="a-top"><span class="a-tick">$'+esc(a.ticker)+'</span><span class="a-cat">'+esc(a.category)+'</span></div>'+
+      '<div class="a-name">'+esc(a.name)+'</div>'+
+      (a.blurb?'<div class="a-blurb">'+esc(a.blurb)+'</div>':'')+
+      '<div class="a-stats"><span class="a-price">'+fmt(a.price)+' &#8383;</span><span>cap '+fmt(a.mcap)+'</span><span>'+a.holders+' holders</span></div>'+
+    '</div>').join('')+'</div>'):'<div class="muted">No listings here yet. Be the first — hit “List something”.</div>';
+  $('view').innerHTML=chips+grid;
+}
+
+async function openDetail(ticker){
+  MODE='market'; tabs();
+  $('view').innerHTML='<div class="muted">loading…</div>';
+  let a; try{ a=await (await fetch('/api/exchange/asset/'+encodeURIComponent(ticker))).json(); }catch(e){ a={error:'Could not load.'}; }
+  if(!a||a.error){ $('view').innerHTML='<div class="muted">'+esc((a&&a.error)||'Not found')+'</div>'; return; }
+  const mine=ME&&a.owner&&a.owner.id===ME.id;
+  const contact=(ME&&a.owner&&!mine)?'<a class="btn" href="messages.html?u='+a.owner.id+'">Contact founder &rarr;</a>':'';
+  const ownerLine=a.owner?('<div class="d-row">Listed by <b>'+esc(a.owner.name)+(a.owner.handle?(' @'+esc(a.owner.handle)):'')+'</b>'+(contact?(' &middot; '+contact):'')+'</div>'):'';
+  const img=(a.image&&httpOk(a.image))?'<img class="d-img" src="'+esc(a.image)+'" alt="" onerror="this.style.display=\'none\'">':'';
+  const link=(a.link&&httpOk(a.link))?'<div class="d-row">Link: <a href="'+esc(a.link)+'" target="_blank" rel="noopener noreferrer">'+esc(a.link)+'</a></div>':'';
+  const proof=a.proof?'<div class="d-row" style="display:block">Proof of concept: <b>'+esc(a.proof)+'</b></div>':'';
+  const trade=ME?(
+    '<div class="trade">'+
+      '<div class="field"><label>Buy with Bucks</label><input id="buyAmt" type="number" min="10" placeholder="100"></div>'+
+      '<button class="btn buy" onclick="doBuy(\''+esc(a.ticker)+'\')">Buy</button>'+
+      '<div class="field"><label>Sell shares</label><input id="sellAmt" type="number" min="0" step="0.01" placeholder="all"></div>'+
+      '<button class="btn sell" onclick="doSell(\''+esc(a.ticker)+'\')">Sell</button>'+
+    '</div>'):'<div class="note">Log in to trade this listing.</div>';
+  $('view').innerHTML=
+    '<button class="btn ghost" onclick="go(\'market\')" style="margin-bottom:12px">&larr; Market</button>'+
+    '<div class="panel">'+
+      '<div class="a-top"><span class="a-tick" style="font-size:1.2rem">$'+esc(a.ticker)+'</span><span class="a-cat">'+esc(a.category)+'</span></div>'+
+      '<div class="a-name" style="font-size:1.4rem">'+esc(a.name)+'</div>'+
+      img+
+      (a.blurb?'<p style="color:var(--mid);margin:8px 0">'+esc(a.blurb)+'</p>':'')+
+      '<div class="d-row"><span class="a-price" style="font-size:1.1rem">'+fmt(a.price)+' &#8383;</span> &middot; market cap <b>'+fmt(a.mcap)+'</b> &middot; <b>'+a.holders+'</b> holders</div>'+
+      link+proof+ownerLine+
+      trade+
+      '<div class="note">Price rises as people buy and falls as they sell (a bonding curve). Early backers win if a name runs. Play-money only — a taste game, not real investing.</div>'+
+    '</div>';
+}
+
+async function doBuy(ticker){
+  const v=$('buyAmt').value; if(!v||v<10){ midasToast('Minimum buy is 10 Bucks.','error'); return; }
+  const r=await (await fetch('/api/exchange/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,bucks:v})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  DATA.balance=r.balance; midasToast('Bought '+fmt(r.shares)+' shares @ '+fmt(r.avg_price)+' &#8383;.'); openDetail(ticker);
+}
+async function doSell(ticker){
+  let v=$('sellAmt').value;
+  if(!v){ const p=await (await fetch('/api/exchange/portfolio')).json(); const h=(p.holdings||[]).find(x=>x.ticker===ticker); if(!h){ midasToast('You hold none.','error'); return; } v=h.shares; }
+  const r=await (await fetch('/api/exchange/sell',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,shares:v})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  DATA.balance=r.balance; midasToast('Sold for '+fmt(r.value)+' &#8383; ('+(r.pnl>=0?'+':'')+fmt(r.pnl)+').'); openDetail(ticker);
+}
+
+async function renderPortfolio(){
+  if(!ME){ $('view').innerHTML='<div class="muted">Log in to see your holdings. <a href="account.html" style="color:var(--teal)">Account &rarr;</a></div>'; return; }
+  $('view').innerHTML='<div class="muted">loading…</div>';
+  const p=await (await fetch('/api/exchange/portfolio')).json();
+  DATA.balance=p.balance; setBal();
+  const rows=(p.holdings||[]);
+  const body=rows.length?('<div class="panel"><table><thead><tr><th>Asset</th><th class="mono">Shares</th><th class="mono">Cost</th><th class="mono">Value</th><th class="mono">P&amp;L</th></tr></thead><tbody>'+
+    rows.map(h=>'<tr><td><a href="javascript:void(0)" onclick="openDetail(\''+esc(h.ticker)+'\')" style="color:var(--teal);text-decoration:none">$'+esc(h.ticker)+'</a> <span style="color:var(--dim)">'+esc(h.name)+'</span></td>'+
+      '<td class="mono">'+fmt(h.shares)+'</td><td class="mono">'+fmt(h.cost)+'</td><td class="mono">'+fmt(h.value)+'</td>'+
+      '<td class="mono '+(h.pnl>=0?'win':'loss')+'">'+(h.pnl>=0?'+':'')+fmt(h.pnl)+' ('+(h.pnl_pct>=0?'+':'')+h.pnl_pct+'%)</td></tr>').join('')+
+    '</tbody></table></div>'):'<div class="muted">No positions yet. Back something on the Market tab.</div>';
+  const tot='<div class="d-row" style="font-size:.86rem">Invested <b>'+fmt(p.invested)+'</b> &middot; Value <b>'+fmt(p.value)+'</b> &middot; P&amp;L <b class="'+(p.pnl>=0?'win':'loss')+'">'+(p.pnl>=0?'+':'')+fmt(p.pnl)+' &#8383;</b> &middot; Cash <b>'+fmt(p.balance)+' &#8383;</b></div>';
+  $('view').innerHTML=tot+body;
+}
+
+function renderSubmit(){
+  if(!ME){ $('view').innerHTML='<div class="muted">Log in to list something. <a href="account.html" style="color:var(--teal)">Account &rarr;</a></div>'; return; }
+  $('view').innerHTML='<div class="panel">'+
+    '<h2 style="font-size:1.1rem;margin-bottom:4px">List something on the Exchange</h2>'+
+    '<div class="note" style="margin:0 0 10px">Your submission goes to the team for review. Show real proof of concept — links, images, numbers. Approved listings go live and become tradeable, and people can contact you about it.</div>'+
+    '<div class="field"><label>Name *</label><input id="sName" maxlength="80" placeholder="e.g. My Cousin&#39;s Taco Truck"></div>'+
+    '<div class="field"><label>Ticker (optional)</label><input id="sTick" maxlength="8" placeholder="auto from name"></div>'+
+    '<div class="field"><label>Category</label><input id="sCat" maxlength="40" placeholder="Food, Art, Games, Film, Music, Drops, Studios, People, Ideas…"></div>'+
+    '<div class="field"><label>The pitch</label><textarea id="sBlurb" maxlength="240" placeholder="What is it, and why will it run?"></textarea></div>'+
+    '<div class="field"><label>Link</label><input id="sLink" maxlength="300" placeholder="https://…"></div>'+
+    '<div class="field"><label>Image URL</label><input id="sImg" maxlength="300" placeholder="https://… (a poster / photo)"></div>'+
+    '<div class="field"><label>Proof of concept *</label><textarea id="sProof" maxlength="600" placeholder="Sales, traction, demo, reviews, anything that proves it&#39;s real"></textarea></div>'+
+    '<button class="btn buy" onclick="submitListing()">Submit for review</button></div>';
+}
+async function submitListing(){
+  const name=$('sName').value.trim(); if(name.length<2){ midasToast('Give it a name.','error'); return; }
+  const proof=$('sProof').value.trim(); if(proof.length<3){ midasToast('Add proof of concept.','error'); return; }
+  const body={name,ticker:$('sTick').value.trim(),category:$('sCat').value.trim(),blurb:$('sBlurb').value.trim(),link:$('sLink').value.trim(),image:$('sImg').value.trim(),proof};
+  const r=await (await fetch('/api/exchange/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  midasToast('Submitted as $'+esc(r.ticker)+' — pending review.'); go('market');
+}
+
+function renderReview(){
+  const P=DATA.pending||[];
+  if(!P.length){ $('view').innerHTML='<div class="muted">No submissions waiting. The queue is clear.</div>'; return; }
+  $('view').innerHTML=P.map(a=>'<div class="panel pend">'+
+    '<div class="a-top"><span class="a-tick">$'+esc(a.ticker)+'</span><span class="a-cat">'+esc(a.category)+'</span></div>'+
+    '<div class="a-name">'+esc(a.name)+'</div>'+
+    (a.blurb?'<p style="color:var(--mid);margin:6px 0">'+esc(a.blurb)+'</p>':'')+
+    ((a.image&&httpOk(a.image))?'<img class="d-img" src="'+esc(a.image)+'" onerror="this.style.display=\'none\'">':'')+
+    ((a.link&&httpOk(a.link))?'<div class="d-row">Link: <a href="'+esc(a.link)+'" target="_blank" rel="noopener noreferrer">'+esc(a.link)+'</a></div>':'')+
+    (a.proof?'<div class="d-row" style="display:block">Proof: <b>'+esc(a.proof)+'</b></div>':'')+
+    '<div style="display:flex;gap:8px;margin-top:10px"><button class="btn buy" onclick="moderate('+a.id+',\'approve\')">Approve &amp; list</button>'+
+    '<button class="btn sell" onclick="moderate('+a.id+',\'reject\')">Reject</button></div></div>').join('');
+}
+async function moderate(id,action){
+  const r=await (await fetch('/api/exchange/moderate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({asset_id:id,action})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  midasToast('$'+esc(r.ticker)+' '+(r.status==='listed'?'listed.':'rejected.'));
+  await loadMarket(); render();
+}
+
+boot();
+</script>
+</body>
+</html>
