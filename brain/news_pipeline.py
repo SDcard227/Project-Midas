@@ -84,24 +84,42 @@ _STOCKTWITS_TOKEN = os.getenv("STOCKTWITS_TOKEN")
 _ST_BASE = "https://api.stocktwits.com/api/2"
 
 
-def _fetch_rss(limit_per_feed: int = 15) -> list:
+def _fetch_one_rss(source, url, limit_per_feed=15):
     out = []
-    for source, url in RSS_FEEDS:
-        try:
-            r = requests.get(url, timeout=8, headers=_UA)
-            if not r.ok:
-                continue
-            root = ET.fromstring(r.content)
-            for item in (root.findall(".//item") or [])[:limit_per_feed]:
-                el = item.find("title")
-                title = (el.text or "").strip() if el is not None else ""
-                if title:
-                    link_el = item.find("link")
-                    out.append({"source": source,
-                                "title": re.sub(r"\s+", " ", title),
-                                "link": (link_el.text or "").strip() if link_el is not None else ""})
-        except Exception as e:
-            log.debug(f"RSS {source} failed: {e}")
+    try:
+        r = requests.get(url, timeout=8, headers=_UA)
+        if not r.ok:
+            return out
+        root = ET.fromstring(r.content)
+        for item in (root.findall(".//item") or [])[:limit_per_feed]:
+            el = item.find("title")
+            title = (el.text or "").strip() if el is not None else ""
+            if title:
+                link_el = item.find("link")
+                out.append({"source": source,
+                            "title": re.sub(r"\s+", " ", title),
+                            "link": (link_el.text or "").strip() if link_el is not None else ""})
+    except Exception as e:
+        log.debug(f"RSS {source} failed: {e}")
+    return out
+
+
+def _fetch_rss(limit_per_feed: int = 15) -> list:
+    """Fetch all RSS feeds CONCURRENTLY (was sequential -> cold scans overran the gateway
+    and /api/whispers 500'd). Returns whatever finishes within the budget."""
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    out = []
+    ex = ThreadPoolExecutor(max_workers=12)
+    futs = [ex.submit(_fetch_one_rss, s, u, limit_per_feed) for s, u in RSS_FEEDS]
+    try:
+        for f in as_completed(futs, timeout=15):
+            try:
+                out.extend(f.result() or [])
+            except Exception:
+                pass
+    except Exception as e:
+        log.debug(f"rss parallel partial: {e}")
+    ex.shutdown(wait=False)
     return out
 
 
@@ -199,7 +217,15 @@ def _fetch_stocktwits(top_symbols: int = 5, msgs_per: int = 10) -> list:
 def fetch_headlines() -> list:
     """Pull from every source. Returns [{source, title, link}] — source is the
     unit of corroboration, so keep them granular and distinct."""
-    headlines = _fetch_sec() + _fetch_reddit() + _fetch_stocktwits() + _fetch_rss()
+    from concurrent.futures import ThreadPoolExecutor
+    headlines = []
+    with ThreadPoolExecutor(max_workers=4) as ex:
+        futs = {ex.submit(fn): fn.__name__ for fn in (_fetch_sec, _fetch_reddit, _fetch_stocktwits, _fetch_rss)}
+        for fut in futs:
+            try:
+                headlines.extend(fut.result(timeout=20) or [])
+            except Exception as e:
+                log.debug(f"{futs[fut]} failed: {e}")
     log.info(f"Fetched {len(headlines)} headlines across all sources")
     return headlines
 
