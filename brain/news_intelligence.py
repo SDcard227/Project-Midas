@@ -32,6 +32,7 @@ log = logging.getLogger("Midas.News")
 
 DEFAULT_MODEL = os.getenv("ANTHROPIC_MODEL", "claude-haiku-4-5")
 MAX_HEADLINES_PER_CALL = 25   # keep one call cheap and well under the token cap
+MAX_HEADLINES_TOTAL = int(os.getenv("MIDAS_AI_MAX_HEADLINES", "80"))   # cost cap: AI-classify only this many per scan
 
 # Lazy import so the bot still runs if anthropic isn't installed.
 try:
@@ -124,6 +125,7 @@ def classify_headlines(headlines: list, model: str = None) -> list:
         return []
 
     model = model or DEFAULT_MODEL
+    headlines = headlines[:MAX_HEADLINES_TOTAL]   # cost cap: don't classify the whole firehose
     verdicts = []
 
     # Chunk so each request stays cheap and well under the output token cap.

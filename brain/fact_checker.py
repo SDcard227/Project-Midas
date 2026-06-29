@@ -34,7 +34,7 @@ import logging
 
 log = logging.getLogger("Midas.FactCheck")
 
-REVIEW_MODEL = os.getenv("ANTHROPIC_REVIEW_MODEL", "claude-opus-4-8")
+REVIEW_MODEL = os.getenv("ANTHROPIC_REVIEW_MODEL", "claude-haiku-4-5")   # cheap by default; set claude-opus-4-8 for premium fact-checks
 
 try:
     import anthropic
