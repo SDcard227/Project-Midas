@@ -158,17 +158,40 @@ class Backtest:
     # Data (Alpaca historical — replaces the dead yfinance feed)
     # -------------------------------------------------------------------------
 
+    def _download_free(self, ticker, fetch_start, end):
+        """Free daily closes from Yahoo's chart API (NO key) — the fallback so Replay
+        runs without Alpaca. Same DataFrame shape as _download ('Close' on a daily index)."""
+        import urllib.request, json as _json
+        from datetime import datetime as _dtc, timezone as _tz
+        try:
+            p1 = int(_dtc.strptime(fetch_start, "%Y-%m-%d").replace(tzinfo=_tz.utc).timestamp())
+            p2 = int(_dtc.strptime(end, "%Y-%m-%d").replace(tzinfo=_tz.utc).timestamp()) + 86400
+            url = ("https://query1.finance.yahoo.com/v8/finance/chart/%s"
+                   "?period1=%d&period2=%d&interval=1d" % (ticker, p1, p2))
+            rq = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(rq, timeout=10) as resp:
+                d = _json.loads(resp.read().decode("utf-8", "replace"))
+            res = d["chart"]["result"][0]
+            ts = res.get("timestamp") or []
+            closes = (res.get("indicators", {}).get("quote") or [{}])[0].get("close") or []
+            rows = [(t, c) for t, c in zip(ts, closes) if c is not None]
+            if not rows:
+                return pd.DataFrame()
+            idx = pd.to_datetime([t for t, _ in rows], unit="s", utc=True).tz_localize(None).normalize()
+            out = pd.DataFrame({"Close": [float(c) for _, c in rows]}, index=idx)
+            out.index.name = "Date"
+            return out.sort_index()
+        except Exception as e:
+            log.warning(f"Free backtest data for {ticker}: {e}")
+            return pd.DataFrame()
+
     def _download(self, ticker: str, fetch_start: str, end: str) -> pd.DataFrame:
-        """Daily closes for [fetch_start, end] from Alpaca. Returns a DataFrame
-        with a single 'Close' column on a tz-naive daily DatetimeIndex — the same
-        shape the simulator expects. Needs free ALPACA_API_KEY/SECRET in .env."""
+        """Daily closes for [fetch_start, end]. Alpaca when keys are set, else free Yahoo
+        data so Replay works with no keys. 'Close' on a tz-naive daily DatetimeIndex."""
         key = os.getenv("ALPACA_API_KEY")
         secret = os.getenv("ALPACA_SECRET_KEY")
         if not (key and secret):
-            raise RuntimeError(
-                "Backtest needs ALPACA_API_KEY and ALPACA_SECRET_KEY in your .env "
-                "(free paper keys work for historical data). yfinance is no longer used."
-            )
+            return self._download_free(ticker, fetch_start, end)   # free Yahoo data, no key
         client = StockHistoricalDataClient(key, secret)
         req = StockBarsRequest(
             symbol_or_symbols=ticker,
@@ -180,10 +203,10 @@ class Backtest:
             bars = client.get_stock_bars(req)
         except Exception as e:
             log.warning(f"Alpaca download failed for {ticker}: {e}")
-            return pd.DataFrame()
+            return self._download_free(ticker, fetch_start, end)
         df = getattr(bars, "df", None)
         if df is None or df.empty:
-            return pd.DataFrame()
+            return self._download_free(ticker, fetch_start, end)
         df = df.reset_index()
         if "symbol" in df.columns:
             df = df[df["symbol"] == ticker]
