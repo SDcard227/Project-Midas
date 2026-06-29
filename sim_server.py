@@ -1004,13 +1004,19 @@ def api_comments():
         data = request.get_json(silent=True) or {}
         res = comments.add_comment(user, data.get("event_id"), data.get("ticker"),
                                    data.get("text"), parent_id=data.get("parent_id"))
-        if res.get("ok") and data.get("parent_id"):
+        if res.get("ok"):
             try:
-                from brain import notifications
-                pa = comments.author_of(int(data["parent_id"]))
-                if pa and pa.get("user_id") and pa["user_id"] != user["id"]:
-                    notifications.push(pa["user_id"], "reply",
-                                       f"{user['name']} replied to your take", "gossip.html")
+                from brain import notifications, accounts
+                notified = set()
+                if data.get("parent_id"):
+                    pa = comments.author_of(int(data["parent_id"]))
+                    if pa and pa.get("user_id") and pa["user_id"] != user["id"]:
+                        notifications.push(pa["user_id"], "reply",
+                                           f"{user['name']} replied to your take", "gossip.html")
+                        notified.add(pa["user_id"])
+                for uid in accounts.resolve_handles(data.get("text", "")):
+                    if uid != user["id"] and uid not in notified:
+                        notifications.push(uid, "mention", f"{user['name']} mentioned you", "gossip.html")
             except Exception:
                 pass
         return jsonify(res), (400 if res.get("error") else 200)
@@ -1115,7 +1121,8 @@ def api_profile(user_id):
                     "followers": sc["followers"], "following": sc["following"],
                     "i_follow": bool(me and not is_me and social.is_following(me["id"], user_id)),
                     "mutual": bool(me and not is_me and social.is_mutual(me["id"], user_id)),
-                    "dm_privacy": (u.get("dm_privacy") or "open") if is_me else None})
+                    "dm_privacy": (u.get("dm_privacy") or "open") if is_me else None,
+                    "handle": u.get("handle", "")})
 
 
 @app.route("/api/leaderboard")
@@ -1485,6 +1492,26 @@ def api_profile_bio():
         return jsonify({"error": "Log in first."}), 401
     data = request.get_json(silent=True) or {}
     return jsonify(accounts.set_bio(u["id"], data.get("bio", "")))
+
+
+@app.route("/api/profile/handle", methods=["POST"])
+def api_profile_handle():
+    from brain import accounts
+    u = _current_user()
+    if not u:
+        return jsonify({"error": "Log in first."}), 401
+    data = request.get_json(silent=True) or {}
+    res = accounts.set_handle(u["id"], data.get("handle", ""))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/handle/<handle>")
+def api_handle(handle):
+    from brain import accounts
+    u = accounts.get_by_handle(handle)
+    if not u:
+        return jsonify({"error": "No such handle."}), 404
+    return jsonify({"id": u["id"], "name": u["name"], "handle": u["handle"]})
 
 
 # ── DMs ──────────────────────────────────────────────────────────────────────

@@ -43,6 +43,10 @@
     .pmain{flex:1;min-width:220px}
     .pname{font-size:1.7rem;font-weight:600;line-height:1.2}
     .pnick{font-family:var(--mono);font-size:.74rem;color:var(--dim);margin-top:2px}
+    .phandle{font-family:var(--mono);font-size:.8rem;color:var(--teal);margin-top:3px}
+    .phandle a{color:var(--dim);font-size:.66rem;margin-left:6px;text-decoration:none;border-bottom:1px dotted var(--dim)}
+    .phandle a:hover{color:var(--text)}
+    .mention{color:var(--teal);text-decoration:none;font-weight:500}.mention:hover{text-decoration:underline}
     .pmeta{font-family:var(--mono);font-size:.64rem;color:var(--dim);letter-spacing:.06em;margin-top:7px;text-transform:uppercase}
     .verified{color:var(--teal);font-weight:600}
     .pactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
@@ -101,7 +105,12 @@ function joined(iso){ try{ return new Date(iso).toLocaleDateString(undefined,{ye
 
 async function boot(){
   try{ ME=(await (await fetch('/api/me')).json()).user; }catch(e){ ME=null; }
-  const uid = qsU() || (ME && ME.id);
+  let uid = qsU();
+  if(!uid){
+    const hm=location.search.match(/[?&]h=([A-Za-z0-9_]+)/);   // profile.html?h=handle (from @mentions)
+    if(hm){ try{ const r=await (await fetch('/api/handle/'+hm[1])).json(); if(r&&r.id) uid=r.id; }catch(e){} }
+  }
+  uid = uid || (ME && ME.id);
   if(!uid){ $('body').innerHTML='<div class="muted">Log in to see your profile. <a href="account.html" style="color:var(--teal)">Account &rarr;</a></div>'; return; }
   try{
     P=await (await fetch('/api/profile/'+uid)).json();
@@ -148,6 +157,7 @@ function render(){
       <div class="pavatar" style="border-color:${hue}">${esc(initials(P.name))}</div>
       <div class="pmain">
         <div class="pname" style="color:${hue}">${esc(P.name)}${P.verified?' <span class="verified" title="Verified">✓</span>':''}</div>
+        ${P.handle?('<div class="phandle">@'+esc(P.handle)+(P.is_me?' <a href="javascript:void(0)" onclick="editHandle()">change</a>':'')+'</div>'):(P.is_me?'<div class="phandle"><a href="javascript:void(0)" onclick="editHandle()">+ set a @handle</a></div>':'')}
         ${P.nickname?'<div class="pnick">goes by “'+esc(P.nickname)+'”</div>':''}
         <div class="pmeta">${(P.tier||'free').toUpperCase()} · joined ${joined(P.joined)}${loc?(' · '+esc(loc)):''}</div>
         <div class="pcounts"><b>${P.followers||0}</b> followers · <b>${P.following||0}</b> following${P.mutual?'<span class="mutual">mutual</span>':''}</div>
@@ -176,6 +186,15 @@ async function saveBio(){
     if(r.error){ midasToast(r.error,'error'); return; }
     P.bio=(r.user&&r.user.bio)||bio; midasToast('Bio saved.'); render();
   }catch(e){ midasToast('Could not save.','error'); }
+}
+async function editHandle(){
+  const h=prompt("Your @handle (2-20 lowercase letters, numbers, or _). People use it to @mention you.", P.handle||"");
+  if(h===null) return;
+  try{
+    const r=await (await fetch('/api/profile/handle',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({handle:h})})).json();
+    if(r.error){ midasToast(r.error,'error'); return; }
+    P.handle=(r.user&&r.user.handle)||h.toLowerCase(); midasToast('Handle set to @'+P.handle); render();
+  }catch(e){ midasToast('Could not set handle.','error'); }
 }
 async function block(){
   if(!confirm('Block '+P.name+'? They won’t be able to message you.')) return;
