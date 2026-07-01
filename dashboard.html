@@ -660,13 +660,19 @@ function renderSignalsPane(){
 }
 
 // ── Fetch news ────────────────────────────────────────────────────────────────
+let _dashNewsTries=0;
 async function fetchNews(){
   try{
     const r=await fetch(`${SIM}/api/news`);
     _news=await r.json();
+    if(_news.warming && !((_news.articles||[]).length) && (_dashNewsTries=(_dashNewsTries||0)+1)<=8){
+      document.getElementById('pb-news').innerHTML='<div class="dash-loading"><span>warming up the news&hellip;</span></div>';
+      setTimeout(fetchNews, 3000); return;
+    }
+    _dashNewsTries=0;
     renderNewsPane();renderL3();
     // Populate source filter
-    const sources=['ALL',...new Set(_news.articles.map(a=>a.source))];
+    const sources=['ALL',...new Set((_news.articles||[]).map(a=>a.source))];
     const sel=document.getElementById('news-filter-sel');
     const cur=sel.value;
     sel.innerHTML=sources.map(s=>`<option value="${s}"${s===cur?' selected':''}>${s}</option>`).join('');
@@ -686,7 +692,7 @@ function renderNewsPane(srcFilter){
   if(!_news)return;
   const el=document.getElementById('pb-news');
   const src=srcFilter||document.getElementById('news-filter-sel').value||'ALL';
-  let articles=_news.articles;
+  let articles=_news.articles||[];
   if(_newsRegion!=='ALL') articles=articles.filter(a=>a.region===_newsRegion);
   if(src!=='ALL') articles=articles.filter(a=>a.source===src);
   let html='';
@@ -959,15 +965,22 @@ function toggleLayout(){
 }
 
 // ── Early Whispers (from /api/whispers) ──────────────────────────────────────
+let _dashWhTries=0;
 async function fetchWhispers(){
   const el=document.getElementById('pb-whispers'); if(!el) return;
   try{
     const d=await (await fetch(`${SIM}/api/whispers`)).json();
     const rows=(d.haulers||[]).concat(d.whispers||[]).slice(0,12);
     if(!rows.length){
+      if(d.warming && (_dashWhTries=(_dashWhTries||0)+1)<=8){   // cold cache: scan building, poll
+        el.innerHTML='<div class="dash-loading"><span>warming up the wire&hellip;</span></div>';
+        setTimeout(fetchWhispers, 3000); return;
+      }
+      _dashWhTries=0;
       el.innerHTML='<div class="dash-loading"><span>'+(d.ai_enabled?'No whispers yet — scanner is listening':'AI off — set ANTHROPIC_API_KEY')+'</span></div>';
       return;
     }
+    _dashWhTries=0;
     el.innerHTML=rows.map(w=>{
       const col=w.direction==='bullish'?'var(--green)':w.direction==='bearish'?'var(--red)':'var(--dim)';
       const arr=w.direction==='bullish'?'&#9650;':w.direction==='bearish'?'&#9660;':'&middot;';
