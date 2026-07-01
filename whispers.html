@@ -434,7 +434,8 @@ function renderWire(){
   const wire=document.getElementById('wire'); if(!wire) return;
   if(!WIRE_ROWS.length){ if(RAW_WIRE&&(RAW_WIRE.wire||[]).length){ renderRawWire(RAW_WIRE); return; } wire.innerHTML='<div class="wire-empty">Loading live headlines…</div>'; loadBoard(); return; }
   const rows=sortRows(WIRE_ROWS);
-  let html = wireStory(rows[0],true) + '<div class="wire-cols">'+rows.slice(1).map(x=>wireStory(x,false)).join('')+'</div>';
+  const note = (rows[0]&&rows[0].keyless) ? '<div class="rw-head">Auto-tagged from '+rows.length+' live ticker stories &middot; set ANTHROPIC_API_KEY for AI-ranked whispers</div>' : '';
+  let html = note + wireStory(rows[0],true) + '<div class="wire-cols">'+rows.slice(1).map(x=>wireStory(x,false)).join('')+'</div>';
   if(GATE.gated && GATE.locked>0){
     html += '<div class="gate-card"><b>'+GATE.locked+' more whisper'+(GATE.locked==1?'':'s')+' behind Pro.</b><br>'+
       'You are on the Free plan, showing the top '+WIRE_ROWS.length+'. <a href="account.html">Upgrade to unlock the full wire &rarr;</a></div>';
