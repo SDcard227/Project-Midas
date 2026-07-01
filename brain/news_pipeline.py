@@ -227,7 +227,18 @@ def fetch_headlines() -> list:
             except Exception as e:
                 log.debug(f"{futs[fut]} failed: {e}")
     log.info(f"Fetched {len(headlines)} headlines across all sources")
-    return headlines
+    # Dedup exact re-listings (same title+source) so one article isn't classified twice
+    # and the wire doesn't repeat itself. Cross-source dupes are kept — that's corroboration.
+    seen, deduped = set(), []
+    for h in headlines:
+        k = ((h.get("title") or "").strip().lower(), h.get("source"))
+        if k[0] and k in seen:
+            continue
+        seen.add(k)
+        deduped.append(h)
+    if len(deduped) != len(headlines):
+        log.info(f"Deduped {len(headlines)} -> {len(deduped)} unique headlines")
+    return deduped
 
 
 def run_scan(ledger: SignalLedger = None, model: str = None,
