@@ -80,6 +80,11 @@
     .gp-text a.mention,.tr-text a.mention{font-family:var(--title);font-weight:500}
     .treply-box{padding:15px 22px}
     .treply-box textarea{width:100%;font-family:var(--title);font-size:.9rem;border:1px solid var(--border2);background:var(--bg);padding:10px 12px;outline:none;resize:vertical;min-height:56px;color:var(--text)}
+    .gp-own{font-family:var(--mono);font-size:.6rem;color:var(--dim);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline}
+    .gp-own:hover{color:var(--text)}
+    .gp-own.del:hover{color:var(--red)}
+    .gp-edited{font-family:var(--mono);font-size:.58rem;color:var(--dim);margin-left:4px}
+    .gp-edit-ta{width:100%;font-family:var(--title);font-size:.92rem;border:1px solid var(--border2);background:var(--bg);padding:9px 11px;outline:none;resize:vertical;min-height:54px;color:var(--text);margin:4px 0}
   </style>
   <style id="mobile-nav">
     .nav-burger{display:none;background:none;border:none;font-size:1.6rem;line-height:1;color:#1e1a14;cursor:pointer;padding:0 6px;z-index:300;}
@@ -171,8 +176,8 @@ function renderFeed(){
     return '<div class="gp" onclick="openThread('+r.id+')"><div class="gp-h">'+authorTag(r,hue)+sentTag(r.sentiment)+
       '<span class="gp-votes"><button class="gp-vote up" onclick="vote('+r.id+',\'up\',event)">&#9650; '+(r.upvotes||0)+'</button>'+
       '<button class="gp-vote down" onclick="vote('+r.id+',\'down\',event)">&#9660; '+(r.downvotes||0)+'</button></span></div>'+
-      '<div class="gp-text">'+linkify(r.text)+'</div>'+
-      '<div class="gp-foot">'+rc+(rc===1?' reply':' replies')+' &middot; <span class="discuss">discuss &rarr;</span></div></div>';
+      '<div class="gp-text" id="ctext-'+r.id+'">'+linkify(r.text)+editedTag(r)+'</div>'+
+      '<div class="gp-foot">'+rc+(rc===1?' reply':' replies')+' &middot; <span class="discuss">discuss &rarr;</span>'+ownControls(r)+'</div></div>';
   }).join('');
 }
 async function load(){
@@ -212,6 +217,61 @@ async function vote(id,dir,ev){
   }catch(e){}
 }
 
+const MY_ID=()=> ME && ME.id;
+function editedTag(c){ return c.edited ? '<span class="gp-edited">(edited)</span>' : ''; }
+function ownControls(c){
+  if(!c.user_id || c.user_id!==MY_ID()) return '';
+  return ' &middot; <button class="gp-own" onclick="startEdit('+c.id+',event)">edit</button>'+
+    ' <button class="gp-own del" onclick="delComment('+c.id+',event)">delete</button>';
+}
+function startEdit(id,ev){
+  if(ev) ev.stopPropagation();
+  const box=$('ctext-'+id); if(!box || box.dataset.editing) return;
+  const row=ROWS.find(x=>x.id===id);
+  const cur=(row&&row.text)!=null ? row.text : (box.getAttribute('data-raw')||'');
+  box.dataset.editing='1'; box.dataset.orig=box.innerHTML;
+  box.innerHTML='<textarea class="gp-edit-ta" id="cedit-'+id+'" maxlength="500" onclick="event.stopPropagation()"></textarea>'+
+    '<div class="gp-foot" style="margin-top:0"><button class="gp-own" onclick="saveEdit('+id+',event)">save</button>'+
+    ' <button class="gp-own" onclick="cancelEdit('+id+',event)">cancel</button></div>';
+  const ta=$('cedit-'+id); if(ta){ ta.value=cur; ta.focus(); }
+}
+function cancelEdit(id,ev){
+  if(ev) ev.stopPropagation();
+  const box=$('ctext-'+id); if(!box) return;
+  box.innerHTML=box.dataset.orig||''; delete box.dataset.editing; delete box.dataset.orig;
+}
+async function saveEdit(id,ev){
+  if(ev) ev.stopPropagation();
+  const ta=$('cedit-'+id); if(!ta) return;
+  const text=(ta.value||'').trim(); if(!text) return;
+  try{
+    const r=await (await fetch('/api/comments/edit',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({comment_id:id,text})})).json();
+    if(r.error){ midasToast(r.error, 'error'); return; }
+    const row=ROWS.find(x=>x.id===id); if(row){ row.text=r.text; row.sentiment=r.sentiment; row.edited=true; }
+    const box=$('ctext-'+id);
+    if(box){
+      box.innerHTML=linkify(r.text)+'<span class="gp-edited">(edited)</span>';
+      box.setAttribute('data-raw', esc(r.text));
+      delete box.dataset.editing; delete box.dataset.orig;
+    }
+    if(row) renderFeed();
+    if(THREAD_OPEN) refreshThread();
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
+}
+async function delComment(id,ev){
+  if(ev) ev.stopPropagation();
+  if(!confirm('Delete this comment?')) return;
+  try{
+    const r=await (await fetch('/api/comments/delete',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({comment_id:id})})).json();
+    if(r.error){ midasToast(r.error, 'error'); return; }
+    if(THREAD_OPEN===id){ closeThread(); }
+    await load();
+    if(THREAD_OPEN && THREAD_OPEN!==id) refreshThread();
+  }catch(e){ midasToast('Error: '+e.message, 'error'); }
+}
+
 let THREAD_OPEN=null;
 function repHue(c){ return (c&&c.rep&&c.rep.hue) ? c.rep.hue : 'var(--text)'; }
 function authorTag(o,hue){
@@ -241,11 +301,12 @@ async function refreshThread(){
 function renderThread(d){
   const r=d.root;
   let h='<div class="troot"><div class="gp-h">'+authorTag(r,repHue(r))+sentTag(r.sentiment)+cVotes(r)+'</div>'+
-    '<div class="gp-text" style="font-size:1.02rem">'+linkify(r.text)+'</div></div>';
+    '<div class="gp-text" id="ctext-'+r.id+'" data-raw="'+esc(r.text)+'" style="font-size:1.02rem">'+linkify(r.text)+editedTag(r)+'</div>'+
+    ownControls(r)+'</div>';
   h+='<div style="font-family:var(--mono);font-size:.6rem;letter-spacing:.14em;color:var(--dim);padding:13px 22px 2px;text-transform:uppercase">'+d.count+' '+(d.count===1?'reply':'replies')+'</div>';
   h+=(d.replies||[]).map(c=>
     '<div class="treply"><div class="gp-h">'+authorTag(c,repHue(c))+sentTag(c.sentiment)+cVotes(c)+'</div>'+
-    '<div class="tr-text">'+linkify(c.text)+'</div></div>').join('');
+    '<div class="tr-text" id="ctext-'+c.id+'" data-raw="'+esc(c.text)+'">'+linkify(c.text)+editedTag(c)+'</div>'+ownControls(c)+'</div>').join('');
   if(!d.replies.length) h+='<div style="padding:4px 22px 12px;font-family:var(--mono);font-size:.7rem;color:var(--dim)">No replies yet, start it off.</div>';
   if(ME){
     h+='<div class="treply-box"><textarea id="rtext" maxlength="500" placeholder="Add to the discussion…"></textarea>'+

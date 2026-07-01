@@ -82,6 +82,11 @@
     td.mono,th.mono{font-family:var(--mono)}
     .note{font-family:var(--mono);font-size:.62rem;color:var(--dim);line-height:1.5;margin-top:10px}
     .pend{border-left:3px solid var(--amber)}
+    .c-own{font-family:var(--mono);font-size:.6rem;color:var(--dim);background:none;border:none;cursor:pointer;padding:0;text-decoration:underline}
+    .c-own:hover{color:var(--text)}
+    .c-own.del:hover{color:var(--red)}
+    .c-edited{font-family:var(--mono);font-size:.58rem;color:var(--dim);margin-left:4px}
+    .c-edit-ta{width:100%;font-family:var(--title);font-size:.92rem;border:1px solid var(--border2);background:var(--bg);padding:9px 11px;outline:none;resize:vertical;min-height:54px;color:var(--text);margin:4px 0}
   </style>
 </head>
 <body>
@@ -228,7 +233,9 @@ async function loadAComments(ticker){
     : '<div class="note" style="margin-bottom:12px">Log in to join the discussion.</div>';
   const list=cs.length?cs.map(function(c){
     var hue=(c.rep&&c.rep.hue)||'var(--text)';
-    return '<div style="border-top:1px solid var(--border);padding:10px 0"><a href="profile.html?u='+(c.user_id||0)+'" style="font-family:var(--mono);font-size:.72rem;font-weight:600;color:'+hue+';text-decoration:none">'+esc(c.author)+'</a><div style="font-size:.92rem;color:var(--text);margin-top:3px">'+linkifyC(c.text)+'</div></div>';
+    return '<div style="border-top:1px solid var(--border);padding:10px 0"><a href="profile.html?u='+(c.user_id||0)+'" style="font-family:var(--mono);font-size:.72rem;font-weight:600;color:'+hue+';text-decoration:none">'+esc(c.author)+'</a>'+
+      '<div id="ctext-'+c.id+'" data-raw="'+esc(c.text)+'" style="font-size:.92rem;color:var(--text);margin-top:3px">'+linkifyC(c.text)+cEditedTag(c)+'</div>'+
+      cOwnControls(c,ticker)+'</div>';
   }).join(''):'<div class="muted" style="padding:10px 0">No takes yet. Start the thread.</div>';
   $('adisc').innerHTML='<div style="font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;color:var(--dim);text-transform:uppercase;margin-bottom:12px">Discussion &middot; '+cs.length+'</div>'+box+list;
 }
@@ -237,6 +244,41 @@ async function postAComment(ticker){
   const r=await (await fetch('/api/exchange/comments/'+encodeURIComponent(ticker),{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({text})})).json();
   if(r.error){ midasToast(r.error,'error'); return; }
   el.value=''; loadAComments(ticker);
+}
+
+const MY_ID=()=> ME && ME.id;
+function cEditedTag(c){ return c.edited ? '<span class="c-edited">(edited)</span>' : ''; }
+function cOwnControls(c,ticker){
+  if(!c.user_id || c.user_id!==MY_ID()) return '';
+  var t=esc(ticker);
+  return '<div style="margin-top:4px"><button class="c-own" onclick="startCEdit('+c.id+',\''+t+'\')">edit</button>'+
+    ' <button class="c-own del" onclick="delCComment('+c.id+',\''+t+'\')">delete</button></div>';
+}
+function startCEdit(id,ticker){
+  const box=$('ctext-'+id); if(!box || box.dataset.editing) return;
+  const cur=box.getAttribute('data-raw')||'';
+  box.dataset.editing='1'; box.dataset.orig=box.innerHTML;
+  box.innerHTML='<textarea class="c-edit-ta" id="cedit-'+id+'" maxlength="500"></textarea>'+
+    '<div style="margin-top:2px"><button class="c-own" onclick="saveCEdit('+id+',\''+esc(ticker)+'\')">save</button>'+
+    ' <button class="c-own" onclick="cancelCEdit('+id+')">cancel</button></div>';
+  const ta=$('cedit-'+id); if(ta){ ta.value=cur; ta.focus(); }
+}
+function cancelCEdit(id){
+  const box=$('ctext-'+id); if(!box) return;
+  box.innerHTML=box.dataset.orig||''; delete box.dataset.editing; delete box.dataset.orig;
+}
+async function saveCEdit(id,ticker){
+  const ta=$('cedit-'+id); if(!ta) return;
+  const text=(ta.value||'').trim(); if(!text) return;
+  const r=await (await fetch('/api/comments/edit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment_id:id,text})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  loadAComments(ticker);
+}
+async function delCComment(id,ticker){
+  if(!confirm('Delete this comment?')) return;
+  const r=await (await fetch('/api/comments/delete',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment_id:id})})).json();
+  if(r.error){ midasToast(r.error,'error'); return; }
+  loadAComments(ticker);
 }
 
 async function doBuy(ticker){

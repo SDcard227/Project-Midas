@@ -1132,6 +1132,34 @@ def api_comments_thread(comment_id):
     return jsonify(comments.thread(comment_id))
 
 
+@app.route("/api/comments/edit", methods=["POST"])
+def api_comments_edit():
+    from brain import comments
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in to edit."}), 401
+    data = request.get_json(silent=True) or {}
+    cid = data.get("comment_id")
+    if not cid:
+        return jsonify({"error": "comment_id required"}), 400
+    res = comments.edit_comment(user, int(cid), data.get("text"))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
+@app.route("/api/comments/delete", methods=["POST"])
+def api_comments_delete():
+    from brain import comments
+    user = _current_user()
+    if not user:
+        return jsonify({"error": "Log in to delete."}), 401
+    data = request.get_json(silent=True) or {}
+    cid = data.get("comment_id")
+    if not cid:
+        return jsonify({"error": "comment_id required"}), 400
+    res = comments.delete_comment(user, int(cid))
+    return jsonify(res), (400 if res.get("error") else 200)
+
+
 def _send_email(to, subject, body):
     """Send via SMTP if configured (SMTP_HOST/USER/PASS env); else False (dev mode
     shows the link in the UI). Keeps Midas runnable with no email service set up."""
@@ -1863,6 +1891,7 @@ def api_health():
         "alpaca_secret": bool(os.getenv("ALPACA_SECRET_KEY")),
         "finnhub":       bool(os.getenv("FINNHUB_API_KEY")),
         "anthropic":     bool(os.getenv("ANTHROPIC_API_KEY")),
+        "secret_key":    bool(os.getenv("SECRET_KEY") or os.getenv("MIDAS_MSG_KEY")),
         "db_backend":    "postgres" if db._is_pg() else "sqlite",
         "has_database_url": bool(os.getenv("DATABASE_URL")),
     }
