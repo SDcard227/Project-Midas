@@ -432,7 +432,7 @@ function renderRawWire(d){
 }
 function renderWire(){
   const wire=document.getElementById('wire'); if(!wire) return;
-  if(!WIRE_ROWS.length){ if(RAW_WIRE&&(RAW_WIRE.wire||[]).length){ renderRawWire(RAW_WIRE); return; } wire.innerHTML='<div class="wire-empty">The wire is quiet, no stories in yet. Try “Most recent”, or set ANTHROPIC_API_KEY for ranked whispers.</div>'; return; }
+  if(!WIRE_ROWS.length){ if(RAW_WIRE&&(RAW_WIRE.wire||[]).length){ renderRawWire(RAW_WIRE); return; } wire.innerHTML='<div class="wire-empty">Loading live headlines…</div>'; loadBoard(); return; }
   const rows=sortRows(WIRE_ROWS);
   let html = wireStory(rows[0],true) + '<div class="wire-cols">'+rows.slice(1).map(x=>wireStory(x,false)).join('')+'</div>';
   if(GATE.gated && GATE.locked>0){
