@@ -147,6 +147,16 @@ class SignalLedger:
             self.state["events"][eid] = ev
 
         ev["last_seen"] = ts
+
+        # Dedup re-scans: the same article (title + source) is re-fetched every scan.
+        # If it's already logged for this event, bump recency but don't re-count it —
+        # otherwise one headline inflates into dozens of "mentions" across scans.
+        _t = (title or "").strip().lower()
+        if _t and any(m.get("source") == source and (m.get("title") or "").strip().lower() == _t
+                      for m in ev.get("mentions_log", [])):
+            self._save()
+            return ev
+
         ev["mentions"] += 1
         if source and source not in ev["sources"]:
             ev["sources"].append(source)       # distinct-source corroboration
