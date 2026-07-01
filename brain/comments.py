@@ -48,7 +48,8 @@ def init_db():
         cols = [r["name"] for r in c.execute("PRAGMA table_info(comments)").fetchall()]
         for col, ddl in [("upvotes", "INTEGER DEFAULT 0"),
                          ("downvotes", "INTEGER DEFAULT 0"),
-                         ("parent_id", "INTEGER")]:
+                         ("parent_id", "INTEGER"),
+                         ("edited", "INTEGER DEFAULT 0")]:
             if col not in cols:
                 c.execute(f"ALTER TABLE comments ADD COLUMN {col} {ddl}")
         c.execute("""CREATE TABLE IF NOT EXISTS comment_votes (
@@ -106,6 +107,44 @@ def add_comment(user, event_id, ticker, text, parent_id=None):
              parent_id, datetime.now(timezone.utc).isoformat()))
     return {"ok": True, "id": cur.lastrowid, "sentiment": sent,
             "parent_id": parent_id, "nudge": crowd_nudge(event_id)}
+
+
+def edit_comment(user, comment_id, new_text):
+    """Owner edits their own comment: updates text, re-scans sentiment, marks it edited."""
+    new_text = (new_text or "").strip()[:500]
+    if len(new_text) < 2:
+        return {"error": "Say a little more."}
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT user_id FROM comments WHERE id=?", (comment_id,)).fetchone()
+        if not r:
+            return {"error": "Comment not found."}
+        if r["user_id"] != user["id"]:
+            return {"error": "You can only edit your own comments."}
+        sent = _scan_sentiment(new_text)
+        c.execute("UPDATE comments SET text=?, sentiment=?, edited=1 WHERE id=?",
+                  (new_text, sent, comment_id))
+    return {"ok": True, "id": comment_id, "text": new_text, "sentiment": sent, "edited": True}
+
+
+def delete_comment(user, comment_id):
+    """Owner deletes their own comment (and, if it's a top-level take, its replies + votes)."""
+    init_db()
+    with _conn() as c:
+        r = c.execute("SELECT user_id, parent_id FROM comments WHERE id=?",
+                      (comment_id,)).fetchone()
+        if not r:
+            return {"error": "Comment not found."}
+        if r["user_id"] != user["id"]:
+            return {"error": "You can only delete your own comments."}
+        ids = [comment_id]
+        if r["parent_id"] is None:   # a top-level take takes its replies with it
+            ids += [x["id"] for x in
+                    c.execute("SELECT id FROM comments WHERE parent_id=?", (comment_id,)).fetchall()]
+        qs = ",".join("?" * len(ids))
+        c.execute(f"DELETE FROM comment_votes WHERE comment_id IN ({qs})", ids)
+        c.execute(f"DELETE FROM comments WHERE id IN ({qs})", ids)
+    return {"ok": True, "deleted": ids}
 
 
 def author_of(comment_id):
@@ -190,7 +229,7 @@ def list_comments(event_id=None, ticker=None, limit=50):
             "sentiment": r["sentiment"], "upvotes": r["upvotes"] or 0,
             "downvotes": r["downvotes"] or 0, "reply_count": r["reply_count"] or 0,
             "user_id": r["user_id"], "rep": reps.get(r["user_id"]),
-            "created_at": r["created_at"]} for r in rows]
+            "edited": bool(r["edited"]), "created_at": r["created_at"]} for r in rows]
     bull = sum(1 for r in out if r["sentiment"] == "bullish")
     bear = sum(1 for r in out if r["sentiment"] == "bearish")
     return {"comments": out, "count": len(out), "bull": bull, "bear": bear,
@@ -212,7 +251,7 @@ def recent_all(limit=80):
             "downvotes": r["downvotes"] or 0, "reply_count": r["reply_count"] or 0,
             "event_id": r["event_id"], "ticker": r["ticker"],
             "user_id": r["user_id"], "rep": reps.get(r["user_id"]),
-            "created_at": r["created_at"]} for r in rows]
+            "edited": bool(r["edited"]), "created_at": r["created_at"]} for r in rows]
     bull = sum(1 for r in out if r["sentiment"] == "bullish")
     bear = sum(1 for r in out if r["sentiment"] == "bearish")
     return {"comments": out, "count": len(out), "bull": bull, "bear": bear}
@@ -235,7 +274,8 @@ def thread(comment_id):
                 "sentiment": r["sentiment"], "upvotes": r["upvotes"] or 0,
                 "downvotes": r["downvotes"] or 0, "ticker": r["ticker"],
                 "event_id": r["event_id"], "user_id": r["user_id"],
-                "rep": reps.get(r["user_id"]), "created_at": r["created_at"]}
+                "rep": reps.get(r["user_id"]), "edited": bool(r["edited"]),
+                "created_at": r["created_at"]}
     return {"root": fmt(root), "replies": [fmt(r) for r in replies], "count": len(replies)}
 
 
