@@ -275,13 +275,20 @@ def run_scan(ledger: SignalLedger = None, model: str = None,
             h["review"] = review_event(h, model=review_model)
             h["reviewed_confidence"] = round(h["confidence"] * h["review"]["multiplier"], 1)
 
+    # No AI key? Synthesize whisper cards (ticker + direction + confidence) from the raw
+    # headlines so the Wire keeps its ticker/confidence view without a key — see wire_enrich.
+    whispers_out = ledger.whispers()
+    if not ai_enabled:
+        from .wire_enrich import build_keyless_whispers
+        whispers_out = build_keyless_whispers(articles)
+
     return {
         "updated": now,
         "scanned": len(articles),
         "market_moving": market_moving,
         "ai_enabled": ai_enabled,
         "sources": src_counts,
-        "whispers": ledger.whispers(),
+        "whispers": whispers_out,
         "haulers": haulers,
         "top": ledger.top_signals(5),
         # raw firehose — so the Wire shows live news even with AI off (no API key needed).
