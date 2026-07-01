@@ -130,7 +130,7 @@ function sparkline(hist){
     '<polyline fill="none" stroke="'+(up?'var(--green)':'var(--red)')+'" stroke-width="2" points="'+d+'"/></svg>';
 }
 
-function setBal(){ $('bal').innerHTML = ME ? ('Balance: <b>'+fmt(DATA.balance)+' &#8383;</b>') : '<a class="btn" href="account.html">Log in to trade</a>'; }
+function setBal(){ $('bal').innerHTML = ME ? ('Balance: <b>'+fmt(DATA.balance)+' B</b>') : '<a class="btn" href="account.html">Log in to trade</a>'; }
 function tabs(){
   const t=[['market','Market'],['portfolio','Portfolio'],['scouts','Scouts'],['submit','List something']];
   if(ME&&DATA.is_admin) t.push(['review','Review'+(DATA.pending&&DATA.pending.length?(' ('+DATA.pending.length+')'):'')]);
@@ -173,7 +173,7 @@ function renderMarket(){
       '<div class="a-top"><span class="a-tick">$'+esc(a.ticker)+'</span><span class="a-cat">'+esc(a.category)+'</span></div>'+
       '<div class="a-name">'+esc(a.name)+'</div>'+
       (a.blurb?'<div class="a-blurb">'+esc(a.blurb)+'</div>':'')+
-      '<div class="a-stats"><span class="a-price">'+fmt(a.price)+' &#8383;</span> '+chg(a)+'<span>cap '+fmt(a.mcap)+'</span><span>'+a.holders+' holders</span></div>'+
+      '<div class="a-stats"><span class="a-price">'+fmt(a.price)+' B</span> '+chg(a)+'<span>cap '+fmt(a.mcap)+'</span><span>'+a.holders+' holders</span></div>'+
     '</div>').join('')+'</div>'):'<div class="muted">No listings here yet. Be the first — hit “List something”.</div>';
   $('view').innerHTML=trend+chips+sortRow+grid;
 }
@@ -203,7 +203,7 @@ async function openDetail(ticker){
       '<div class="a-name" style="font-size:1.4rem">'+esc(a.name)+'</div>'+
       img+
       (a.blurb?'<p style="color:var(--mid);margin:8px 0">'+esc(a.blurb)+'</p>':'')+
-      '<div class="d-row"><span class="a-price" style="font-size:1.1rem">'+fmt(a.price)+' &#8383;</span> '+chg(a)+' &middot; market cap <b>'+fmt(a.mcap)+'</b> &middot; <b>'+a.holders+'</b> holders</div>'+
+      '<div class="d-row"><span class="a-price" style="font-size:1.1rem">'+fmt(a.price)+' B</span> '+chg(a)+' &middot; market cap <b>'+fmt(a.mcap)+'</b> &middot; <b>'+a.holders+'</b> holders</div>'+
       sparkline(a.history)+
       link+proof+ownerLine+
       trade+
@@ -243,14 +243,14 @@ async function doBuy(ticker){
   const v=$('buyAmt').value; if(!v||v<10){ midasToast('Minimum buy is 10 Bucks.','error'); return; }
   const r=await (await fetch('/api/exchange/buy',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,bucks:v})})).json();
   if(r.error){ midasToast(r.error,'error'); return; }
-  DATA.balance=r.balance; midasToast('Bought '+fmt(r.shares)+' shares @ '+fmt(r.avg_price)+' &#8383;.'); openDetail(ticker);
+  DATA.balance=r.balance; midasToast('Bought '+fmt(r.shares)+' shares @ '+fmt(r.avg_price)+' B.'); openDetail(ticker);
 }
 async function doSell(ticker){
   let v=$('sellAmt').value;
   if(!v){ const p=await (await fetch('/api/exchange/portfolio')).json(); const h=(p.holdings||[]).find(x=>x.ticker===ticker); if(!h){ midasToast('You hold none.','error'); return; } v=h.shares; }
   const r=await (await fetch('/api/exchange/sell',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticker,shares:v})})).json();
   if(r.error){ midasToast(r.error,'error'); return; }
-  DATA.balance=r.balance; midasToast('Sold for '+fmt(r.value)+' &#8383; ('+(r.pnl>=0?'+':'')+fmt(r.pnl)+').'); openDetail(ticker);
+  DATA.balance=r.balance; midasToast('Sold for '+fmt(r.value)+' B ('+(r.pnl>=0?'+':'')+fmt(r.pnl)+').'); openDetail(ticker);
 }
 
 async function renderPortfolio(){
@@ -264,7 +264,7 @@ async function renderPortfolio(){
       '<td class="mono">'+fmt(h.shares)+'</td><td class="mono">'+fmt(h.cost)+'</td><td class="mono">'+fmt(h.value)+'</td>'+
       '<td class="mono '+(h.pnl>=0?'win':'loss')+'">'+(h.pnl>=0?'+':'')+fmt(h.pnl)+' ('+(h.pnl_pct>=0?'+':'')+h.pnl_pct+'%)</td></tr>').join('')+
     '</tbody></table></div>'):'<div class="muted">No positions yet. Back something on the Market tab.</div>';
-  const tot='<div class="d-row" style="font-size:.86rem">Invested <b>'+fmt(p.invested)+'</b> &middot; Value <b>'+fmt(p.value)+'</b> &middot; P&amp;L <b class="'+(p.pnl>=0?'win':'loss')+'">'+(p.pnl>=0?'+':'')+fmt(p.pnl)+' &#8383;</b> &middot; Cash <b>'+fmt(p.balance)+' &#8383;</b></div>';
+  const tot='<div class="d-row" style="font-size:.86rem">Invested <b>'+fmt(p.invested)+'</b> &middot; Value <b>'+fmt(p.value)+'</b> &middot; P&amp;L <b class="'+(p.pnl>=0?'win':'loss')+'">'+(p.pnl>=0?'+':'')+fmt(p.pnl)+' B</b> &middot; Cash <b>'+fmt(p.balance)+' B</b></div>';
   $('view').innerHTML=tot+body;
 }
 

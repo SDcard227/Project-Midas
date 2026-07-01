@@ -99,14 +99,7 @@
   <script>function midasBack(e){if(history.length>1){e.preventDefault();history.back();return false;}return true;}</script>
   <nav>
     <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
-    <ul class="nav-links">
-      <li><a href="intelligence.html">Signals</a></li>
-      <li><a href="whispers.html">The Wire</a></li>
-      <li><a href="gossip.html">The Floor</a></li>
-      <li><a href="parlor.html" class="active">The Parlor</a></li>
-      <li><a href="pit.html">The Pit</a></li>
-      <li><a href="account.html" class="nav-cta">Account</a></li>
-    </ul>
+    <ul class="nav-links"></ul>
     <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
   </nav>
 
@@ -231,7 +224,7 @@ function setBal(b){
     $('bal').textContent='—';
     $('wallet-sub').innerHTML='<a href="account.html">Log in to play</a>';
   }else{
-    $('bal').textContent=Number(b).toLocaleString()+' ₿';
+    $('bal').textContent=Number(b).toLocaleString()+' B';
     $('wallet-sub').innerHTML='<span class="lbl">Midas Bucks</span>';
   }
 }
@@ -239,7 +232,7 @@ function setRecord(rec){
   if(!rec || !rec.bets){ $('wallet-rec').innerHTML=''; return; }
   const wr=(rec.win_rate!==null&&rec.win_rate!==undefined)?rec.win_rate+'% win':'unsettled';
   const net=(rec.net>=0?'+':'')+Number(rec.net).toLocaleString();
-  $('wallet-rec').innerHTML=rec.wins+'-'+rec.losses+' · '+wr+' · <span class="'+(rec.net>=0?'win':'loss')+'">'+net+' ₿</span>';
+  $('wallet-rec').innerHTML=rec.wins+'-'+rec.losses+' · '+wr+' · <span class="'+(rec.net>=0?'win':'loss')+'">'+net+' B</span>';
 }
 async function refreshMe(){
   if(!ME){ setBal(null); $('wallet-rec').innerHTML=''; return; }
@@ -259,7 +252,7 @@ async function bet(mid, side){
       body:JSON.stringify({market_id:mid,side,stake})})).json();
     if(r.error){ midasToast(r.error,'error'); return; }
     if('balance' in r) setBal(r.balance);
-    midasToast('Bet placed — '+stake+' ₿ on '+side.toUpperCase()+'.');
+    midasToast('Bet placed — '+stake+' B on '+side.toUpperCase()+'.');
     refreshMe(); loadMarkets();
   }catch(e){ midasToast('Bet failed.','error'); }
 }
@@ -277,9 +270,9 @@ async function loadMine(){
         let res='<span class="push">—</span>', st='<span class="pill open">Open</span>';
         if(x.settled){
           st = x.outcome ? '<span class="pill '+x.outcome+'">'+x.outcome.toUpperCase()+'</span>' : st;
-          if(x.payout>x.stake)      res='<span class="win">+'+(x.payout-x.stake)+' ₿</span>';
+          if(x.payout>x.stake)      res='<span class="win">+'+(x.payout-x.stake)+' B</span>';
           else if(x.payout===x.stake) res='<span class="push">refunded</span>';
-          else                      res='<span class="loss">-'+x.stake+' ₿</span>';
+          else                      res='<span class="loss">-'+x.stake+' B</span>';
         }
         return '<tr><td>'+esc(x.question)+'</td><td><span class="pill '+x.side+'">'+x.side.toUpperCase()+'</span></td><td class="mono">'+x.stake+'</td><td>'+st+'</td><td class="mono">'+res+'</td></tr>';
       }).join('')+'</tbody></table></div>';
@@ -292,7 +285,7 @@ async function loadResults(){
     const m=r.markets||[];
     if(!m.length){ $('results').innerHTML='<div class="muted">Nothing settled yet.</div>'; return; }
     $('results').innerHTML='<div class="panel"><table><thead><tr><th>Market</th><th>Outcome</th><th class="mono">Pool</th></tr></thead><tbody>'+
-      m.map(x=>'<tr><td>'+esc(x.question)+'</td><td><span class="pill '+(x.outcome||'open')+'">'+((x.outcome||'—').toUpperCase())+'</span></td><td class="mono">'+x.total+' ₿</td></tr>').join('')+
+      m.map(x=>'<tr><td>'+esc(x.question)+'</td><td><span class="pill '+(x.outcome||'open')+'">'+((x.outcome||'—').toUpperCase())+'</span></td><td class="mono">'+x.total+' B</td></tr>').join('')+
       '</tbody></table></div>';
   }catch(e){ $('results').innerHTML='<div class="muted">Could not load results.</div>'; }
 }
@@ -329,7 +322,7 @@ async function adminResolve(mid,outcome){
   const r=await (await fetch('/api/parlor/resolve',{method:'POST',headers:{'Content-Type':'application/json'},
     body:JSON.stringify({market_id:mid,outcome})})).json();
   if(r.error){ midasToast(r.error,'error'); return; }
-  midasToast(r.voided?'Voided — stakes refunded.':('Settled '+outcome.toUpperCase()+' — '+r.paid+' ₿ paid.'));
+  midasToast(r.voided?'Voided — stakes refunded.':('Settled '+outcome.toUpperCase()+' — '+r.paid+' B paid.'));
   loadMarkets();
 }
 
