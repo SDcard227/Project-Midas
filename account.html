@@ -94,15 +94,7 @@
 
   <nav>
     <a class="nav-logo" href="index.html">PROJECT <span>MIDAS</span></a>
-    <ul class="nav-links">
-      <li><a href="intelligence.html">Signals</a></li>
-      <li><a href="whispers.html">The Wire</a></li>
-      <li><a href="gossip.html">The Floor</a></li>
-      <li><a href="practice.html">Replay</a></li>
-      <li><a href="trade.html">Trade</a></li>
-      <li><a href="dashboard.html">Command</a></li>
-      <li><a href="account.html" class="nav-cta active">Get Access</a></li>
-    </ul>
+    <ul class="nav-links"></ul>
       <button class="nav-burger" aria-label="Menu" onclick="document.querySelector('nav .nav-links').classList.toggle('open')">&#9776;</button>
   </nav>
 
@@ -186,9 +178,9 @@
         <div class="row"><span class="k">Plan</span><span class="v"><span class="tier" id="uTier">FREE</span></span></div>
       </div>
       <div class="plans">
-        <div class="plan" data-tier="free"><div class="pn">Free</div><div class="pp">$0</div><div class="pd">The Wire, The Floor, comments + practice. All the social, free.</div></div>
-        <div class="plan" data-tier="pro"><div class="pn">Pro</div><div class="pp">$29<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">Semi-auto trading: Midas suggests, you approve each trade.</div><button class="planbtn" id="btn-pro" onclick="upgrade('pro')">Upgrade</button></div>
-        <div class="plan" data-tier="premium"><div class="pn">Premium</div><div class="pp">$79<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">Full-auto trading: Midas runs it for you, hands-off.</div><button class="planbtn" id="btn-premium" onclick="upgrade('premium')">Upgrade</button></div>
+        <div class="plan" data-tier="free"><div class="pn">Free</div><div class="pp">$0</div><div class="pd">The basics: the raw news wire, browse every market, The Floor, comments and Replay. A limited slice of the daily signals. All the social, free.</div></div>
+        <div class="plan" data-tier="pro"><div class="pn">Pro</div><div class="pp">$29<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">The full wire and every AI-ranked whisper, leak to whisper to swell to hauler, with all five signal layers and richer data. Priority refresh. The complete newspaper.</div><button class="planbtn" id="btn-pro" onclick="upgrade('pro')">Upgrade</button></div>
+        <div class="plan" data-tier="premium"><div class="pn">Premium</div><div class="pp">$79<span style="font-size:.7rem;color:var(--dim)">/mo</span></div><div class="pd">Everything in Pro plus advanced analytics, unlimited Parlor and Exchange play, early access to new features, and top reputation perks.</div><button class="planbtn" id="btn-premium" onclick="upgrade('premium')">Upgrade</button></div>
       </div>
       <div class="plan-note" id="billNote">Loading plans…</div>
       <p id="manageSub" style="display:none;margin-top:8px"><a href="javascript:void(0)" onclick="manageSub()" style="font-family:var(--mono);font-size:.74rem;color:var(--teal)">Manage or cancel subscription &rarr;</a></p>
